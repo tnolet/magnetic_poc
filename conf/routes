@@ -3,14 +3,22 @@
 # ~~~~
 
 # Home page
-GET        /                    controllers.Application.index
+GET         /                   controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file        controllers.Assets.at(path="/public", file)
+GET         /assets/*file       controllers.Assets.at(path="/public", file)
 
 # Images
-GET         /images              controllers.Images.list
+GET         /images             controllers.Images.list
 
-POST        /images              controllers.Images.create
+POST        /images             controllers.Images.create
 
-GET         /images/:id          controllers.Images.find(id: Long)
+GET         /images/:id         controllers.Images.find(id: Long)
+
+# Mesos Callback
+
+POST        /callback           controllers.Mesos.cb
+
+# Catchall
+
+GET         /*path              controllers.Application.catchAll(path)

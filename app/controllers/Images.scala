@@ -36,10 +36,10 @@ object Images extends Controller {
     body.validate[DockerImage].fold(
       valid = { image =>
         DockerImages.insert(image)
-        Ok("Ok")
+        Created
       },
       invalid = {
-        errors => BadRequest(JsError.toFlatJson(errors))
+        errors => BadRequest(Json.toJson(JsError.toFlatJson(errors)))
       }
     )
   }

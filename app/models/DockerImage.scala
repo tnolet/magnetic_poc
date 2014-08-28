@@ -22,7 +22,7 @@ object DockerImages {
   def all(implicit s: Session): List[DockerImage] = images.list
 
   /**
-   * Retrieve an image from the id
+   * Retrieve an image based on its id
    * @param id unique id for this image
    */
   def findById(id: Long)(implicit s: Session) =
