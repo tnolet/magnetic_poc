@@ -1,10 +1,19 @@
 package controllers
 
+import actors.Stage
+import akka.util.Timeout
 import models.{DockerImage, DockerImages}
 import play.api.db.slick._
+import play.api.libs.concurrent.Akka
 import play.api.mvc._
 import play.api.Play.current
 import play.api.libs.json._
+import akka.pattern.ask
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
+
+
 
 object Images extends Controller {
 
@@ -50,8 +59,10 @@ object Images extends Controller {
     )
   }
 
-  def deploy(id: Long) = Action { implicit request =>
-    NoContent
+  def deploy(id: Long) = Action.async {
+    val deployer = Akka.system.actorSelection("akka://application/user/deployer")
+    implicit val timeout = Timeout(5 seconds)
+    (deployer ? Stage(id)).mapTo[String].map( response => Ok(response))
   }
 
   def delete(id: Long) = DBAction { implicit rs =>

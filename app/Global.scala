@@ -1,6 +1,5 @@
 
 import akka.actor.Props
-import com.typesafe.config.ConfigFactory
 import lib.marathon.Marathon
 import play.api._
 import play.api.libs.concurrent.Akka
@@ -46,10 +45,12 @@ object Global extends GlobalSettings {
       case Failure(exception) => Logger.info(s"Could not connect to Marathon on ${Marathon.uri}")
     })
 
-    // start up Akka Deployment system
-    DeploymentSystem.start
+    // Start up a Deployment actor system with a parent at the top
+    val deployer = Akka.system.actorOf(Props[DeploymentParentActor], "deployer")
 
-//    val conf = ConfigFactory.load()
+
+
+    //    val conf = ConfigFactory.load()
 //    val dockerHost = conf.getString("docker.daemon.host")
 //    val dockerPort = conf.getInt("docker.daemon.port")
 
@@ -64,21 +65,11 @@ object InitialData {
         Seq(
           DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",""),
           DockerImage(Option(2L), "busybox","busybox","latest","/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""),
-          DockerImage(Option(3L), "hello", "tnolet/hello","latest",""))
+          DockerImage(Option(3L), "hello", "tnolet/hello","latest",""),
+          DockerImage(Option(3L), "hello", "tnolet/haproxy-rest","latest","-port=$PORT0"))
           .foreach(DockerImages.insert)
       }
     }
   }
 }
 
-object DeploymentSystem {
-
-  import play.api.Play.current
-
-  def start: Unit = {
-    val deploymentParent = Akka.system.actorOf(
-      Props(new DeploymentParentActor),
-      "deploymentParent"
-    )
-  }
-}
