@@ -6,7 +6,11 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 /**
  * Created by tim on 29/08/14.
+ *
+ * This lib contains all basic functions for communicating with Mesos
  */
+
+//case class Mesos(host: String, port: Int, baseUri: String)
 object Mesos {
 
   import play.api.Play.current
@@ -14,11 +18,15 @@ object Mesos {
   val conf = ConfigFactory.load()
   val mesosHost = conf.getString("mesos.host")
   val mesosPort = conf.getInt("mesos.port")
-  val mesosUri = WS.url(s"http://$mesosHost:$mesosPort")
+  val mesosBaseUri = (s"http://$mesosHost:$mesosPort")
 
   def Health : Future[Int] = {
-    mesosUri.get().map {
+    WS.url(mesosBaseUri + "/health").get().map {
       case response => response.status
     }
   }
+
+  def host = mesosHost
+  def port = mesosPort
+  def uri =  mesosBaseUri
 }

@@ -4,16 +4,17 @@ import play.api.db.slick.Config.driver.simple._
 import scala.slick.lifted.Tag
 
 
-case class DockerImage(id: Option[Long], name: String, version: String, arguments: String)
+case class DockerImage(id: Option[Long], name: String, repo: String,version: String, arguments: String)
 
 class DockerImages(tag: Tag) extends Table[DockerImage](tag, "DOCKER_IMAGE") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def name = column[String]("name", O.NotNull)
+  def repo = column[String]("repo", O.NotNull)
   def version = column[String]("version", O.NotNull)
   def arguments = column[String]("arguments")
 
-  def * = (id.?, name, version, arguments) <>(DockerImage.tupled, DockerImage.unapply _)
+  def * = (id.?, name, repo, version, arguments) <>(DockerImage.tupled, DockerImage.unapply _)
 }
 
 object DockerImages {
@@ -28,6 +29,14 @@ object DockerImages {
    */
   def findById(id: Long)(implicit s: Session) =
     images.filter(_.id === id).firstOption
+
+  /**
+   * Retrieve an image based on its name
+   * @param name unique name for this image
+   */
+  def findByName(name: String)(implicit s: Session) =
+    images.filter(_.name === name).firstOption
+
 
   /**
    * Count all images

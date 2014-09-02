@@ -26,10 +26,17 @@ object Images extends Controller {
     Ok(Json.toJson(images))
   }
 
-  def find(id: Long) = DBAction { implicit rs =>
+  def find_by_id(id: Long) = DBAction { implicit rs =>
     val image = DockerImages.findById(id)
     Ok(Json.toJson(image))
   }
+
+
+  def find_by_name(name: String) = DBAction { implicit rs =>
+    val image = DockerImages.findByName(name)
+    Ok(Json.toJson(image))
+  }
+
 
   def create = DBAction(parse.json) { implicit rs =>
     rs.request.body.validate[DockerImage].fold(
@@ -41,6 +48,10 @@ object Images extends Controller {
         errors => BadRequest(Json.toJson(JsError.toFlatJson(errors)))
       }
     )
+  }
+
+  def deploy(id: Long) = Action { implicit request =>
+    NoContent
   }
 
   def delete(id: Long) = DBAction { implicit rs =>
