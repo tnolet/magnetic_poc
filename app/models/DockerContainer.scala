@@ -4,7 +4,7 @@ import java.util.Date
 import play.api.db.slick.Config.driver.simple._
 import scala.slick.lifted.Tag
 
-case class DockerContainer(id: Option[Long], status: String, created: Date)
+case class DockerContainer(id: Option[Long], status: String, created: Date, ports: String)
 
 class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CONTAINER") {
 
@@ -13,8 +13,9 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def name = column[String]("name", O.NotNull)
   def created = column[Date]("created", O.NotNull)
+  def ports = column[String]("ports")
 
-  def * = (id.?, name, created) <>(DockerContainer.tupled, DockerContainer.unapply _)
+  def * = (id.?, name, created, ports) <>(DockerContainer.tupled, DockerContainer.unapply _)
 }
 
 object DockerContainers {

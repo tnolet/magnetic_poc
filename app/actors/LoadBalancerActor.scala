@@ -6,7 +6,6 @@ class LoadBalancerActor extends Actor with ActorLogging {
 
   def receive = {
 
-    case "ping" =>
-      context.parent ! "pong"
+    case "ping" => context.parent ! "pong"
   }
 }

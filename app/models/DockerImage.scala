@@ -4,15 +4,16 @@ import play.api.db.slick.Config.driver.simple._
 import scala.slick.lifted.Tag
 
 
-case class DockerImage(id: Option[Long], name: String, version: String)
+case class DockerImage(id: Option[Long], name: String, version: String, arguments: String)
 
 class DockerImages(tag: Tag) extends Table[DockerImage](tag, "DOCKER_IMAGE") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def name = column[String]("name", O.NotNull)
   def version = column[String]("version", O.NotNull)
+  def arguments = column[String]("arguments")
 
-  def * = (id.?, name, version) <>(DockerImage.tupled, DockerImage.unapply _)
+  def * = (id.?, name, version, arguments) <>(DockerImage.tupled, DockerImage.unapply _)
 }
 
 object DockerImages {
@@ -40,6 +41,14 @@ object DockerImages {
    */
   def insert(image: DockerImage)(implicit s: Session) {
     images.insert(image)
+  }
+
+  /**
+   * Delete an image
+   * @param id the id of the image to delete
+   */
+  def delete(id: Long)(implicit s: Session) {
+    images.filter(_.id === id).delete
   }
 
 }

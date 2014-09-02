@@ -32,8 +32,7 @@ object Images extends Controller {
   }
 
   def create = DBAction(parse.json) { implicit rs =>
-    val body = rs.request.body
-    body.validate[DockerImage].fold(
+    rs.request.body.validate[DockerImage].fold(
       valid = { image =>
         DockerImages.insert(image)
         Created
@@ -42,6 +41,11 @@ object Images extends Controller {
         errors => BadRequest(Json.toJson(JsError.toFlatJson(errors)))
       }
     )
+  }
+
+  def delete(id: Long) = DBAction { implicit rs =>
+    val result = DockerImages.delete(id)
+    NoContent
   }
 }
 

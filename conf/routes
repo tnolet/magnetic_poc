@@ -15,9 +15,7 @@ POST        /images             controllers.Images.create
 
 GET         /images/:id         controllers.Images.find(id: Long)
 
-# Mesos Callback
-
-POST        /callback           controllers.Mesos.cb
+DELETE      /images/:id         controllers.Images.delete(id: Long)
 
 # Catchall
 

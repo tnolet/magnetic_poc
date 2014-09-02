@@ -7,18 +7,31 @@ import actors._
 import models._
 import play.api.db.slick._
 import play.api.Play.current
+import lib.mesos.Mesos
+import scala.util.{Success, Failure}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 object Global extends GlobalSettings {
 
   override def onStart (application: Application): Unit = {
 
-   InitialData.insert()
+    // Some Mock data for initial testing
+    InitialData.insert()
 
-    val conf = ConfigFactory.load()
-    val docker_host = conf.getString("docker.daemon.host")
-    val docker_port = conf.getInt("docker.daemon.port")
+    // Check Mesos Master health
 
+    val healthy = Mesos.Health
+
+    healthy.onComplete({
+      case Success(int) => Logger.info("Mesos healthy")
+      case Failure(exception) => Logger.info("Mesos not healthy")
+    })
+
+
+//    val conf = ConfigFactory.load()
+//    val dockerHost = conf.getString("docker.daemon.host")
+//    val dockerPort = conf.getInt("docker.daemon.port")
     import play.api.Play.current
 
     val lbParentActor = Akka.system.actorOf(
@@ -28,22 +41,16 @@ object Global extends GlobalSettings {
   }
 }
 
-// Some Mock data for initial testing
 object InitialData {
 
   def insert(): Unit = {
     DB.withSession{ implicit s: Session =>
       if (DockerImages.count == 0) {
         Seq(
-          DockerImage(Option(1L), "Redis","1.0"),
-          DockerImage(Option(2L), "Redis","2.0"),
-          DockerImage(Option(3L), "SQL","0.8"),
-          DockerImage(Option(4L), "SQL","0.8.1"),
-          DockerImage(Option(5L), "Web","0.5.1"),
-          DockerImage(Option(6L), "Web","0.9"),
-          DockerImage(Option(7L), "Core","0.6"),
-          DockerImage(Option(8L), "Core","3.0"),
-          DockerImage(Option(9L), "Web","1.0")).foreach(DockerImages.insert)
+          DockerImage(Option(1L), "tnolet/mesos-tester","latest",""),
+          DockerImage(Option(2L), "busybox","latest","/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""),
+          DockerImage(Option(3L), "tnolet/hello","latest",""))
+          .foreach(DockerImages.insert)
       }
     }
   }
