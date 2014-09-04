@@ -1,15 +1,17 @@
 
+import actors.deployment.DeploymentParentActor
+import actors.jobs.{CheckJobs, JobManagerActor}
 import akka.actor.Props
 import lib.marathon.Marathon
 import play.api._
 import play.api.libs.concurrent.Akka
-import actors._
 import models._
 import play.api.db.slick._
 import play.api.Play.current
 import lib.mesos.Mesos
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 
 object Global extends GlobalSettings {
@@ -48,6 +50,12 @@ object Global extends GlobalSettings {
     // Start up a Deployment actor system with a parent at the top
     val deployer = Akka.system.actorOf(Props[DeploymentParentActor], "deployer")
 
+    // Check the Jobs table for new jobs and send them to the deployer
+    val jobManager = Akka.system.actorOf(Props[JobManagerActor], name = "jobManager")
+
+    Akka.system.scheduler.schedule(0.second, 5.second, jobManager, CheckJobs(deployer))
+
+
 
 
     //    val conf = ConfigFactory.load()
@@ -64,9 +72,9 @@ object InitialData {
       if (DockerImages.count == 0) {
         Seq(
           DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",""),
-          DockerImage(Option(2L), "busybox","busybox","latest","/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""),
+          DockerImage(Option(2L), "busybox","busybox","latest","""/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""""),
           DockerImage(Option(3L), "hello", "tnolet/hello","latest",""),
-          DockerImage(Option(3L), "hello", "tnolet/haproxy-rest","latest","-port=$PORT0"))
+          DockerImage(Option(3L), "haproxy-test", "tnolet/haproxy-rest","latest",""))
           .foreach(DockerImages.insert)
       }
     }

@@ -9,16 +9,20 @@ GET           /                         controllers.Application.index
 GET           /assets/*file             controllers.Assets.at(path="/public", file)
 
 # Images
-GET           /images                   controllers.Images.list
+GET           /images                   controllers.ImagesController.list
 
-POST          /images                   controllers.Images.create
+POST          /images                   controllers.ImagesController.create
 
-POST          /images/:id/deploy        controllers.Images.deploy(id: Long)
+POST          /images/:id/deploy        controllers.ImagesController.deploy(id: Long, amount: Option[Int])
 
-GET           /images/:id               controllers.Images.find_by_id(id: Long)
+GET           /images/:id               controllers.ImagesController.find_by_id(id: Long)
 
+DELETE        /images/:id               controllers.ImagesController.delete(id: Long)
 
-DELETE        /images/:id               controllers.Images.delete(id: Long)
+#Jobs
+
+GET           /jobs                   controllers.JobsController.list
+
 
 # Catchall
 

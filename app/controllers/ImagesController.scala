@@ -1,29 +1,14 @@
 package controllers
 
-import actors.Stage
-import akka.util.Timeout
-import models.{DockerImage, DockerImages}
+import models.{DockerImage, DockerImages,Job,Jobs}
 import play.api.db.slick._
-import play.api.libs.concurrent.Akka
 import play.api.mvc._
 import play.api.Play.current
 import play.api.libs.json._
-import akka.pattern.ask
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+import lib.util.date._
 
+object ImagesController extends Controller {
 
-
-
-object Images extends Controller {
-
-//  def list = Action.async {
-//    WS.url("http://" + docker_host + ":" + docker_port + "/images/json").withRequestTimeout(5000)
-//      .get().map {
-//      response =>
-//        Ok(response.json);
-//    }
-// }
 
   // Json reading/writing
   implicit val imageReads = Json.reads[DockerImage]
@@ -59,10 +44,17 @@ object Images extends Controller {
     )
   }
 
-  def deploy(id: Long) = Action.async {
-    val deployer = Akka.system.actorSelection("akka://application/user/deployer")
-    implicit val timeout = Timeout(5 seconds)
-    (deployer ? Stage(id)).mapTo[String].map( response => Ok(response))
+  def deploy(id: Long, amount: Option[Int]) = DBAction { implicit rs =>
+    val image = DockerImages.findById(id)
+      image match {
+        case Some(image) => {
+          val timestamp = TimeStamp.now
+          Jobs.insert( new Job(Option(0),"NEW",1,Json.stringify(Json.toJson(image)),timestamp,timestamp))
+          Created("Deployment job created")
+        }
+        case None => NotFound("No such image found")
+      }
+
   }
 
   def delete(id: Long) = DBAction { implicit rs =>

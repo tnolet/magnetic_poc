@@ -7,7 +7,7 @@ import play.api.libs.json._
 object Application extends Controller {
 
   def index = Action {
-    Redirect(routes.Images.list)
+    Redirect(routes.ImagesController.list)
   }
 
   def catchAll(path: String) = Action { request =>

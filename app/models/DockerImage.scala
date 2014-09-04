@@ -14,7 +14,7 @@ class DockerImages(tag: Tag) extends Table[DockerImage](tag, "DOCKER_IMAGE") {
   def version = column[String]("version", O.NotNull)
   def arguments = column[String]("arguments")
 
-  def * = (id.?, name, repo, version, arguments) <>(DockerImage.tupled, DockerImage.unapply _)
+  def * = (id.?, name, repo, version, arguments) <> (DockerImage.tupled, DockerImage.unapply _)
 }
 
 object DockerImages {
@@ -39,7 +39,7 @@ object DockerImages {
 
 
   /**
-   * Count all images
+   * count returns the amount of images
    */
   def count(implicit s: Session): Int =
     Query(images.length).first
