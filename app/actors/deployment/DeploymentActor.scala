@@ -3,8 +3,10 @@ package actors.deployment
 import akka.actor._
 import lib.marathon.Marathon
 import models.DockerImage
+import actors.loadbalancer.AddBackendServer
 import play.api.libs.concurrent.Akka
 import actors.jobs.UpdateJob
+import play.api.libs.json.JsValue
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -21,6 +23,7 @@ case class Submit(jobId: Long, image: DockerImage) extends DeployEvent
 case object Stage extends DeployEvent
 case object RunWait extends DeployEvent
 case object RunStart extends DeployEvent
+case object RunLive extends DeployEvent
 case class Fail(reason: String) extends DeployEvent
 
 //states
@@ -30,6 +33,7 @@ case object Submitted extends State
 case object Staging extends State
 case object Waiting extends State
 case object Running extends State
+case object Live extends State
 case object Failed extends State
 
 //state data
@@ -44,6 +48,7 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
   private var watcher: ActorRef = _
 
   val jobManager = context.actorSelection("akka://application/user/jobManager")
+  val lbManager = context.actorSelection("akka://application/user/lbManager")
 
   startWith(Idle, Uninitialized)
 
@@ -91,10 +96,15 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
   when(Running) {
 
+    case Event(RunLive, d: Deployable) =>
+      val newStateData = d.copy(d.jobId, d.image, "LIVE")
+      goto(Live) using newStateData
+  }
+
+  when(Live){
     case Event(_,_) =>
 
       stay()
-
   }
 
   when(Failed){
@@ -176,7 +186,46 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
           //Stop the TaskWatcher
           watcher ! PoisonPill
+
+          //Bring it Live
+          self ! RunLive
       }
+
+    case Running -> Live =>
+      nextStateData match {
+        case Deployable(jobId, image, marathonState) =>
+
+          /**
+          * Add the running instance to the load balancer.
+          * We grab the published port and IP from Marathon and hand it to the load balancer actor to update the
+          * configuration.
+          */
+
+          // for now, we get it from the task data
+          val appId = Marathon.appId(image.name, image.version)
+
+          val futureTasks = Marathon.tasks(appId)
+          futureTasks.map( tasks => {
+            val tasksList = (tasks \ "tasks").as[List[JsValue]]
+
+            // the Tasks list can be unpopulated due to queuing in Mesos/Marathon
+            if (tasksList.nonEmpty) {
+
+              // Get the relevant data
+              val host = (tasksList(0) \ "host").as[String]
+              val port = (tasksList(0) \ "ports")(0).as[Int]
+
+              lbManager ! AddBackendServer(host, port, appId)
+
+
+
+            }
+
+          })
+
+
+      }
+
 
     case _ -> Failed =>
       stateData match {

@@ -1,6 +1,7 @@
 
 import actors.deployment.DeploymentParentActor
 import actors.jobs.{CheckJobs, JobManagerActor}
+import actors.loadbalancer.LoadBalancerParentActor
 import akka.actor.Props
 import lib.marathon.Marathon
 import play.api._
@@ -50,11 +51,14 @@ object Global extends GlobalSettings {
     // Start up a Deployment actor system with a parent at the top
     val deployer = Akka.system.actorOf(Props[DeploymentParentActor], "deployer")
 
-    // Check the Jobs table for new jobs and send them to the deployer
+    // Start up the JobManager actor system
     val jobManager = Akka.system.actorOf(Props[JobManagerActor], name = "jobManager")
 
     Akka.system.scheduler.schedule(0.second, 5.second, jobManager, CheckJobs(deployer))
 
+
+    // Start up the Load Balanacer actor system
+    Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
 
 
 

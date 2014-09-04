@@ -1,15 +1,11 @@
 package actors.deployment
 
 import akka.actor.{ActorRef, Cancellable, ActorLogging, Actor}
-import akka.event.LoggingReceive
 import lib.marathon.Marathon
 import models.DockerImage
-import play.api.libs.json.{JsValue, JsResultException}
-import play.libs.Akka
-import actors.jobs.UpdateJob
+import play.api.libs.json.{JsNull, JsValue}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import actors.deployment.RunStart
 
 
 /**
@@ -57,26 +53,27 @@ class TaskWatcherActor extends Actor with ActorLogging {
       futureTasks.map( tasks => {
           val tasksList = (tasks \ "tasks").as[List[JsValue]]
 
+          // the Tasks list can be unpopulated due to queuing in Mesos/Marathon
           if (tasksList.nonEmpty) {
 
-            val startTime = (tasksList(0) \ "startedAt").as[String]
+            val startTime = (tasksList(0) \ "startedAt")
 
-            if (startTime != null) {
+            // as long as the value for "startedAt" is null, the task has not started yet
+            if (startTime != JsNull) {
 
-              log.info(s"Tasks for appId $appId started at ${startTime}")
+              log.info(s"Tasks for appId $appId started at ${startTime.toString}")
               originalSender ! RunStart
               scheduler.cancel()
 
-            }
-
-          } else {
-            // Schedule another check
-
-            scheduler = context.system.scheduler.scheduleOnce(3 seconds, self, CheckTasks)
-
-          }
+            } else { reschedule }
+          } else { reschedule }
       }
       )
+  }
+
+  def reschedule: Unit = {
+    // Schedule another check
+    scheduler = context.system.scheduler.scheduleOnce(3 seconds, self, CheckTasks)
   }
 }
 
