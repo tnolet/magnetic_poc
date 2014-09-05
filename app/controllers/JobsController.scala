@@ -28,6 +28,7 @@ object JobsController extends Controller {
       (__ \ 'status).read[String] and
       (__ \ 'priority).read[Int] and
       (__ \ 'payload).read[String] and
+      (__ \ 'queue).read[String] and
       (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) } and
       (__ \ 'updated_at).read[Long].map{ long => new Timestamp(long) }
     )(Job)

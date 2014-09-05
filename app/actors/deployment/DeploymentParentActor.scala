@@ -12,7 +12,7 @@ class DeploymentParentActor extends Actor with ActorLogging {
   def receive = LoggingReceive {
 
     case Submit(jobId, image) =>
-      val deploymentActor = context.actorOf(Props[DeploymentActor], s"${image.id.get}_${image.version}")
-      deploymentActor ! Submit(jobId,image)
+      val deploymentActor = context.actorOf(Props[DeploymentActor], s"${jobId}_${image.id.get}_${image.version}")
+      deploymentActor forward Submit(jobId,image)
   }
 }

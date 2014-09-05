@@ -1,20 +1,22 @@
 package actors.jobs
 
-import akka.actor.{ActorRef, ActorLogging, Actor}
+import akka.actor.{Props, ActorLogging, Actor}
 import akka.event.LoggingReceive
-import models.{DockerImage, Jobs}
+import models.{Job, Jobs}
+import models.docker.DockerImage
 import play.api.db.slick._
 import play.api.Play.current
-import actors.deployment.Submit
 import play.api.libs.json._
 
 
 sealed trait JobsMessage
-case class CheckJobs(deployer: ActorRef) extends JobsMessage
-case class UpdateJob(id: Long, status: String) extends JobsMessage
+case object CheckJobs extends JobsMessage
+case object StartJob extends JobsMessage
+case class UpdateJob(status: String) extends JobsMessage
 
 /**
- * JobMonitorActor checks the database for new Jobs
+ * JobMonitorActor checks the database for new Jobs. It picks up new jobs, assigns them to actors that perform the work
+ * and updates the status of a job.
  */
 class JobManagerActor extends Actor with ActorLogging {
 
@@ -23,34 +25,30 @@ class JobManagerActor extends Actor with ActorLogging {
   implicit val imageWrites = Json.writes[DockerImage]
 
   def receive =  LoggingReceive {
-    case CheckJobs(deployer) =>
-    log.info("Checking for new jobs")
-      DB.withSession { implicit session: Session =>
+
+    case CheckJobs =>
+      //log.debug("Job Manager is checking for new jobs")
+      DB.withTransaction { implicit session: Session =>
         Jobs
           .all
-          .filter(_.status=="NEW")
-          .foreach( job => {
-          log.info(s"Found new job with id: ${job.id.getOrElse("unknown id")}")
-
-          //send job payload to deployer and mark as submitted
-          Json.parse(job.payload).validate[DockerImage].fold(
-            valid = { image =>
-              log.info("Job payload is image" + job.payload)
-              deployer ! Submit(job.id.get, image)
-              Jobs.update_status(job.id.get, "VALIDATED")
-            },
-            invalid = {
-              errors => log.error(s"Invalid payload in job with id: ${job.id}. Errors: " + errors)
-            }
-          )
+          .filter(_.status == "NEW")
+          .foreach(job => {
+          startJobExecutor(job)
         }
-        )
+          )
       }
-    case UpdateJob(id, status) =>
-      log.info(s"Updating job $id with status $status")
-      DB.withSession { implicit session: Session =>
-        Jobs.update_status(id,status)
-      }
+  }
+
+  def startJobExecutor(job: Job) = {
+
+    val props = Props(new JobExecutorActor(job))
+    val executor = context.actorOf(props, "jobExecutor_"+ job.id.get.toString)
+    executor ! StartJob
+
+    DB.withSession { implicit session: Session =>
+      Jobs.update_status(job.id.get, Jobs.status("active"))
+    }
+
   }
 
 }

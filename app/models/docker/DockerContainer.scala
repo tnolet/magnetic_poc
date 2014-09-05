@@ -1,7 +1,9 @@
-package models
+package models.docker
 
 import java.util.Date
+
 import play.api.db.slick.Config.driver.simple._
+
 import scala.slick.lifted.Tag
 
 case class DockerContainer(id: Option[Long], status: String, created: Date, ports: String)

@@ -2,7 +2,7 @@ package actors.deployment
 
 import akka.actor.{ActorRef, Cancellable, ActorLogging, Actor}
 import lib.marathon.Marathon
-import models.DockerImage
+import models.docker.DockerImage
 import play.api.libs.json.{JsNull, JsValue}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -55,6 +55,7 @@ class TaskWatcherActor extends Actor with ActorLogging {
 
           // the Tasks list can be unpopulated due to queuing in Mesos/Marathon
           if (tasksList.nonEmpty) {
+
 
             val startTime = (tasksList(0) \ "startedAt")
 

@@ -10,7 +10,7 @@ class LoadBalancerParentActor extends Actor with ActorLogging {
   private val lbManager = context.actorOf(Props[LoadBalancerManagerActor], "lbManager")
 
   def receive = {
-    case m: Any => lbManager forward m
+    case message: Any => lbManager forward message
   }
 
 }

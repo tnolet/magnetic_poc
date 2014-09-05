@@ -2,13 +2,14 @@ package actors.deployment
 
 import akka.actor._
 import lib.marathon.Marathon
-import models.DockerImage
 import actors.loadbalancer.AddBackendServer
-import play.api.libs.concurrent.Akka
+import models.docker.DockerImage
 import actors.jobs.UpdateJob
+import actors.loadbalancer.{LbFail,LbSuccess}
 import play.api.libs.json.JsValue
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import models.Jobs
 
 /**
  *
@@ -19,11 +20,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 //events
 sealed trait DeployEvent
-case class Submit(jobId: Long, image: DockerImage) extends DeployEvent
+case class Submit(jobId: Long, payload: DockerImage) extends DeployEvent
 case object Stage extends DeployEvent
 case object RunWait extends DeployEvent
 case object RunStart extends DeployEvent
-case object RunLive extends DeployEvent
+case object RunExpose extends DeployEvent
 case class Fail(reason: String) extends DeployEvent
 
 //states
@@ -32,6 +33,7 @@ case object Idle extends State
 case object Submitted extends State
 case object Staging extends State
 case object Waiting extends State
+case object WaitingExposure extends State
 case object Running extends State
 case object Live extends State
 case object Failed extends State
@@ -45,9 +47,9 @@ case class Failure(reason: String)
 
 class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
+  private var jobExecutor: ActorRef = _
   private var watcher: ActorRef = _
 
-  val jobManager = context.actorSelection("akka://application/user/jobManager")
   val lbManager = context.actorSelection("akka://application/user/lbManager")
 
   startWith(Idle, Uninitialized)
@@ -55,6 +57,8 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
   when(Idle) {
 
       case Event(Submit(jobId, image), Uninitialized) =>
+        jobExecutor = sender()
+
         log.info(s"Staging deployment of image: ${image.name}")
         val newState = new Deployable(jobId, image, "SUBMITTED")
         goto(Submitted) using newState
@@ -63,6 +67,7 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
   when(Submitted) {
 
     case Event(Stage, d: Deployable) =>
+
       val newStateData = d.copy(d.jobId, d.image, "STAGING")
       goto(Staging) using newStateData
 
@@ -72,6 +77,7 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
   }
   
   when(Staging) {
+
     case Event(RunWait, d: Deployable) =>
       val newStateData = d.copy(d.jobId, d.image, "WAITING_FOR_RUNNING")
       goto(Waiting) using newStateData
@@ -85,6 +91,7 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
    * us whether a state has changed on Marathon and we can proceed. If we never get message, we time out and fail.
    */
   when(Waiting, stateTimeout = 3 minutes) {
+
     case Event(StateTimeout, d: Deployable) =>
       val newStateData = d.copy(d.jobId, d.image, "TIMED_OUT")
       goto(Failed) using newStateData
@@ -92,13 +99,36 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
     case Event(RunStart, d: Deployable) =>
       val newStateData = d.copy(d.jobId, d.image, "RUNNING")
       goto(Running) using newStateData
+
+    case Event(Fail,f: Failure) =>
+      goto(Failed)
+
   }
 
   when(Running) {
 
-    case Event(RunLive, d: Deployable) =>
+    case Event(RunExpose, d: Deployable) =>
+      val newStateData = d.copy(d.jobId, d.image, "EXPOSING")
+      goto(WaitingExposure) using newStateData
+
+    case Event(Fail,f: Failure) =>
+      goto(Failed)
+
+  }
+
+  // WaitingExposure is the state for waiting if the loadbalancer connects correctly
+  when(WaitingExposure) {
+
+    case Event(LbSuccess, d: Deployable) =>
       val newStateData = d.copy(d.jobId, d.image, "LIVE")
       goto(Live) using newStateData
+
+    case Event(LbFail, d: Deployable) =>
+      val newStateData = d.copy(d.jobId, d.image, "LIVE_WITH_FAILED_EXPOSURE")
+      goto(Failed) using newStateData
+
+    case Event(Fail, f: Failure) =>
+      goto(Failed)
   }
 
   when(Live){
@@ -132,9 +162,6 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
                 // Marathon reports everything is OK
                 log.info(s"Submit ${image.name} to Marathon successful: response code: $i")
 
-                //Report status to Job Manager
-                jobManager ! UpdateJob(jobId,marathonState.toUpperCase)
-
                 //Proceed to Staging fase with Deploy command. Staging can take time
                 self ! Stage
                 
@@ -158,9 +185,6 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
                 // Marathon reports everything is OK: start to stage the container
                 log.info(s"Staging ${image.name} to Marathon successful: response code: $i")
 
-                // Report status to Job Manager
-                jobManager ! UpdateJob(jobId,marathonState.toUpperCase)
-
                 //We should now start an actor that watches the staging fase on Marathon and reports success or failure
                 watcher = context.actorOf(Props[TaskWatcherActor], "watcher")
                 watcher ! Watch(image)
@@ -182,16 +206,16 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
         case Deployable(jobId, image, marathonState) =>
 
           //Report status to Job Manager
-          jobManager ! UpdateJob(jobId,marathonState.toUpperCase)
+          jobExecutor ! UpdateJob(marathonState.toUpperCase)
 
           //Stop the TaskWatcher
           watcher ! PoisonPill
 
-          //Bring it Live
-          self ! RunLive
+          //Expose it to the load balancer
+          self ! RunExpose
       }
 
-    case Running -> Live =>
+    case Running -> WaitingExposure =>
       nextStateData match {
         case Deployable(jobId, image, marathonState) =>
 
@@ -217,8 +241,6 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
               lbManager ! AddBackendServer(host, port, appId)
 
-
-
             }
 
           })
@@ -226,11 +248,22 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
       }
 
+    case WaitingExposure -> Live =>
+      nextStateData match {
+        case Deployable(jobId, image, marathonState) =>
+          jobExecutor ! UpdateJob(Jobs.status("finished"))
+      }
+
+    case WaitingExposure -> Failed =>
+      nextStateData match {
+        case Deployable(jobId, image, marathonState) =>
+          jobExecutor ! UpdateJob(Jobs.status("failed"))
+      }
 
     case _ -> Failed =>
       stateData match {
         case Deployable(jobId, _, marathonState) =>
-        jobManager ! UpdateJob(jobId, "FAILED")
+        jobExecutor ! UpdateJob(Jobs.status("failed"))
       }
   }
 

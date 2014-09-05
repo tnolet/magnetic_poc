@@ -4,6 +4,7 @@ import actors.jobs.{CheckJobs, JobManagerActor}
 import actors.loadbalancer.LoadBalancerParentActor
 import akka.actor.Props
 import lib.marathon.Marathon
+import models.docker.{DockerImages, DockerImage}
 import play.api._
 import play.api.libs.concurrent.Akka
 import models._
@@ -54,7 +55,7 @@ object Global extends GlobalSettings {
     // Start up the JobManager actor system
     val jobManager = Akka.system.actorOf(Props[JobManagerActor], name = "jobManager")
 
-    Akka.system.scheduler.schedule(0.second, 5.second, jobManager, CheckJobs(deployer))
+    Akka.system.scheduler.schedule(0.second, 5.second, jobManager, CheckJobs)
 
 
     // Start up the Load Balanacer actor system

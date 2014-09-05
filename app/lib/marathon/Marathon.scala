@@ -1,7 +1,7 @@
 package lib.marathon
 
 import com.typesafe.config.ConfigFactory
-import models.DockerImage
+import models.docker.DockerImage
 import models.marathon.Tasks
 import play.api.libs.ws.WS
 import scala.concurrent.Future

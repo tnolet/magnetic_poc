@@ -1,6 +1,8 @@
-package models
+package models.docker
 
 import play.api.db.slick.Config.driver.simple._
+import play.api.libs.json.Json
+
 import scala.slick.lifted.Tag
 
 
@@ -18,6 +20,9 @@ class DockerImages(tag: Tag) extends Table[DockerImage](tag, "DOCKER_IMAGE") {
 }
 
 object DockerImages {
+
+  implicit val imageReads = Json.reads[DockerImage]
+  implicit val imageWrites = Json.writes[DockerImage]
 
   val images = TableQuery[DockerImages]
 

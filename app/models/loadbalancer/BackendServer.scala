@@ -10,9 +10,9 @@ case class BackendServer (
                            host: String,
                            port: Int,
                            weight: Int,
-                           maxconn: Option[Double],
+                           maxconn: Option[Int],
                            check: Option[Boolean],
-                           checkInterval: Option[Double]
+                           checkInterval: Option[Int]
                            )
 
 object BackendServer {

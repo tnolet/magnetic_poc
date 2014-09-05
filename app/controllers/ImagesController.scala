@@ -1,6 +1,7 @@
 package controllers
 
-import models.{DockerImage, DockerImages,Job,Jobs}
+import models.docker.{DockerImage, DockerImages}
+import models.{Job,Jobs}
 import play.api.db.slick._
 import play.api.mvc._
 import play.api.Play.current
@@ -48,9 +49,9 @@ object ImagesController extends Controller {
     val image = DockerImages.findById(id)
       image match {
         case Some(image) => {
-          val timestamp = TimeStamp.now
-          Jobs.insert( new Job(Option(0),"NEW",1,Json.stringify(Json.toJson(image)),timestamp,timestamp))
-          Created("Deployment job created")
+
+          val jobId = createDeployJob(image)
+          Created(s"jobId: $jobId ")
         }
         case None => NotFound("No such image found")
       }
@@ -58,8 +59,34 @@ object ImagesController extends Controller {
   }
 
   def delete(id: Long) = DBAction { implicit rs =>
-    val result = DockerImages.delete(id)
+    DockerImages.delete(id)
     NoContent
   }
-}
 
+  /**
+   * createDeployJobs creates a deployment job based on an image and return the id of the created job
+   * @param image is an object of the type [[DockerImage]]
+   */
+
+
+  def createDeployJob(image: DockerImage) : Long = {
+
+    var newJobId: Long = 0
+
+    play.api.db.slick.DB.withTransaction { implicit session =>
+
+      val timestamp = TimeStamp.now
+
+     newJobId = Jobs.insert(new Job(
+        Option(0), // temporary id, will be discarded
+        Jobs.status("new"), // status
+        1, // priority
+        Json.stringify(Json.toJson(image)), // payload
+        Jobs.queue("deployment"), // queue
+        timestamp, // created timestamp
+        timestamp) // updated timestamp
+      )
+    }
+    newJobId
+  }
+}

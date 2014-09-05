@@ -21,18 +21,20 @@ object LoadBalancer {
 
   val lbApi = s"http://$lbHost:$lbApiPort/v$lbApiVersion"
 
-  def getConfig: Future[Configuration] = {
+  def getConfig: Future[Option[Configuration]] = {
     WS.url(s"$lbApi/config").get().map {
       case response => {
         response.json
-          .validate[Configuration].get
+          .validate[Configuration].asOpt
       }
     }
   }
 
-  def setConfig(config: Configuration): Unit = {
+  def setConfig(config: Configuration): Future[Boolean] = {
 
     val json = Json.toJson(config)
-    WS.url(s"$lbApi/config").post(json)
+    WS.url(s"$lbApi/config").post(json).map {
+      case response => (response.status < 399)
+    }
   }
 }
