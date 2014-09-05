@@ -2,14 +2,15 @@ package actors.deployment
 
 import akka.actor._
 import lib.marathon.Marathon
-import actors.loadbalancer.AddBackendServer
-import models.docker.DockerImage
+import actors.loadbalancer.{RemoveBackendServer, AddBackendServer, LbFail, LbSuccess}
+import models.docker.{DockerContainers, DockerImage}
 import actors.jobs.UpdateJob
-import actors.loadbalancer.{LbFail,LbSuccess}
+import play.api.db.slick._
 import play.api.libs.json.JsValue
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import models.Jobs
+import play.api.Play.current
 
 /**
  *
@@ -18,37 +19,53 @@ import models.Jobs
  */
 
 
-//events
-sealed trait DeployEvent
-case class Submit(jobId: Long, payload: DockerImage) extends DeployEvent
+//events for deploying
+trait DeployEvent
+case class SubmitDeployment(vrn: String, image: DockerImage) extends DeployEvent
 case object Stage extends DeployEvent
 case object RunWait extends DeployEvent
 case object RunStart extends DeployEvent
 case object RunExpose extends DeployEvent
+case object DestroyFinish extends DeployEvent
 case class Fail(reason: String) extends DeployEvent
 
-//states
-sealed trait State
-case object Idle extends State
-case object Submitted extends State
-case object Staging extends State
-case object Waiting extends State
-case object WaitingExposure extends State
-case object Running extends State
-case object Live extends State
-case object Failed extends State
+//events for undeploying
+case class SubmitUnDeployment(vrn: String) extends DeployEvent
+case object UnExpose extends DeployEvent
+
+
+trait DeployState
+
+//states for deploying
+case object Idle extends DeployState
+case object Submitted extends DeployState
+case object Staging extends DeployState
+case object Waiting extends DeployState
+case object WaitingExposure extends DeployState
+case object Running extends DeployState
+case object Live extends DeployState
+case object Failed extends DeployState
+
+//states for undeploying
+case object WaitingUnExpose extends DeployState
+case object WaitingDestroy extends DeployState
+case object Destroyed extends DeployState
 
 //state data
 sealed trait Data
 case object Uninitialized extends Data
-case class Deployable(jobId: Long, image: DockerImage, marathonState: String) extends Data
+case class ContainerState(status: String) extends Data
 case class Failure(reason: String)
 
 
-class DeploymentActor extends Actor with LoggingFSM[State, Data]{
+class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
   private var jobExecutor: ActorRef = _
   private var watcher: ActorRef = _
+  private var vrn: String = _
+  private var repo: String = _
+  private var version: String = _
+  private var image: DockerImage = _
 
   val lbManager = context.actorSelection("akka://application/user/lbManager")
 
@@ -56,19 +73,41 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
   when(Idle) {
 
-      case Event(Submit(jobId, image), Uninitialized) =>
-        jobExecutor = sender()
+      // Initial message for starting a deployment
+      case Event(SubmitDeployment(_vrn, _image), Uninitialized) =>
 
-        log.info(s"Staging deployment of image: ${image.name}")
-        val newState = new Deployable(jobId, image, "SUBMITTED")
+        // Set all variables for he container we are going to deploy
+
+        jobExecutor = sender()
+        vrn         = _vrn
+        repo        = _image.repo
+        version     = _image.version
+        image       = _image
+
+        log.info(s"Staging deployment of image $repo:$version with unique ID $vrn")
+
+        val newState = new ContainerState("SUBMITTED")
+
         goto(Submitted) using newState
+
+      // Inital message for starting an undeployment
+      case Event(SubmitUnDeployment(_vrn), Uninitialized) =>
+
+        jobExecutor = sender()
+        vrn         = _vrn
+
+        log.info(s"Starting the undeployment of $vrn")
+
+        val newState = new ContainerState("WAITING_FOR_UNEXPOSE")
+
+        goto(WaitingUnExpose) using newState
   }
 
   when(Submitted) {
 
-    case Event(Stage, d: Deployable) =>
+    case Event(Stage, c: ContainerState) =>
 
-      val newStateData = d.copy(d.jobId, d.image, "STAGING")
+      val newStateData = c.copy("STAGING")
       goto(Staging) using newStateData
 
     case Event(Fail,f: Failure) =>
@@ -78,8 +117,8 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
   
   when(Staging) {
 
-    case Event(RunWait, d: Deployable) =>
-      val newStateData = d.copy(d.jobId, d.image, "WAITING_FOR_RUNNING")
+    case Event(RunWait, c: ContainerState) =>
+      val newStateData = c.copy("WAITING_FOR_RUNNING")
       goto(Waiting) using newStateData
 
     case Event(Fail,f: Failure) =>
@@ -92,23 +131,22 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
    */
   when(Waiting, stateTimeout = 3 minutes) {
 
-    case Event(StateTimeout, d: Deployable) =>
-      val newStateData = d.copy(d.jobId, d.image, "TIMED_OUT")
+    case Event(StateTimeout, c: ContainerState) =>
+      val newStateData = c.copy("TIMED_OUT")
       goto(Failed) using newStateData
 
-    case Event(RunStart, d: Deployable) =>
-      val newStateData = d.copy(d.jobId, d.image, "RUNNING")
+    case Event(RunStart, c: ContainerState) =>
+      val newStateData = c.copy("RUNNING")
       goto(Running) using newStateData
 
     case Event(Fail,f: Failure) =>
       goto(Failed)
-
   }
 
   when(Running) {
 
-    case Event(RunExpose, d: Deployable) =>
-      val newStateData = d.copy(d.jobId, d.image, "EXPOSING")
+    case Event(RunExpose, c: ContainerState) =>
+      val newStateData = c.copy("EXPOSING")
       goto(WaitingExposure) using newStateData
 
     case Event(Fail,f: Failure) =>
@@ -119,12 +157,12 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
   // WaitingExposure is the state for waiting if the loadbalancer connects correctly
   when(WaitingExposure) {
 
-    case Event(LbSuccess, d: Deployable) =>
-      val newStateData = d.copy(d.jobId, d.image, "LIVE")
+    case Event(LbSuccess, c: ContainerState) =>
+      val newStateData = c.copy("LIVE")
       goto(Live) using newStateData
 
-    case Event(LbFail, d: Deployable) =>
-      val newStateData = d.copy(d.jobId, d.image, "LIVE_WITH_FAILED_EXPOSURE")
+    case Event(LbFail, c: ContainerState) =>
+      val newStateData = c.copy("LIVE_WITH_FAILED_EXPOSURE")
       goto(Failed) using newStateData
 
     case Event(Fail, f: Failure) =>
@@ -136,6 +174,49 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
       stay()
   }
+
+
+  /**
+   *
+   * undeploy states
+   *
+   */
+
+  when(WaitingUnExpose){
+
+    case Event(LbSuccess, c: ContainerState) =>
+      val newStateData = c.copy("UNEXPOSED")
+      goto(WaitingDestroy) using newStateData
+
+    case Event(LbFail, c: ContainerState) =>
+      val newStateData = c.copy("LIVE_WITH_FAILED_EXPOSURE")
+      goto(Failed) using newStateData
+
+    case Event(Fail, f: Failure) =>
+      goto(Failed)
+  }
+
+  when(WaitingDestroy){
+
+    case Event(DestroyFinish,c: ContainerState) =>
+      val newStateData = c.copy("DESTROYED")
+      goto(Destroyed) using newStateData
+
+    case Event(Fail, f: Failure) =>
+      goto(Failed)
+  }
+
+  when(Destroyed){
+    case Event(_,_) =>
+
+      stay()
+  }
+
+  /**
+   *
+   * Failed and unhandled states
+   *
+   */
 
   when(Failed){
     case Event(_,_) =>
@@ -155,19 +236,22 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
     case Idle -> Submitted =>
       nextStateData match {
-        case Deployable(jobId, image, marathonState) =>
-          Marathon.submitContainer(image).map(
+        case ContainerState(state) =>
+
+          updateContainerState(state)
+
+          Marathon.submitContainer(vrn, image).map(
             i => {
               if (i < 399) {
                 // Marathon reports everything is OK
-                log.info(s"Submit ${image.name} to Marathon successful: response code: $i")
+                log.info(s"Submit $vrn to Marathon successful: response code: $i")
 
                 //Proceed to Staging fase with Deploy command. Staging can take time
                 self ! Stage
                 
               }
               else {
-                log.error(s"Submit ${image.name} to Marathon has errors: response code: $i")
+                log.error(s"Submit $vrn to Marathon has errors: response code: $i")
                 self ! Fail
               }
             }
@@ -177,24 +261,27 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
       // on the transition from Submitted to Staging we have to start watching Marathon for state change to running
     case Submitted -> Staging =>
       nextStateData match {
-        case Deployable(jobId, image, marathonState) =>
-          Marathon.stageContainer(image).map(
+        case ContainerState(state) =>
+
+          updateContainerState(state)
+
+          Marathon.stageContainer(vrn, image).map(
             i => {
               if (i < 399) {
                 
                 // Marathon reports everything is OK: start to stage the container
-                log.info(s"Staging ${image.name} to Marathon successful: response code: $i")
+                log.info(s"Staging $vrn to Marathon successful: response code: $i")
 
                 //We should now start an actor that watches the staging fase on Marathon and reports success or failure
                 watcher = context.actorOf(Props[TaskWatcherActor], "watcher")
-                watcher ! Watch(image)
+                watcher ! Watch(vrn)
 
                 //Proceed to Waiting fase and wait for the staging to finish and the deployment start running. Staging can take time
                 self ! RunWait
 
               }
               else {
-                log.error(s"Staging ${image.name} to Marathon has errors: response code: $i")
+                log.error(s"Staging $vrn to Marathon has errors: response code: $i")
                 self ! Fail
               }
             }
@@ -203,10 +290,9 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
     case Waiting -> Running =>
       nextStateData match {
-        case Deployable(jobId, image, marathonState) =>
+        case ContainerState(state) =>
 
-          //Report status to Job Manager
-          jobExecutor ! UpdateJob(marathonState.toUpperCase)
+          updateContainerState(state)
 
           //Stop the TaskWatcher
           watcher ! PoisonPill
@@ -217,7 +303,10 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
     case Running -> WaitingExposure =>
       nextStateData match {
-        case Deployable(jobId, image, marathonState) =>
+        case ContainerState(state) =>
+
+          updateContainerState(state)
+
 
           /**
           * Add the running instance to the load balancer.
@@ -225,10 +314,8 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
           * configuration.
           */
 
-          // for now, we get it from the task data
-          val appId = Marathon.appId(image.name, image.version)
 
-          val futureTasks = Marathon.tasks(appId)
+          val futureTasks = Marathon.tasks(vrn)
           futureTasks.map( tasks => {
             val tasksList = (tasks \ "tasks").as[List[JsValue]]
 
@@ -239,7 +326,7 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
               val host = (tasksList(0) \ "host").as[String]
               val port = (tasksList(0) \ "ports")(0).as[Int]
 
-              lbManager ! AddBackendServer(host, port, appId)
+              lbManager ! AddBackendServer(host,port,vrn)
 
             }
 
@@ -250,22 +337,100 @@ class DeploymentActor extends Actor with LoggingFSM[State, Data]{
 
     case WaitingExposure -> Live =>
       nextStateData match {
-        case Deployable(jobId, image, marathonState) =>
+        case ContainerState(state) =>
+
+          updateContainerState(state)
+
           jobExecutor ! UpdateJob(Jobs.status("finished"))
       }
 
     case WaitingExposure -> Failed =>
       nextStateData match {
-        case Deployable(jobId, image, marathonState) =>
+        case ContainerState(state) =>
+
+          updateContainerState(state)
+
           jobExecutor ! UpdateJob(Jobs.status("failed"))
       }
 
     case _ -> Failed =>
-      stateData match {
-        case Deployable(jobId, _, marathonState) =>
-        jobExecutor ! UpdateJob(Jobs.status("failed"))
+      nextStateData match {
+        case ContainerState(state) =>
+
+          updateContainerState(state)
+
+          jobExecutor ! UpdateJob(Jobs.status("failed"))
+      }
+
+
+    /**
+     *
+     * Transitions  undeployment
+     *
+     */
+
+
+    case Idle -> WaitingUnExpose =>
+      nextStateData match {
+        case ContainerState(state) =>
+          updateContainerState(state)
+
+          lbManager ! RemoveBackendServer(vrn)
+
+      }
+
+    // Start killing the container on Marathon
+    case WaitingUnExpose -> WaitingDestroy =>
+      log.debug("Asking marathon for delete")
+
+      nextStateData match {
+        case ContainerState(state) =>
+          updateContainerState(state)
+
+
+          Marathon.destroyContainer(vrn).map(
+            i => {
+              if (i < 399) {
+                // Marathon reports everything is OK: the container will be destroyed
+                log.info(s"Destroying $vrn on Marathon successful: response code: $i")
+
+                jobExecutor ! UpdateJob(Jobs.status("finished"))
+
+                self ! DestroyFinish
+
+              }
+              else {
+                log.error(s"Destroying $vrn on Marathon has errors: response code: $i")
+
+                jobExecutor ! UpdateJob(Jobs.status("failed"))
+
+                self ! Fail
+
+              }
+            }
+          )
+      }
+
+    case WaitingDestroy -> Destroyed =>
+      nextStateData match {
+        case ContainerState(state) =>
+          updateContainerState(state)
+
+          jobExecutor ! UpdateJob(Jobs.status("finished"))
+
       }
   }
 
+
+
+
+
   initialize()
+
+  def updateContainerState(state: String) : Unit = {
+
+    DB.withSession { implicit session: Session =>
+      DockerContainers.updateStatusByVrn(vrn,state)
+    }
+  }
 }

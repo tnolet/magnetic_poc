@@ -9,10 +9,9 @@ import play.api.Play.current
 import play.api.libs.json._
 
 
-sealed trait JobsMessage
+trait JobsMessage
 case object CheckJobs extends JobsMessage
 case object StartJob extends JobsMessage
-case class UpdateJob(status: String) extends JobsMessage
 
 /**
  * JobMonitorActor checks the database for new Jobs. It picks up new jobs, assigns them to actors that perform the work

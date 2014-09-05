@@ -46,13 +46,13 @@ object ImagesController extends Controller {
   }
 
   def deploy(id: Long, amount: Option[Int]) = DBAction { implicit rs =>
-    val image = DockerImages.findById(id)
-      image match {
-        case Some(image) => {
+    val _image = DockerImages.findById(id)
+      _image match {
+        case Some(image) =>
 
           val jobId = createDeployJob(image)
           Created(s"jobId: $jobId ")
-        }
+
         case None => NotFound("No such image found")
       }
 
@@ -64,7 +64,7 @@ object ImagesController extends Controller {
   }
 
   /**
-   * createDeployJobs creates a deployment job based on an image and return the id of the created job
+   * createDeployJob creates a deployment job based on an image and returns the id of the created job
    * @param image is an object of the type [[DockerImage]]
    */
 

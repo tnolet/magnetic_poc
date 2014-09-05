@@ -22,12 +22,12 @@ object Configuration {
   /**
    * Remove a backend from an existing configuration by name
    * @param conf represent a configuration object
-   * @param backendName represent the unique name of backend
+   * @param vrn represents the vrn associated with the backend
    * @return a new [[Configuration]] object
    */
 
-  def removeBackend(conf: Configuration, backendName: String): Configuration = {
+  def removeBackend(conf: Configuration, vrn: String): Configuration = {
 
-    conf.copy(backends = conf.backends.filterNot( be => be.name == backendName))
+    conf.copy(backends = conf.backends.filterNot( be => be.name == vrn))
   }
 }

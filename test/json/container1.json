@@ -1,0 +1,6 @@
+{
+    "name" : "test",
+    "imageRepo" : "tnolet/test",
+    "imageVersion" : "latest",
+    "ports" : "8080"
+}

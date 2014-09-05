@@ -1,28 +1,53 @@
 package models.docker
 
-import java.util.Date
+import java.sql.Timestamp
 
 import play.api.db.slick.Config.driver.simple._
-
+import play.api.libs.json._
 import scala.slick.lifted.Tag
+import play.api.libs.functional.syntax._
 
-case class DockerContainer(id: Option[Long], status: String, created: Date, ports: String)
+
+
+case class DockerContainer(id: Option[Long],
+                           vrn: String,
+                           status: String,
+                           imageRepo: String,
+                           imageVersion: String,
+                           ports: String,
+                           created_at: java.sql.Timestamp)
 
 class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CONTAINER") {
 
-  implicit val dateColumnType = MappedColumnType.base[Date, Long](d => d.getTime, d => new Date(d))
-
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-  def name = column[String]("name", O.NotNull)
-  def created = column[Date]("created", O.NotNull)
+  def vrn = column[String]("vrn", O.NotNull)
+  def status = column[String]("status", O.NotNull)
+  def imageRepo = column[String]("imageRepo", O.NotNull)
+  def imageVersion = column[String]("imageVersion", O.NotNull)
   def ports = column[String]("ports")
+  def created_at = column[java.sql.Timestamp]("created_at", O.NotNull)
 
-  def * = (id.?, name, created, ports) <>(DockerContainer.tupled, DockerContainer.unapply _)
+  def * = (id.?, vrn, status, imageRepo, imageVersion, ports, created_at) <>(DockerContainer.tupled, DockerContainer.unapply _)
 }
 
 object DockerContainers {
 
+  // Json reading/writing
+  implicit val containerWrites = Json.writes[DockerContainer]
+
+  implicit val containerReads = (
+    (__ \ 'id).read[Option[Long]] and
+      (__ \ 'vrn).read[String] and
+      (__ \ 'status).read[String] and
+      (__ \ 'imageRepo).read[String] and
+      (__ \ 'imageVersion).read[String] and
+      (__ \ 'ports).read[String] and
+      (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
+    )(DockerContainer)
+
   val containers = TableQuery[DockerContainers]
+
+  def all(implicit s: Session): List[DockerContainer] = containers.list
 
   /**
    * Retrieve a container from the id
@@ -30,6 +55,44 @@ object DockerContainers {
    */
   def findById(id: Long)(implicit s: Session) =
     containers.filter(_.id === id).firstOption
+
+  /**
+   * Retrieve a container from the id
+   * @param id
+   */
+  def findNonDestroyedById(id: Long)(implicit s: Session) =
+    containers
+      .filter(_.id === id)
+      .firstOption
+
+  /**
+   * Insert a new container
+   * @param container a new container from the DockerContainer type
+   */
+  def insert(container: DockerContainer)(implicit s: Session) : Long  = {
+    (containers returning containers.map(_.id)).insert(container)
+  }
+
+
+  /**
+   * Update a container
+   * @param container the container to update
+   */
+  def update(container: DockerContainer)(implicit s: Session) {
+    containers.filter(_.id === container.id).update(container)
+
+  }
+
+  /**
+   * Update a container by vrn
+   * @param container the container to update
+   */
+  def updateStatusByVrn(vrn: String, status: String)(implicit s: Session) {
+    containers.filter(_.vrn === vrn)
+      .map(c => (c.status))
+      .update(status)
+  }
+
 
   /**
    * Count all containers

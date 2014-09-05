@@ -19,9 +19,20 @@ GET           /images/:id               controllers.ImagesController.find_by_id(
 
 DELETE        /images/:id               controllers.ImagesController.delete(id: Long)
 
+# Containers
+
+GET           /containers               controllers.ContainerController.list
+
+POST          /containers               controllers.ContainerController.create
+
+GET           /containers/:id           controllers.ContainerController.find_by_id(id: Long)
+
+DELETE        /containers/:id           controllers.ContainerController.delete(id: Long)
+
+
 #Jobs
 
-GET           /jobs                   controllers.JobsController.list
+GET           /jobs                     controllers.JobsController.list
 
 
 # Catchall

@@ -2,7 +2,6 @@ package actors.deployment
 
 import akka.actor.{ActorRef, Cancellable, ActorLogging, Actor}
 import lib.marathon.Marathon
-import models.docker.DockerImage
 import play.api.libs.json.{JsNull, JsValue}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -14,17 +13,13 @@ import scala.concurrent.duration._
  */
 
 sealed trait WatcherMessage
-case class Watch(image: DockerImage) extends WatcherMessage
+case class Watch(vrn: String) extends WatcherMessage
 case object CheckTasks extends WatcherMessage
 
 class TaskWatcherActor extends Actor with ActorLogging {
 
   private var scheduler: Cancellable = _
-
-  // The application ID we are watching the tasks for
-  private var appId: String = _
-
-  // The original sender to whom we should send the RunStart message
+  private var vrn: String = _
   private var originalSender: ActorRef = _
 
   override def postStop(): Unit = {
@@ -32,24 +27,19 @@ class TaskWatcherActor extends Actor with ActorLogging {
   }
 
   def receive = {
-    case Watch(image) =>
+    case Watch(_vrn) =>
 
-      // Store the application id so we can lookup its tasks
-      appId = Marathon.appId(image.name, image.version)
+      vrn             = _vrn
+      originalSender  = sender()
+      scheduler       = context.system.scheduler.scheduleOnce(3 seconds, self, CheckTasks)
 
-      //Store the parent actorRef
-      originalSender = sender()
-
-      //Do initial check in x seconds
-      scheduler = context.system.scheduler.scheduleOnce(3 seconds, self, CheckTasks)
-
-      log.info(s"Started watcher for tasks on $appId")
+      log.info(s"Started watcher for tasks on $vrn")
 
     case CheckTasks =>
 
-      log.info(s"Checking tasks for appId: $appId")
+      log.info(s"Checking tasks for appId: $vrn")
 
-      val futureTasks = Marathon.tasks(appId)
+      val futureTasks = Marathon.tasks(vrn)
       futureTasks.map( tasks => {
           val tasksList = (tasks \ "tasks").as[List[JsValue]]
 
@@ -57,22 +47,22 @@ class TaskWatcherActor extends Actor with ActorLogging {
           if (tasksList.nonEmpty) {
 
 
-            val startTime = (tasksList(0) \ "startedAt")
+            val startTime = tasksList(0) \ "startedAt"
 
             // as long as the value for "startedAt" is null, the task has not started yet
             if (startTime != JsNull) {
 
-              log.info(s"Tasks for appId $appId started at ${startTime.toString}")
+              log.info("Tasks for appId %s started at %s".format(vrn, startTime.toString))
               originalSender ! RunStart
               scheduler.cancel()
 
-            } else { reschedule }
-          } else { reschedule }
+            } else { reschedule() }
+          } else { reschedule() }
       }
       )
   }
 
-  def reschedule: Unit = {
+  def reschedule() : Unit = {
     // Schedule another check
     scheduler = context.system.scheduler.scheduleOnce(3 seconds, self, CheckTasks)
   }

@@ -1,8 +1,12 @@
 package models
 
+import java.sql.Timestamp
+
 import play.api.db.slick.Config.driver.simple._
+import play.api.libs.json._
 import scala.slick.lifted.Tag
 import lib.util.date.TimeStamp
+import play.api.libs.functional.syntax._
 
 
 case class Job(id: Option[Long],
@@ -29,6 +33,19 @@ class Jobs(tag: Tag) extends Table[Job](tag, "JOB") {
 
 
 object Jobs {
+
+  // Json reading/writing
+  implicit val jobWrites = Json.writes[Job]
+
+  implicit val jobReads = (
+    (__ \ 'id).read[Option[Long]] and
+      (__ \ 'status).read[String] and
+      (__ \ 'priority).read[Int] and
+      (__ \ 'payload).read[String] and
+      (__ \ 'queue).read[String] and
+      (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) } and
+      (__ \ 'updated_at).read[Long].map{ long => new Timestamp(long) }
+    )(Job)
 
   val jobs = TableQuery[Jobs]
 
@@ -74,7 +91,7 @@ object Jobs {
   // Constants
 
   final val status = Map("new" -> "NEW", "active" -> "ACTIVE", "finished" -> "FINISHED", "failed" -> "FAILED")
-  final val queue = Map("deployment" -> "DEPLOYMENT")
+  final val queue = Map("deployment" -> "DEPLOYMENT", "undeployment" -> "UNDEPLOYMENT")
 
 }
 
