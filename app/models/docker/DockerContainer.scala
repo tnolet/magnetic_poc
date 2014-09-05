@@ -2,6 +2,7 @@ package models.docker
 
 import java.sql.Timestamp
 
+import models.Environments
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
@@ -15,6 +16,7 @@ case class DockerContainer(id: Option[Long],
                            imageRepo: String,
                            imageVersion: String,
                            ports: String,
+                           environmentId: Long,
                            created_at: java.sql.Timestamp)
 
 class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CONTAINER") {
@@ -25,9 +27,12 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
   def imageRepo = column[String]("imageRepo", O.NotNull)
   def imageVersion = column[String]("imageVersion", O.NotNull)
   def ports = column[String]("ports")
+  def environmentId = column[Long]("environmentId")
   def created_at = column[java.sql.Timestamp]("created_at", O.NotNull)
+  def environment = foreignKey("ENVIRONMENT_FK", environmentId, Environments.environments)(_.id)
 
-  def * = (id.?, vrn, status, imageRepo, imageVersion, ports, created_at) <>(DockerContainer.tupled, DockerContainer.unapply _)
+
+  def * = (id.?, vrn, status, imageRepo, imageVersion, ports, environmentId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply _)
 }
 
 object DockerContainers {
@@ -42,6 +47,7 @@ object DockerContainers {
       (__ \ 'imageRepo).read[String] and
       (__ \ 'imageVersion).read[String] and
       (__ \ 'ports).read[String] and
+      (__ \ 'environmentId).read[Long] and
       (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
     )(DockerContainer)
 
@@ -51,7 +57,7 @@ object DockerContainers {
 
   /**
    * Retrieve a container from the id
-   * @param id
+   * @param id the containers's id
    */
   def findById(id: Long)(implicit s: Session) =
     containers.filter(_.id === id).firstOption
@@ -85,7 +91,8 @@ object DockerContainers {
 
   /**
    * Update a container by vrn
-   * @param container the container to update
+   * @param vrn the container to update
+   * @param status the state of the container
    */
   def updateStatusByVrn(vrn: String, status: String)(implicit s: Session) {
     containers.filter(_.vrn === vrn)

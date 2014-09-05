@@ -43,6 +43,7 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
       (__ \ 'imageRepo).read[String] and
       (__ \ 'imageVersion).read[String] and
       (__ \ 'ports).read[String] and
+      (__ \ 'environmentId).read[Long] and
       (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
     )(DockerContainer)
 
@@ -94,6 +95,7 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
                 image.repo,
                 image.version,
                 "",
+                1,
                 TimeStamp.now))
           }
           deployer ! SubmitDeployment(vrn, image)

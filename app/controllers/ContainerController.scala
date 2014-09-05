@@ -23,6 +23,7 @@ object ContainerController extends Controller {
       (__ \ 'imageRepo).read[String] and
       (__ \ 'imageVersion).read[String] and
       (__ \ 'ports).read[String] and
+      (__ \ 'environmentId).read[Long] and
       (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
     )(DockerContainer)
 

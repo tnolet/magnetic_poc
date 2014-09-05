@@ -82,7 +82,21 @@ object InitialData {
           DockerImage(Option(3L), "haproxy-test", "tnolet/haproxy-rest","latest",""))
           .foreach(DockerImages.insert)
       }
+      if (Environments.count == 0) {
+        Seq(
+          Environment(Option(1L), "development", "created"),
+          Environment(Option(2L), "test1", "created"),
+          Environment(Option(3L), "test2", "created"),
+          Environment(Option(4L), "acceptance1", "created"),
+          Environment(Option(5L), "acceptance2", "created"),
+          Environment(Option(5L), "pre-production", "created"),
+          Environment(Option(5L), "production", "created"),
+          Environment(Option(6L), "disaster recovery", "created"))
+          .foreach(Environments.insert)
+      }
+
+      }
+
     }
-  }
 }
 

@@ -29,6 +29,12 @@ GET           /containers/:id           controllers.ContainerController.find_by_
 
 DELETE        /containers/:id           controllers.ContainerController.delete(id: Long)
 
+# Environments
+
+GET           /environments             controllers.EnvironmentController.list
+
+GET           /environments/:id         controllers.EnvironmentController.find_by_id(id: Long)
+
 
 #Jobs
 

@@ -18,7 +18,6 @@ import play.api.Play.current
  *
  */
 
-
 //events for deploying
 trait DeployEvent
 case class SubmitDeployment(vrn: String, image: DockerImage) extends DeployEvent
@@ -329,10 +328,8 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
               lbManager ! AddBackendServer(host,port,vrn)
 
             }
-
-          })
-
-
+          }
+        )
       }
 
     case WaitingExposure -> Live =>
@@ -362,13 +359,11 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
           jobExecutor ! UpdateJob(Jobs.status("failed"))
       }
 
-
     /**
      *
      * Transitions  undeployment
      *
      */
-
 
     case Idle -> WaitingUnExpose =>
       nextStateData match {
@@ -420,10 +415,6 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
       }
   }
-
-
-
-
 
   initialize()
 
