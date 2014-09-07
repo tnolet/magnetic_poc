@@ -4,13 +4,16 @@ import actors.jobs.{CheckJobs, JobManagerActor}
 import actors.loadbalancer.LoadBalancerParentActor
 import akka.actor.Props
 import lib.marathon.Marathon
+import lib.mesos.Mesos
+import lib.loadbalancer.LoadBalancer
+
 import models.docker.{DockerImages, DockerImage}
+import models.service.{Services, Service, ServiceType, ServiceTypes}
 import play.api._
 import play.api.libs.concurrent.Akka
 import models._
 import play.api.db.slick._
 import play.api.Play.current
-import lib.mesos.Mesos
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -20,9 +23,19 @@ object Global extends GlobalSettings {
 
   override def onStart (application: Application): Unit = {
 
-    // Some Mock data for initial testing
+    /**********************************************
+      *
+      *  Initial insertion of test data
+      *
+      **********************************************/
+
     InitialData.insert
 
+    /**********************************************
+     *
+     *  Initial health checks for external dependencies
+     *
+     **********************************************/
 
     // Check Mesos Master health
     val healthyMesos = Mesos.Health
@@ -36,8 +49,7 @@ object Global extends GlobalSettings {
     })
 
     // Check Marathon health
-    val healthyMarathon = Mesos.Health
-
+    val healthyMarathon = Marathon.Health
 
     healthyMarathon.onComplete({
       case Success(returnCode) =>
@@ -49,8 +61,27 @@ object Global extends GlobalSettings {
       case Failure(exception) => Logger.info(s"Could not connect to Marathon on ${Marathon.uri}")
     })
 
+    // Check load balancer health
+    val healthyLoadBalancer = LoadBalancer.Health
+
+    healthyLoadBalancer.onComplete({
+      case Success(returnCode) =>
+        if (returnCode < 399)
+        { Logger.info(s"Successfully connected to the load balancer on ${LoadBalancer.uri}")}
+        else
+        { Logger.error("Load balancer is running, but is not healthy")}
+
+      case Failure(exception) => Logger.info(s"Could not connect to the load balancer on ${LoadBalancer.uri}")
+    })
+
+    /**********************************************
+      *
+      *  Start up Akka Systems
+      *
+      **********************************************/
+
     // Start up a Deployment actor system with a parent at the top
-    val deployer = Akka.system.actorOf(Props[DeploymentParentActor], "deployer")
+    Akka.system.actorOf(Props[DeploymentParentActor], "deployer")
 
     // Start up the JobManager actor system
     val jobManager = Akka.system.actorOf(Props[JobManagerActor], name = "jobManager")
@@ -60,12 +91,6 @@ object Global extends GlobalSettings {
 
     // Start up the Load Balanacer actor system
     Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
-
-
-
-    //    val conf = ConfigFactory.load()
-//    val dockerHost = conf.getString("docker.daemon.host")
-//    val dockerPort = conf.getInt("docker.daemon.port")
 
   }
 }
@@ -89,14 +114,27 @@ object InitialData {
           Environment(Option(3L), "test2", "created"),
           Environment(Option(4L), "acceptance1", "created"),
           Environment(Option(5L), "acceptance2", "created"),
-          Environment(Option(5L), "pre-production", "created"),
-          Environment(Option(5L), "production", "created"),
-          Environment(Option(6L), "disaster recovery", "created"))
+          Environment(Option(6L), "pre-production", "created"),
+          Environment(Option(7L), "production", "created"),
+          Environment(Option(8L), "disaster recovery", "created"))
           .foreach(Environments.insert)
       }
-
+      if (ServiceTypes.count == 0 ) {
+        Seq(
+          ServiceType(Option(1L),"search","1.0"),
+          ServiceType(Option(2L),"search","2.0"),
+          ServiceType(Option(3L),"cart","1.1")
+        ).foreach(ServiceTypes.insert)
       }
-
+      if (Services.count == 0) {
+        Seq(
+          Service(Option(1L),8900,"initial",lib.util.vamp.Naming.createVrn("serviceInstance","development"),1,1),
+          Service(Option(1L),8901,"initial",lib.util.vamp.Naming.createVrn("serviceInstance","development"),1,2),
+          Service(Option(1L),8902,"initial",lib.util.vamp.Naming.createVrn("serviceInstance","test1"),2,1),
+          Service(Option(1L),8903,"initial",lib.util.vamp.Naming.createVrn("serviceInstance","test2"),2,3)
+        ).foreach(Services.insert)
+      }
     }
+  }
 }
 

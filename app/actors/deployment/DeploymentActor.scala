@@ -4,7 +4,7 @@ import akka.actor._
 import lib.marathon.Marathon
 import actors.loadbalancer.{RemoveBackendServer, AddBackendServer, LbFail, LbSuccess}
 import models.docker.{DockerContainers, DockerImage}
-import actors.jobs.UpdateJob
+import actors.jobs.{addJobEvent, UpdateJob}
 import play.api.db.slick._
 import play.api.libs.json.JsValue
 import scala.concurrent.duration._
@@ -51,7 +51,7 @@ case object WaitingDestroy extends DeployState
 case object Destroyed extends DeployState
 
 //state data
-sealed trait Data
+trait Data
 case object Uninitialized extends Data
 case class ContainerState(status: String) extends Data
 case class Failure(reason: String)
@@ -65,6 +65,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
   private var repo: String = _
   private var version: String = _
   private var image: DockerImage = _
+  private var eventType: String = _
 
   val lbManager = context.actorSelection("akka://application/user/lbManager")
 
@@ -82,6 +83,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
         repo        = _image.repo
         version     = _image.version
         image       = _image
+        eventType   = "deployment"
 
         log.info(s"Staging deployment of image $repo:$version with unique ID $vrn")
 
@@ -94,6 +96,8 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
         jobExecutor = sender()
         vrn         = _vrn
+        eventType   = "undeployment"
+
 
         log.info(s"Starting the undeployment of $vrn")
 
@@ -229,7 +233,12 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       stay()
   }
 
-  //transitions
+  /**
+   *
+   * Transitions
+   *
+   */
+
 
   onTransition {
 
@@ -237,7 +246,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       nextStateData match {
         case ContainerState(state) =>
 
-          updateContainerState(state)
+          sendStateUpdate(state)
 
           Marathon.submitContainer(vrn, image).map(
             i => {
@@ -262,7 +271,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       nextStateData match {
         case ContainerState(state) =>
 
-          updateContainerState(state)
+          sendStateUpdate(state)
 
           Marathon.stageContainer(vrn, image).map(
             i => {
@@ -291,7 +300,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       nextStateData match {
         case ContainerState(state) =>
 
-          updateContainerState(state)
+          sendStateUpdate(state)
 
           //Stop the TaskWatcher
           watcher ! PoisonPill
@@ -304,15 +313,13 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       nextStateData match {
         case ContainerState(state) =>
 
-          updateContainerState(state)
-
+          sendStateUpdate(state)
 
           /**
           * Add the running instance to the load balancer.
           * We grab the published port and IP from Marathon and hand it to the load balancer actor to update the
           * configuration.
           */
-
 
           val futureTasks = Marathon.tasks(vrn)
           futureTasks.map( tasks => {
@@ -336,7 +343,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       nextStateData match {
         case ContainerState(state) =>
 
-          updateContainerState(state)
+          sendStateUpdate(state)
 
           jobExecutor ! UpdateJob(Jobs.status("finished"))
       }
@@ -345,7 +352,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       nextStateData match {
         case ContainerState(state) =>
 
-          updateContainerState(state)
+          sendStateUpdate(state)
 
           jobExecutor ! UpdateJob(Jobs.status("failed"))
       }
@@ -354,21 +361,21 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       nextStateData match {
         case ContainerState(state) =>
 
-          updateContainerState(state)
+          sendStateUpdate(state)
 
           jobExecutor ! UpdateJob(Jobs.status("failed"))
       }
 
-    /**
-     *
-     * Transitions  undeployment
-     *
-     */
+/**
+ *
+ * Transitions  undeployment
+ *
+ */
 
     case Idle -> WaitingUnExpose =>
       nextStateData match {
         case ContainerState(state) =>
-          updateContainerState(state)
+          sendStateUpdate(state)
 
           lbManager ! RemoveBackendServer(vrn)
 
@@ -380,7 +387,8 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
       nextStateData match {
         case ContainerState(state) =>
-          updateContainerState(state)
+
+          sendStateUpdate(state)
 
 
           Marathon.destroyContainer(vrn).map(
@@ -389,10 +397,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
                 // Marathon reports everything is OK: the container will be destroyed
                 log.info(s"Destroying $vrn on Marathon successful: response code: $i")
 
-                jobExecutor ! UpdateJob(Jobs.status("finished"))
-
                 self ! DestroyFinish
-
               }
               else {
                 log.error(s"Destroying $vrn on Marathon has errors: response code: $i")
@@ -409,7 +414,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
     case WaitingDestroy -> Destroyed =>
       nextStateData match {
         case ContainerState(state) =>
-          updateContainerState(state)
+          sendStateUpdate(state)
 
           jobExecutor ! UpdateJob(Jobs.status("finished"))
 
@@ -418,10 +423,25 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
   initialize()
 
-  def updateContainerState(state: String) : Unit = {
+  /**
+   *
+   * Updates the state of all who want to know. In this case specifically the container and the job
+   * by the means of job events.
+   *
+   * @param state the current state of the machine. The evenType is a local var
+   */
+  
+  def sendStateUpdate(state: String) : Unit = {
 
+    // Update the job events
+
+    jobExecutor ! addJobEvent(state, eventType)
+
+    // Update the container
     DB.withSession { implicit session: Session =>
       DockerContainers.updateStatusByVrn(vrn,state)
     }
+
   }
+
 }

@@ -21,6 +21,18 @@ object LoadBalancer {
 
   val lbApi = s"http://$lbHost:$lbApiPort/v$lbApiVersion"
 
+  def host = lbHost
+  def port = lbApiPort
+  def uri = lbApi
+
+
+  def Health : Future[Int] = {
+    WS.url(lbApi + "/info").get().map {
+      case response => response.status
+    }
+  }
+
+
   def getConfig: Future[Option[Configuration]] = {
     WS.url(s"$lbApi/config").get().map {
       case response => {

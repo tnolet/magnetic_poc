@@ -1,17 +1,15 @@
 package actors.jobs
 
-import java.sql.Timestamp
-
-import actors.deployment.{SubmitUnDeployment, SubmitDeployment}
+import actors.deployment.{SubmitServiceDeployment, SubmitUnDeployment, SubmitDeployment}
 import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
 import lib.util.date.TimeStamp
 import models.docker._
-import models.{Jobs, Job}
+import models.service.{Services, Service, ServiceCreate}
+import models.{JobEvent, Jobs, Job}
 import play.api.db.slick._
 import play.api.libs.json._
 import play.api.db.slick.DB
-import play.api.libs.functional.syntax._
 
 
 /**
@@ -21,31 +19,12 @@ import play.api.libs.functional.syntax._
 
 
 case class UpdateJob(status: String) extends JobsMessage
+case class addJobEvent(status: String, eventType: String) extends JobsMessage
 
 class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
-
-
   import play.api.Play.current
 
-  // Json reading/writing
-  implicit val imageReads = Json.reads[DockerImage]
-  implicit val imageWrites = Json.writes[DockerImage]
-
-
-  // Json reading/writing
-  implicit val containerWrites = Json.writes[DockerContainer]
-
-  implicit val containerReads = (
-    (__ \ 'id).read[Option[Long]] and
-      (__ \ 'vrn).read[String] and
-      (__ \ 'status).read[String] and
-      (__ \ 'imageRepo).read[String] and
-      (__ \ 'imageVersion).read[String] and
-      (__ \ 'ports).read[String] and
-      (__ \ 'environmentId).read[Long] and
-      (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
-    )(DockerContainer)
 
   private val id = job.id.get
   private val queue = job.queue
@@ -62,9 +41,29 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
         case "UNDEPLOYMENT" => executeUnDeployment()
 
+        case "SERVICE_DEPLOYMENT" => executeServiceDeployment()
+
         case _ => log.error(s"Found job with unknown queue $queue")
       }
 
+    /**
+     * Updates the general Job status, e.g. whether it is running, finished or failed
+     */
+    case addJobEvent(status,eventType) =>
+
+      log.info(s"Adding job event $eventType with status $status")
+
+      // create the JobEvent
+      val event = new JobEvent(Some(0),status,eventType,id,TimeStamp.now)
+
+      // insert it
+      DB.withSession { implicit session: Session =>
+        Jobs.insertJobEvent(id,event)
+      }
+
+    /**
+     * Adds events to jobs
+     */
     case UpdateJob(status) =>
       log.info(s"Updating job $id with status $status")
       DB.withSession { implicit session: Session =>
@@ -77,6 +76,8 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
    */
   def executeDeployment(): Unit = {
     val deployer = context.actorSelection("/user/deployer")
+
+    import models.docker.DockerImageJson.imageReads
 
     Json.parse(payload)
       .validate[DockerImage]
@@ -109,15 +110,52 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
     val deployer = context.actorSelection("/user/deployer")
 
+    import models.docker.DockerContainerJson.containerReads
+
     Json.parse(payload)
       .validate[DockerContainer]
       .fold(
         valid = { container => {
+
           deployer ! SubmitUnDeployment(container.vrn)
         }
       },
         invalid = { errors => log.error(s"Invalid payload in job with id: ${job.id}. Errors: " + errors) }
     )
   }
+  /**
+   * Parses the payload of a job in the Service deployment queue, creates a service for it and submits the job to
+   * the service deployer.
+   */
+  def executeServiceDeployment() : Unit = {
 
+    val deployer = context.actorSelection("/user/deployer")
+
+    import models.service.ServiceJson.serviceReadsforCreate
+
+    Json.parse(payload)
+      .validate[ServiceCreate]
+      .fold(
+        valid = { service => {
+
+          // Create a unique VRN for this resource
+          val vrn = lib.util.vamp.Naming.createVrn("service","dev")
+
+          DB.withTransaction { implicit session =>
+
+            Services.insert(
+              new Service(Option(0),
+                service.port,
+                "INITIAL",
+                vrn,
+                service.environmentId,
+                service.serviceTypeId))
+          }
+
+          deployer ! SubmitServiceDeployment(vrn,service)
+        }
+      },
+        invalid = { errors => log.error(s"Invalid payload in job with id: ${job.id}. Errors: " + errors) }
+      )
   }
+}

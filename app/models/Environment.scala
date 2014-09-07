@@ -3,8 +3,6 @@ package models
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
-import lib.util.date.TimeStamp
-import play.api.libs.functional.syntax._
 import models.docker.DockerContainers
 
 case class Environment(id: Option[Long],
@@ -24,6 +22,13 @@ object Environments {
 
   val environments = TableQuery[Environments]
 
+  val environments_with_containers = for {
+    (e,d) <- environments leftJoin  DockerContainers.containers on (_.id === _.environmentId)
+  } yield (e.name, d.vrn.?)
+
+
+  def all_with_containers(implicit s: Session) : Seq[(String,Option[String])] = environments_with_containers.list
+
   def all(implicit s: Session): List[Environment] = environments.list
 
   def insert(env: Environment)(implicit s: Session) : Long  = {
@@ -36,7 +41,7 @@ object Environments {
   def update_state(id: Long, status: String)(implicit s: Session) {
 
     environments.filter(_.id === id)
-      .map(env => (env.state))
+      .map(env => env.state)
       .update(status)
   }
 
@@ -45,4 +50,11 @@ object Environments {
    */
   def count(implicit s: Session): Int =
     Query(environments.length).first
+}
+
+object EnvironmentJson {
+
+  implicit val envReads = Json.reads[Environment]
+  implicit val envWrites = Json.writes[Environment]
+
 }

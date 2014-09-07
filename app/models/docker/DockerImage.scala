@@ -66,3 +66,11 @@ object DockerImages {
   }
 
 }
+
+object DockerImageJson {
+
+  // Json reading/writing
+  implicit val imageReads = Json.reads[DockerImage]
+  implicit val imageWrites = Json.writes[DockerImage]
+
+}

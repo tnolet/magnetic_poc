@@ -5,7 +5,9 @@ import play.api.libs.json.Json
 /**
  * Created by tim on 04/09/14.
  */
-case class Backend ( name: String, servers: List[BackendServer], options: Map[String,Boolean])
+case class Backend ( name: String,
+                     servers: List[BackendServer],
+                     options: Map[String,Boolean])
 
 object Backend {
 

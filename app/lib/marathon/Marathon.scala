@@ -27,15 +27,19 @@ object Marathon {
   val marathonBaseUri = s"http://$marathonHost:$marathonPort"
   val marathonApi = s"$marathonBaseUri/v$marathonApiVersion"
 
+  def host = marathonHost
+  def port = marathonPort
+  def uri = marathonBaseUri
+
+
+  def Health = Ping
+
   def Ping : Future[Int] = {
     WS.url(marathonBaseUri + "/ping").get().map {
       case response => response.status
     }
   }
 
-  def host = marathonHost
-  def port = marathonPort
-  def uri = marathonBaseUri
 
   /**
    * Submit a Docker image and all its meta-data to Marathon, but with 0 instances. This helps us check for errors and
@@ -109,7 +113,4 @@ object Marathon {
       case response => response.json
     }
   }
-
-  // Helper function to create application ID's based on repo names
-  def appId(name: String, version: String) = name.replace("/","-").replace("_","-").concat("-" + version)
 }

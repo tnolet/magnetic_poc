@@ -1,6 +1,7 @@
 package lib.mesos
 
 import com.typesafe.config.ConfigFactory
+import play.api.libs.json.JsValue
 import play.api.libs.ws.WS
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -29,4 +30,13 @@ object Mesos {
   def host = mesosHost
   def port = mesosPort
   def uri =  mesosBaseUri
+
+  /**
+   * Returns an array of all the slaves in the Mesos cluster together with their details
+   */
+  def slaves : Future[JsValue] = {
+    WS.url(s"$mesosBaseUri/master/state.json").get().map {
+      case response => (response.json \ "slaves")
+    }
+  }
 }

@@ -1,14 +1,18 @@
 package models
 
-import lib.util.date.TimeStamp
+import java.sql.Timestamp
 import play.api.db.slick.Config.driver.simple._
+import play.api.libs.json._
 import scala.slick.lifted.Tag
+import play.api.libs.functional.syntax._
+
 
 case class JobEvent(id: Option[Long],
                status: String,
                eventType: String,
                jobId: Long,
                timestamp: java.sql.Timestamp)
+
 
 class JobEvents(tag: Tag) extends Table[JobEvent](tag, "JOB_EVENTS") {
 
@@ -38,13 +42,32 @@ object JobEvents {
     events.insert(jobEvent)
   }
 
-
   /**
    * Retrieve a job based on its id
-   * @param id unique id for this job
+   * @param id unique id for this jobEvent
    */
   def findById(id: Long)(implicit s: Session) =
     events.filter(_.id === id).firstOption
 
+  /**
+   * Retrieve a job based on its foreign key, which is a job id
+   * @param id unique id for the job
+   */
+  def findByJobId(id: Long)(implicit s: Session) =
+    events.filter(_.jobId === id).list
 }
 
+object JobEventJson {
+
+  // Json reading/writing
+  implicit val jobEventWrites = Json.writes[JobEvent]
+
+  implicit val jobEventReads = (
+    (__ \ 'id).read[Option[Long]] and
+      (__ \ 'status).read[String] and
+      (__ \ 'eventType).read[String] and
+      (__ \ 'jobId).read[Long] and
+      (__ \ 'timestamp).read[Long].map{ long => new Timestamp(long) }
+    )(JobEvent)
+
+}

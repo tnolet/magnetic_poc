@@ -10,11 +10,8 @@ import lib.util.date._
 
 object ImagesController extends Controller {
 
-
-  // Json reading/writing
-  implicit val imageReads = Json.reads[DockerImage]
-  implicit val imageWrites = Json.writes[DockerImage]
-
+  import models.docker.DockerImageJson.imageReads
+  import models.docker.DockerImageJson.imageWrites
 
   def list = DBAction { implicit rs =>
     val images = DockerImages.all
@@ -45,7 +42,7 @@ object ImagesController extends Controller {
     )
   }
 
-  def deploy(id: Long, amount: Option[Int]) = DBAction { implicit rs =>
+  def deploy(id: Long, amount: Option[Int], environment: Option[Int]) = DBAction { implicit rs =>
     val _image = DockerImages.findById(id)
       _image match {
         case Some(image) =>

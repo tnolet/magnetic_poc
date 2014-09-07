@@ -3,23 +3,23 @@ package controllers
 import play.api.db.slick.DBAction
 import play.api.mvc.Controller
 import play.api.libs.json._
-import models.{Environments, Environment}
+import models. Environments
 import play.api.Play.current
 import play.api.db.slick._
+import play.api.libs.functional.syntax._
 
 object EnvironmentController extends Controller {
 
-  // Json reading/writing
-  implicit val envReads = Json.reads[Environment]
-  implicit val envWrites = Json.writes[Environment]
+  import models.EnvironmentJson.envWrites
 
   def list = DBAction { implicit rs =>
-    val job = Environments.all
-    Ok(Json.toJson(job))
+    val envs = Environments.all
+
+    Ok(Json.toJson(envs))
   }
 
   def find_by_id(id: Long) = DBAction { implicit rs =>
-    val job = Environments.findById(id)
-    Ok(Json.toJson(job))
+    val env = Environments.findById(id)
+    Ok(Json.toJson(env))
   }
 }

@@ -1,6 +1,5 @@
 package controllers
 
-import java.sql.Timestamp
 
 import lib.util.date.TimeStamp
 import models.{Job, Jobs}
@@ -8,24 +7,12 @@ import models.docker.{DockerContainer, DockerContainers}
 import play.api.db.slick._
 import play.api.libs.json._
 import play.api.mvc._
-import play.api.libs.functional.syntax._
 import play.api.Play.current
 
 object ContainerController extends Controller {
 
-  // Json reading/writing
-  implicit val containerWrites = Json.writes[DockerContainer]
-
-  implicit val containerReads = (
-   (__ \ 'id).read[Option[Long]] and
-      (__ \ 'vrn).read[String] and
-      (__ \ 'status).read[String] and
-      (__ \ 'imageRepo).read[String] and
-      (__ \ 'imageVersion).read[String] and
-      (__ \ 'ports).read[String] and
-      (__ \ 'environmentId).read[Long] and
-      (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
-    )(DockerContainer)
+  import models.docker.DockerContainerJson.containerReads
+  import models.docker.DockerContainerJson.containerWrites
 
   def list = DBAction { implicit rs =>
     val containers = DockerContainers.all
@@ -38,7 +25,7 @@ object ContainerController extends Controller {
   }
 
   /**
-   * Deletes a container, when it is eligable to be deleted. This means it should not be in the destroyed state already
+   * Todo: Deletes a container, when it is eligable to be deleted. This means it should not be in the destroyed state already
    * @param id The id of the containers
    */
 

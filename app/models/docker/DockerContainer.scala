@@ -9,7 +9,6 @@ import scala.slick.lifted.Tag
 import play.api.libs.functional.syntax._
 
 
-
 case class DockerContainer(id: Option[Long],
                            vrn: String,
                            status: String,
@@ -32,24 +31,13 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
   def environment = foreignKey("ENVIRONMENT_FK", environmentId, Environments.environments)(_.id)
 
 
-  def * = (id.?, vrn, status, imageRepo, imageVersion, ports, environmentId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply _)
+  def * = {
+    (id.?, vrn, status, imageRepo, imageVersion, ports, environmentId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply)
+  }
 }
 
 object DockerContainers {
 
-  // Json reading/writing
-  implicit val containerWrites = Json.writes[DockerContainer]
-
-  implicit val containerReads = (
-    (__ \ 'id).read[Option[Long]] and
-      (__ \ 'vrn).read[String] and
-      (__ \ 'status).read[String] and
-      (__ \ 'imageRepo).read[String] and
-      (__ \ 'imageVersion).read[String] and
-      (__ \ 'ports).read[String] and
-      (__ \ 'environmentId).read[Long] and
-      (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
-    )(DockerContainer)
 
   val containers = TableQuery[DockerContainers]
 
@@ -64,7 +52,7 @@ object DockerContainers {
 
   /**
    * Retrieve a container from the id
-   * @param id
+   * @param id the id of the container
    */
   def findNonDestroyedById(id: Long)(implicit s: Session) =
     containers
@@ -96,7 +84,7 @@ object DockerContainers {
    */
   def updateStatusByVrn(vrn: String, status: String)(implicit s: Session) {
     containers.filter(_.vrn === vrn)
-      .map(c => (c.status))
+      .map(c => c.status)
       .update(status)
   }
 
@@ -106,4 +94,21 @@ object DockerContainers {
    */
   def count(implicit s: Session): Int =
     Query(containers.length).first
+}
+
+object DockerContainerJson {
+  // Json reading/writing
+  implicit val containerWrites = Json.writes[DockerContainer]
+
+  implicit val containerReads = (
+    (__ \ 'id).read[Option[Long]] and
+      (__ \ 'vrn).read[String] and
+      (__ \ 'status).read[String] and
+      (__ \ 'imageRepo).read[String] and
+      (__ \ 'imageVersion).read[String] and
+      (__ \ 'ports).read[String] and
+      (__ \ 'environmentId).read[Long] and
+      (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
+    )(DockerContainer)
+
 }
