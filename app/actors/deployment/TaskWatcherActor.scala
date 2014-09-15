@@ -12,6 +12,7 @@ import scala.concurrent.duration._
  * It reports back the state of a staging process. Its goal is to notice when "staging" becomes "running"
  */
 
+// messages
 sealed trait WatcherMessage
 case class Watch(vrn: String) extends WatcherMessage
 case object CheckTasks extends WatcherMessage

@@ -128,10 +128,10 @@ object InitialData {
       }
       if (Services.count == 0) {
         Seq(
-          Service(Option(1L),8900,"initial",lib.util.vamp.Naming.createVrn("serviceInstance","development"),1,1),
-          Service(Option(1L),8901,"initial",lib.util.vamp.Naming.createVrn("serviceInstance","development"),1,2),
-          Service(Option(1L),8902,"initial",lib.util.vamp.Naming.createVrn("serviceInstance","test1"),2,1),
-          Service(Option(1L),8903,"initial",lib.util.vamp.Naming.createVrn("serviceInstance","test2"),2,3)
+          Service(Option(1L),8900,"initial",lib.util.vamp.Naming.createVrn("service","development"),1,1),
+          Service(Option(1L),8901,"initial",lib.util.vamp.Naming.createVrn("service","development"),1,2),
+          Service(Option(1L),8902,"initial",lib.util.vamp.Naming.createVrn("service","test1"),2,1),
+          Service(Option(1L),8903,"initial",lib.util.vamp.Naming.createVrn("service","test2"),2,3)
         ).foreach(Services.insert)
       }
     }

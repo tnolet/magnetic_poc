@@ -8,12 +8,12 @@ object Naming {
 
   def createVrn(resourceType: String, environment: String) : String =  {
 
-    "vamp"          +
+    "vrn"          +
     "-"             +
     environment     +
     "-"             +
     resourceType    +
-      "-"             +
+      "-"           +
     Number.rnd
 
   }

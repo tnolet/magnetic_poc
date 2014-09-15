@@ -33,8 +33,8 @@ class JobManagerActor extends Actor with ActorLogging {
           .filter(_.status == "NEW")
           .foreach(job => {
           startJobExecutor(job)
-        }
-          )
+          }
+        )
       }
   }
 

@@ -20,7 +20,7 @@ import play.api.Play.current
 
 //events for deploying
 trait DeployEvent
-case class SubmitDeployment(vrn: String, image: DockerImage) extends DeployEvent
+case class SubmitDeployment(vrn: String, image: DockerImage, environment: String, service : String) extends DeployEvent
 case object Stage extends DeployEvent
 case object RunWait extends DeployEvent
 case object RunStart extends DeployEvent
@@ -61,11 +61,14 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
   private var jobExecutor: ActorRef = _
   private var watcher: ActorRef = _
+  private var eventType: String = _
+
   private var vrn: String = _
   private var repo: String = _
   private var version: String = _
   private var image: DockerImage = _
-  private var eventType: String = _
+  private var environment: String = _
+  private var service: String = _
 
   val lbManager = context.actorSelection("akka://application/user/lbManager")
 
@@ -74,7 +77,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
   when(Idle) {
 
       // Initial message for starting a deployment
-      case Event(SubmitDeployment(_vrn, _image), Uninitialized) =>
+      case Event(SubmitDeployment(_vrn, _image, _environment, _service), Uninitialized) =>
 
         // Set all variables for he container we are going to deploy
 
@@ -83,13 +86,17 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
         repo        = _image.repo
         version     = _image.version
         image       = _image
+        environment = _environment
+        service     = _service
         eventType   = "deployment"
+
 
         log.info(s"Staging deployment of image $repo:$version with unique ID $vrn")
 
         val newState = new ContainerState("SUBMITTED")
 
         goto(Submitted) using newState
+
 
       // Inital message for starting an undeployment
       case Event(SubmitUnDeployment(_vrn), Uninitialized) =>
@@ -113,7 +120,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       val newStateData = c.copy("STAGING")
       goto(Staging) using newStateData
 
-    case Event(Fail,f: Failure) =>
+    case Event(Fail,c: ContainerState) =>
       goto(Failed)
 
   }
@@ -332,7 +339,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
               val host = (tasksList(0) \ "host").as[String]
               val port = (tasksList(0) \ "ports")(0).as[Int]
 
-              lbManager ! AddBackendServer(host,port,vrn)
+              lbManager ! AddBackendServer(host,port,vrn,service)
 
             }
           }

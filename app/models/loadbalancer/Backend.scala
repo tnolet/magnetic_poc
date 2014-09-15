@@ -7,7 +7,12 @@ import play.api.libs.json.Json
  */
 case class Backend ( name: String,
                      servers: List[BackendServer],
-                     options: Map[String,Boolean])
+                     options: Map[String,Boolean]) {
+  def addServer(server: BackendServer) : Backend = this.copy(
+    servers = this.servers.::(server)
+  )
+
+}
 
 object Backend {
 

@@ -13,7 +13,7 @@ GET           /images                                      controllers.ImagesCon
 
 POST          /images                                      controllers.ImagesController.create
 
-POST          /images/:id/deploy                           controllers.ImagesController.deploy(id: Long, amount: Option[Int], environment: Option[Int])
+POST          /images/:id/deploy                           controllers.ImagesController.deploy(id: Long, service: Option[String], environment: Option[Int])
 
 GET           /images/:id                                  controllers.ImagesController.find_by_id(id: Long)
 

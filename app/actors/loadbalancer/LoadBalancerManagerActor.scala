@@ -6,7 +6,7 @@ import models.loadbalancer._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 sealed trait LbMessage
-case class AddBackendServer( host: String, port: Int, vrn: String) extends LbMessage
+case class AddBackendServer( host: String, port: Int, vrn: String, backend: String) extends LbMessage
 case class AddFrontend(vrn: String, port: Int) extends LbMessage
 case class AddFrontendBackend(vrn: String, port: Int) extends LbMessage
 case class AddBackend(vrn: String) extends LbMessage
@@ -21,7 +21,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
 
   def receive =  {
 
-    case AddBackendServer(host,port,vrn) =>
+    case AddBackendServer(host,port,vrn,service) =>
 
       originalSender = sender()
       log.info("Getting LB Configuration")
@@ -35,8 +35,8 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
             log.debug("Current load balancer configuration is: " + config.toString)
 
             val newBackendServer = BackendServer(vrn, host, port, 0, None, None, None)
-            val newBackend = Backend(vrn, List(newBackendServer), Map("transparent" -> false))
-            val newConf = Configuration.addBackend(config, newBackend)
+            //val newBackend = Backend(vrn, List(newBackendServer), Map("transparent" -> false))
+            val newConf = Configuration.addServerToBackend(config,service,newBackendServer)
 
             log.debug("New load balancer configuration is:" + newConf.toString)
 
@@ -73,7 +73,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
           case Some(config: Configuration) => {
 
             log.debug("Current load balancer configuration is: " + config.toString)
-            val newConf = Configuration.removeBackend(config, vrn)
+            val newConf = Configuration.removeServerFromBackend(config, vrn)
             log.debug("New load balancer configuration is:" + newConf.toString)
 
             //Get a Future on a Boolean whether the new config was successfully applied

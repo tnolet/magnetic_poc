@@ -1,8 +1,7 @@
 package controllers
 
 
-import lib.util.date.TimeStamp
-import models.{Job, Jobs}
+import lib.job.UnDeploymentJobBuilder
 import models.docker.{DockerContainer, DockerContainers}
 import play.api.db.slick._
 import play.api.libs.json._
@@ -25,7 +24,9 @@ object ContainerController extends Controller {
   }
 
   /**
-   * Todo: Deletes a container, when it is eligable to be deleted. This means it should not be in the destroyed state already
+   * Todo: Deletes a container, when it is eligable to be deleted. This means:
+   * - it should not be in the destroyed state already
+   * - it should not be part of running/live service
    * @param id The id of the containers
    */
 
@@ -34,7 +35,11 @@ object ContainerController extends Controller {
     _container match {
       case Some(container) =>
 
-        val jobId = createDestroyJob(container)
+        // create an UnDeploymentJobBuilder
+        val builder = new UnDeploymentJobBuilder
+        builder.setContainer(container)
+        val jobId = builder.build
+
         Created(s"jobId: $jobId ")
 
       case None => NotFound("No such container found")
@@ -53,32 +58,4 @@ object ContainerController extends Controller {
       }
     )
   }
-
-  /**
-   * createDestroyJob creates a destroy job for a container and returns the id of the created job
-   * @param container is an object of the type [[DockerContainer]]
-   */
-
-
-  def createDestroyJob(container: DockerContainer) : Long = {
-
-    var newJobId: Long = 0
-
-    play.api.db.slick.DB.withTransaction { implicit session =>
-
-      val timestamp = TimeStamp.now
-
-      newJobId = Jobs.insert(new Job(
-        Option(0), // temporary id, will be discarded
-        Jobs.status("new"), // status
-        1, // priority
-        Json.stringify(Json.toJson(container)), // payload
-        Jobs.queue("undeployment"), // queue
-        timestamp, // created timestamp
-        timestamp) // updated timestamp
-      )
-    }
-    newJobId
-  }
-
 }

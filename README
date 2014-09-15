@@ -1,4 +1,10 @@
 Magnetic.io Demo
 =================================
 
+Initial work on demo app. This demo app implements three main pillars of the magnetic.io design
+
+-   interactive canary release
+-   self-healing
+-   copy & paste environments
+
 This file will be packaged with your application, when using `activator dist`.

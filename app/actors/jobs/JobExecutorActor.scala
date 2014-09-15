@@ -3,6 +3,7 @@ package actors.jobs
 import actors.deployment.{SubmitServiceDeployment, SubmitUnDeployment, SubmitDeployment}
 import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
+import lib.job.{UnDeploymentJobReader, DeploymentJobReader}
 import lib.util.date.TimeStamp
 import models.docker._
 import models.service.{Services, Service, ServiceCreate}
@@ -16,15 +17,12 @@ import play.api.db.slick.DB
  * A JobExecutorActor is started by the [[JobManagerActor]] to take care of running the job once it has been identified.
  * This is necessary so the Manager is free to process new jobs.
  */
-
-
 case class UpdateJob(status: String) extends JobsMessage
 case class addJobEvent(status: String, eventType: String) extends JobsMessage
 
 class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
   import play.api.Play.current
-
 
   private val id = job.id.get
   private val queue = job.queue
@@ -75,54 +73,48 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
    * Parses the payload of a job in the Deployment queue, creates a container for it and submits the job to the deployer.
    */
   def executeDeployment(): Unit = {
+
     val deployer = context.actorSelection("/user/deployer")
+    val deployable = new DeploymentJobReader
 
-    import models.docker.DockerImageJson.imageReads
+    deployable.read(job)
 
-    Json.parse(payload)
-      .validate[DockerImage]
-      .fold(
-        valid = { image => {
+    // create a container record in the database based on the information in the deployment job
+    DB.withTransaction { implicit session =>
 
-          // Create a unique VRN for this resource
-          val vrn = lib.util.vamp.Naming.createVrn("container","dev")
+      // Create a unique VRN for this resource
+      val vrn = lib.util.vamp.Naming.createVrn("container", deployable.environment)
 
-          DB.withTransaction { implicit session =>
+      DockerContainers.insert(
+        new DockerContainer(Option(0),
+          vrn,
+          "INITIAL",
+          deployable.image.repo,
+          deployable.image.version,
+          "",
+          1,
+          TimeStamp.now))
 
-            DockerContainers.insert(
-              new DockerContainer(Option(0),
-                vrn,
-                "INITIAL",
-                image.repo,
-                image.version,
-                "",
-                1,
-                TimeStamp.now))
-          }
-          deployer ! SubmitDeployment(vrn, image)
-        }
-        },
-       invalid = { errors => log.error(s"Invalid payload in job with id: ${job.id}. Errors: " + errors) }
-      )
+      // start the deployment
+      deployer ! SubmitDeployment(vrn,
+        deployable.image,
+        deployable.environment,
+        deployable.service)
     }
+  }
+
 
   def executeUnDeployment(): Unit = {
 
     val deployer = context.actorSelection("/user/deployer")
+    val undeployable = new UnDeploymentJobReader
 
-    import models.docker.DockerContainerJson.containerReads
+    undeployable.read(job)
 
-    Json.parse(payload)
-      .validate[DockerContainer]
-      .fold(
-        valid = { container => {
+    deployer ! SubmitUnDeployment(undeployable.vrn)
 
-          deployer ! SubmitUnDeployment(container.vrn)
-        }
-      },
-        invalid = { errors => log.error(s"Invalid payload in job with id: ${job.id}. Errors: " + errors) }
-    )
   }
+
   /**
    * Parses the payload of a job in the Service deployment queue, creates a service for it and submits the job to
    * the service deployer.
