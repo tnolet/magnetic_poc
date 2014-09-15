@@ -6,16 +6,14 @@ package lib.util.vamp
  */
 object Naming {
 
-  def createVrn(resourceType: String, environment: String) : String =  {
+  def createVrn(resourceType: String, environment: String = "none") : String =  {
 
-    "vrn"          +
-    "-"             +
-    environment     +
-    "-"             +
-    resourceType    +
-      "-"           +
-    Number.rnd
+    environment match {
 
+      case "none" =>  "vrn" + "-" + resourceType + "-" + Number.rnd
+
+      case _ => "vrn" + "-" + environment + "-" + resourceType + "-" + Number.rnd
+
+    }
   }
-
 }

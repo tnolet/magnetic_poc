@@ -29,7 +29,6 @@ object ContainerController extends Controller {
    * - it should not be part of running/live service
    * @param id The id of the containers
    */
-
   def delete(id: Long) = DBAction { implicit rs =>
     val _container = DockerContainers.findById(id)
     _container match {

@@ -59,18 +59,25 @@ object Services {
     services.filter(_.id === id).firstOption
 
   /**
-   * Retrieve service instance based the service type it is associated with
+   * Retrieve services based the service type it is associated with
    * @param id unique id for the [[ServiceType]]
    */
   def findByServiceTypeId(id: Long)(implicit s: Session) =
     services.filter(_.serviceTypeId === id).list
 
   /**
-   * Retrieve service based on the environment it is associated with
+   * Retrieve services based on the environment it is associated with
    * @param id unique id for the [[models.Environment]]
    */
   def findByEnvironmentId(id: Long)(implicit s: Session) =
     services.filter(_.environmentId === id).list
+
+  /**
+   * Retrieve service based on the vrn it is associated with
+   * @param vrn unique vrn for this service
+   */
+  def findByVrn(vrn: String)(implicit s: Session) =
+    services.filter(_.vrn === vrn).firstOption
 
   /**
    * Update a service by vrn

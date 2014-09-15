@@ -18,7 +18,6 @@ class DeploymentJobBuilder {
   private var jobId : Long = _
   private var image : DockerImage = _
   private var service : String = _
-  private var environment : String = _
   private var priority = 1
 
 
@@ -28,10 +27,6 @@ class DeploymentJobBuilder {
 
   def setService(service : String) = {
     this.service = service
-  }
-
-  def setEnvironment(environment : String) = {
-    this.environment = environment
   }
 
   def setPriority(priority : Int) = {
@@ -51,7 +46,6 @@ class DeploymentJobBuilder {
       Jobs.status("new"),                               // status
       priority,                                         // priority
       Json.stringify(payload(image,                     // payload
-                             environment,
                              service)
       ),
       Jobs.queue("deployment"),                         // queue
@@ -71,11 +65,10 @@ class DeploymentJobBuilder {
    * @param service the service to deploy the Docker image to
    * @return a string of JSON
    */
-  private def payload(image : DockerImage, environment: String, service : String) : JsValue = {
+  private def payload(image : DockerImage, service : String) : JsValue = {
 
     // holder for the whole payload
     val result : JsValue = Json.obj(
-    "environment" -> JsString(environment),
     "service" -> JsString(service),
     "image" -> Json.toJson(image)
     )

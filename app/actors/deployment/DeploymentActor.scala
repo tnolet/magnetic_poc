@@ -20,7 +20,7 @@ import play.api.Play.current
 
 //events for deploying
 trait DeployEvent
-case class SubmitDeployment(vrn: String, image: DockerImage, environment: String, service : String) extends DeployEvent
+case class SubmitDeployment(vrn: String, image: DockerImage, service : String) extends DeployEvent
 case object Stage extends DeployEvent
 case object RunWait extends DeployEvent
 case object RunStart extends DeployEvent
@@ -67,7 +67,6 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
   private var repo: String = _
   private var version: String = _
   private var image: DockerImage = _
-  private var environment: String = _
   private var service: String = _
 
   val lbManager = context.actorSelection("akka://application/user/lbManager")
@@ -77,7 +76,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
   when(Idle) {
 
       // Initial message for starting a deployment
-      case Event(SubmitDeployment(_vrn, _image, _environment, _service), Uninitialized) =>
+      case Event(SubmitDeployment(_vrn, _image, _service), Uninitialized) =>
 
         // Set all variables for he container we are going to deploy
 
@@ -86,7 +85,6 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
         repo        = _image.repo
         version     = _image.version
         image       = _image
-        environment = _environment
         service     = _service
         eventType   = "deployment"
 

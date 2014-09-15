@@ -7,7 +7,7 @@ import lib.job.{UnDeploymentJobReader, DeploymentJobReader}
 import lib.util.date.TimeStamp
 import models.docker._
 import models.service.{Services, Service, ServiceCreate}
-import models.{JobEvent, Jobs, Job}
+import models._
 import play.api.db.slick._
 import play.api.libs.json._
 import play.api.db.slick.DB
@@ -77,28 +77,39 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
     val deployer = context.actorSelection("/user/deployer")
     val deployable = new DeploymentJobReader
 
+    // read the job
     deployable.read(job)
+
+    // Create a unique VRN for this resource
+    val vrn = lib.util.vamp.Naming.createVrn("container")
 
     // create a container record in the database based on the information in the deployment job
     DB.withTransaction { implicit session =>
 
-      // Create a unique VRN for this resource
-      val vrn = lib.util.vamp.Naming.createVrn("container", deployable.environment)
 
-      DockerContainers.insert(
-        new DockerContainer(Option(0),
-          vrn,
-          "INITIAL",
-          deployable.image.repo,
-          deployable.image.version,
-          "",
-          1,
-          TimeStamp.now))
+            // check if the service we want to deploy the container to exists
+            val _service = Services.findByVrn(deployable.service)
+            _service match {
+
+              case Some(service) =>
+
+                DockerContainers.insert(
+                  new DockerContainer(Option(0),
+                    vrn,
+                    "INITIAL",
+                    deployable.image.repo,
+                    deployable.image.version,
+                    "",
+                    service.id.getOrElse(1),                            //serviceId
+                    TimeStamp.now))
+
+              case None => log.error(s"No service found with vrn ${deployable.service}")
+            }
+
 
       // start the deployment
       deployer ! SubmitDeployment(vrn,
         deployable.image,
-        deployable.environment,
         deployable.service)
     }
   }
@@ -131,7 +142,7 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
         valid = { service => {
 
           // Create a unique VRN for this resource
-          val vrn = lib.util.vamp.Naming.createVrn("service","dev")
+          val vrn = lib.util.vamp.Naming.createVrn("service","development")
 
           DB.withTransaction { implicit session =>
 

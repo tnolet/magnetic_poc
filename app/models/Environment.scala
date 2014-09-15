@@ -1,9 +1,9 @@
 package models
 
+import models.service.Services
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
-import models.docker.DockerContainers
 
 case class Environment(id: Option[Long],
                        name: String,
@@ -22,12 +22,12 @@ object Environments {
 
   val environments = TableQuery[Environments]
 
-  val environments_with_containers = for {
-    (e,d) <- environments leftJoin  DockerContainers.containers on (_.id === _.environmentId)
+  val environments_with_services = for {
+    (e,d) <- environments leftJoin  Services.services on (_.id === _.environmentId)
   } yield (e.name, d.vrn.?)
 
 
-  def all_with_containers(implicit s: Session) : Seq[(String,Option[String])] = environments_with_containers.list
+  def all_with_containers(implicit s: Session) : Seq[(String,Option[String])] = environments_with_services.list
 
   def all(implicit s: Session): List[Environment] = environments.list
 
@@ -37,6 +37,9 @@ object Environments {
 
   def findById(id: Long)(implicit s: Session) =
     environments.filter(_.id === id).firstOption
+
+  def findIdByName(name: String)(implicit s: Session) =
+    environments.filter(_.name === name).firstOption
 
   def update_state(id: Long, status: String)(implicit s: Session) {
 

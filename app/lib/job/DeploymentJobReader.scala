@@ -15,7 +15,6 @@ class DeploymentJobReader {
 
   private var _image : DockerImage = _
   private var _service : String = _
-  private var _environment : String = _
   private var _priority : Int = _
 
   def read(job: Job) : Unit = {
@@ -35,8 +34,6 @@ class DeploymentJobReader {
       }
     )
     _service = (payload \ "service").as[String]
-    _environment = (payload \ "environment").as[String]
-
 
     _priority = job.priority
 
@@ -49,10 +46,6 @@ class DeploymentJobReader {
 
   def service : String = {
     _service
-  }
-
-  def environment : String = {
-    _environment
   }
 
   def priority : Int = {

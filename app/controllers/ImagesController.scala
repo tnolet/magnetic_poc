@@ -40,7 +40,7 @@ object ImagesController extends Controller {
     )
   }
 
-  def deploy(id: Long, service: Option[String], environment: Option[Int]) = DBAction { implicit rs =>
+  def deploy(id: Long, service: Option[String]) = DBAction { implicit rs =>
     val _image = DockerImages.findById(id)
       _image match {
         case Some(image) =>
@@ -48,7 +48,6 @@ object ImagesController extends Controller {
           // create a builder and build a new deployment job
           val builder = new DeploymentJobBuilder
           builder.setImage(image)
-          builder.setEnvironment("development")
           builder.setService(service.getOrElse("dummyservice"))
           builder.setPriority(1)
           val jobId = builder.build

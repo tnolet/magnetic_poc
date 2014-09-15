@@ -2,7 +2,7 @@ package models.docker
 
 import java.sql.Timestamp
 
-import models.Environments
+import models.service.Services
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
@@ -15,7 +15,7 @@ case class DockerContainer(id: Option[Long],
                            imageRepo: String,
                            imageVersion: String,
                            ports: String,
-                           environmentId: Long,
+                           serviceId: Long,
                            created_at: java.sql.Timestamp)
 
 class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CONTAINER") {
@@ -26,13 +26,13 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
   def imageRepo = column[String]("imageRepo", O.NotNull)
   def imageVersion = column[String]("imageVersion", O.NotNull)
   def ports = column[String]("ports")
-  def environmentId = column[Long]("environmentId")
+  def serviceId = column[Long]("serviceId")
   def created_at = column[java.sql.Timestamp]("created_at", O.NotNull)
-  def environment = foreignKey("ENVIRONMENT_FK", environmentId, Environments.environments)(_.id)
+  def service = foreignKey("SERVICE_FK", serviceId, Services.services)(_.id)
 
 
   def * = {
-    (id.?, vrn, status, imageRepo, imageVersion, ports, environmentId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply)
+    (id.?, vrn, status, imageRepo, imageVersion, ports, serviceId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply)
   }
 }
 
@@ -88,7 +88,6 @@ object DockerContainers {
       .update(status)
   }
 
-
   /**
    * Count all containers
    */
@@ -107,7 +106,7 @@ object DockerContainerJson {
       (__ \ 'imageRepo).read[String] and
       (__ \ 'imageVersion).read[String] and
       (__ \ 'ports).read[String] and
-      (__ \ 'environmentId).read[Long] and
+      (__ \ 'serviceId).read[Long] and
       (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
     )(DockerContainer)
 

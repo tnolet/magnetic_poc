@@ -14,10 +14,10 @@ class DeploymentParentActor extends Actor with ActorLogging {
   def receive = LoggingReceive {
 
       // Container deployments
-    case SubmitDeployment(vrn, image, environment, service) =>
+    case SubmitDeployment(vrn, image, service) =>
 
       val deploymentActor = context.actorOf(Props[DeploymentActor], s"deploy-$vrn-${Number.rnd}")
-      deploymentActor forward SubmitDeployment(vrn, image, environment, service)
+      deploymentActor forward SubmitDeployment(vrn, image, service)
 
       // Container undeployments
     case SubmitUnDeployment(vrn) =>
