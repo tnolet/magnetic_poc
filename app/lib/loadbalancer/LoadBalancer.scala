@@ -32,7 +32,6 @@ object LoadBalancer {
     }
   }
 
-
   def getConfig: Future[Option[Configuration]] = {
     WS.url(s"$lbApi/config").get().map {
       case response => {
@@ -43,10 +42,11 @@ object LoadBalancer {
   }
 
   def setConfig(config: Configuration): Future[Boolean] = {
-
     val json = Json.toJson(config)
     WS.url(s"$lbApi/config").post(json).map {
       case response => (response.status < 399)
     }
   }
+
+ // def getWeight
 }

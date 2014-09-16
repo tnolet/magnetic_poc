@@ -16,7 +16,7 @@ case class Service(id: Option[Long],
 
 case class ServiceCreate(port: Int, environmentId: Long, serviceTypeId: Long)
 
-class Services(tag: Tag) extends Table[Service](tag, "ServiceInstanceS") {
+class Services(tag: Tag) extends Table[Service](tag, "Services") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def port = column[Int]("port", O.NotNull)

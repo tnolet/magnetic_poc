@@ -85,13 +85,14 @@ object Configuration {
    */
   def removeServerFromBackend(conf: Configuration, serverVrn: String) :  Configuration = {
 
+    // Pump all he backends in to a new List, while filtering out the unwanted server
   val newBackends : List[Backend] = for ( backend <- conf.backends ) yield {
-
-    Backend(backend.name,backend.servers.filter(srv => srv.name != serverVrn), backend.options)
+    Backend(backend.name,
+            backend.servers.filter(srv => srv.name != serverVrn),
+            backend.options
+    )
   }
-
     conf.copy(backends = newBackends)
-
   }
 
 
