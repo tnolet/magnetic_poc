@@ -337,6 +337,11 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
               val host = (tasksList(0) \ "host").as[String]
               val port = (tasksList(0) \ "ports")(0).as[Int]
 
+
+              // update the container configuration in the database
+              updateContainer(host,port.toString)
+
+              // add the container as a server to the load balancer
               lbManager ! AddBackendServer(host,port,vrn,service)
 
             }
@@ -447,6 +452,12 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       DockerContainers.updateStatusByVrn(vrn,state)
     }
 
+  }
+
+  def updateContainer(host: String, port: String) : Unit = {
+    DB.withSession {implicit session: Session =>
+    DockerContainers.updateHostAndPortByVrn(vrn,host,port)
+    }
   }
 
 }

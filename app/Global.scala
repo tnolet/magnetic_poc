@@ -1,14 +1,14 @@
 
 import actors.deployment.DeploymentParentActor
 import actors.jobs.{CheckJobs, JobManagerActor}
-import actors.loadbalancer.LoadBalancerParentActor
+import actors.loadbalancer.{LoadBalancerMetricsActor, LoadBalancerParentActor}
 import akka.actor.Props
 import lib.marathon.Marathon
 import lib.mesos.Mesos
 import lib.loadbalancer.LoadBalancer
 
 import models.docker.{DockerImages, DockerImage}
-import models.service.{Services, Service, ServiceType, ServiceTypes}
+import models.service.{ServiceType, ServiceTypes}
 import play.api._
 import play.api.libs.concurrent.Akka
 import models._
@@ -89,8 +89,11 @@ object Global extends GlobalSettings {
     Akka.system.scheduler.schedule(0.second, 5.second, jobManager, CheckJobs)
 
 
-    // Start up the Load Balanacer actor system
+    // Start up the Load Balancer actor system
     Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
+
+    // Start up the Load Balancer Metrics actor system
+//    Akka.system.actorOf(Props[LoadBalancerMetricsActor], name = "lbMetrics")
 
   }
 }
@@ -125,14 +128,6 @@ object InitialData {
           ServiceType(Option(2L),"search","2.0"),
           ServiceType(Option(3L),"cart","1.1")
         ).foreach(ServiceTypes.insert)
-      }
-      if (Services.count == 0) {
-        Seq(
-          Service(Option(1L),8900,"initial",lib.util.vamp.Naming.createVrn("service","development"),1,1),
-          Service(Option(1L),8901,"initial",lib.util.vamp.Naming.createVrn("service","development"),1,2),
-          Service(Option(1L),8902,"initial",lib.util.vamp.Naming.createVrn("service","test1"),2,1),
-          Service(Option(1L),8903,"initial",lib.util.vamp.Naming.createVrn("service","test2"),2,3)
-        ).foreach(Services.insert)
       }
     }
   }

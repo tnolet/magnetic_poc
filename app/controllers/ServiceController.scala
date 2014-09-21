@@ -1,6 +1,7 @@
 package controllers
 
 import lib.util.date.TimeStamp
+import models.docker.DockerContainers
 import models.{Job, Jobs}
 import models.service.{ServiceCreate, Services, Service}
 import play.api.db.slick.DBAction
@@ -26,10 +27,22 @@ object ServiceController extends Controller {
     val service = Services.findById(id)
 
     service match {
-
       case Some(service: Service) => Ok(Json.toJson(service))
       case None => NotFound("No service found")
+    }
+  }
 
+  def find_containers_by_id(id: Long) = DBAction { implicit rs =>
+
+    import models.docker.DockerContainerJson.containerWrites
+
+    val _service = Services.findById(id)
+    _service match {
+      case Some(service) =>
+       val containers = DockerContainers.findByServiceId(service.id.get)
+        Ok(Json.toJson(containers))
+
+      case None => NotFound("No such service found")
     }
   }
 
@@ -37,7 +50,6 @@ object ServiceController extends Controller {
    * Takes in a POSTED json message and sets up a job to create the requested service
    * @return the id of the created job
    */
-
     def create = DBAction(parse.json) { implicit rs =>
 
       import models.service.ServiceJson.serviceReadsforCreate

@@ -8,7 +8,7 @@ case class ServiceType(id: Option[Long],
                     name: String,
                     version: String)
 
-class ServiceTypes(tag: Tag) extends Table[ServiceType](tag, "SERVICES") {
+class ServiceTypes(tag: Tag) extends Table[ServiceType](tag, "SERVICE_TYPES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def name = column[String]("name", O.NotNull)

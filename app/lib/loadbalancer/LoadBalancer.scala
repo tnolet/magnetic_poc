@@ -2,7 +2,7 @@ package lib.loadbalancer
 
 import com.typesafe.config.ConfigFactory
 import models.loadbalancer._
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WS
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -47,6 +47,15 @@ object LoadBalancer {
       case response => (response.status < 399)
     }
   }
+
+
+ def getStats : Future[JsValue] = {
+   WS.url(lbApi + "/stats").get().map {
+     case response => {
+       response.json
+     }
+   }
+ }
 
  // def getWeight
 }

@@ -35,7 +35,6 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
             log.debug("Current load balancer configuration is: " + config.toString)
 
             val newBackendServer = BackendServer(vrn, host, port, 0, None, Some(false), None)
-            //val newBackend = Backend(vrn, List(newBackendServer), Map("transparent" -> false))
             val newConf = Configuration.addServerToBackend(config,service,newBackendServer)
 
             log.debug("New load balancer configuration is:" + newConf.toString)

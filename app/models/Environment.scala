@@ -1,6 +1,6 @@
 package models
 
-import models.service.Services
+import models.service.{ServiceResult, Services, Service}
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
@@ -8,6 +8,12 @@ import scala.slick.lifted.Tag
 case class Environment(id: Option[Long],
                        name: String,
                        state: String)
+
+case class EnvironmentResult(id: Option[Long],
+                             name: String,
+                             state: String,
+                              services: List[ServiceResult]
+                              )
 
 class Environments(tag: Tag) extends Table[Environment](tag, "ENVIRONMENT") {
 
@@ -35,8 +41,9 @@ object Environments {
     (environments returning environments.map(_.id)).insert(env)
   }
 
-  def findById(id: Long)(implicit s: Session) =
+  def findById(id: Long)(implicit s: Session) = {
     environments.filter(_.id === id).firstOption
+  }
 
   def findIdByName(name: String)(implicit s: Session) =
     environments.filter(_.name === name).firstOption
@@ -57,7 +64,10 @@ object Environments {
 
 object EnvironmentJson {
 
+  import models.service.ServiceJson.ServiceResultWrites
+
   implicit val envReads = Json.reads[Environment]
   implicit val envWrites = Json.writes[Environment]
-
+  implicit val envResultWrites = Json.writes[EnvironmentResult]
 }
+

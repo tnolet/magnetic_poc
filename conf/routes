@@ -6,6 +6,7 @@
 GET           /                                            controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
+
 GET           /assets/*file                                controllers.Assets.at(path="/public", file)
 
 # Images
@@ -27,7 +28,11 @@ POST          /containers                                  controllers.Container
 
 GET           /containers/:id                              controllers.ContainerController.find_by_id(id: Long)
 
+GET           /containers/:id/config                       controllers.ContainerController.find_config_by_id(id: Long)
+
 DELETE        /containers/:id                              controllers.ContainerController.delete(id: Long)
+
+POST          /containers/:id/weight/:weight               controllers.ContainerController.set_weight(id: Long, weight: Long)
 
 # Environments
 
@@ -62,8 +67,17 @@ GET           /services                                    controllers.ServiceCo
 
 GET           /services/:id                                controllers.ServiceController.find_by_id(id: Long)
 
+GET           /services/:id/containers                     controllers.ServiceController.find_containers_by_id(id: Long)
+
 POST          /services                                    controllers.ServiceController.create
 
+# SSE-Feeds
+
+GET           /feeds/metrics/lb                            controllers.FeedsController.lbFeed(metricType: Option[String])
+
+# Load balancer
+
+GET         /loadbalancer/stats                            controllers.LoadBalancer.stats
 
 # Catchall
 

@@ -51,6 +51,14 @@ object DockerContainers {
     containers.filter(_.id === id).firstOption
 
   /**
+   * Retrieve a container from the serviceId
+   * @param id the service's id
+   */
+  def findByServiceId(id: Long)(implicit s: Session) =
+    containers.filter(_.serviceId === id).list
+
+  /**
+   * Todo: finish this with correct filtering
    * Retrieve a container from the id
    * @param id the id of the container
    */
@@ -86,6 +94,23 @@ object DockerContainers {
     containers.filter(_.vrn === vrn)
       .map(c => c.status)
       .update(status)
+  }
+
+  /**
+   * Update a container's host and port config by vrn
+   * @param vrn the container to update
+   * @param host the host the container runs on
+   * @param port the port the container runs on
+   */
+  def updateHostAndPortByVrn(vrn: String, host: String, port: String)(implicit s: Session): Unit = {
+    containers.filter(_.vrn === vrn)
+      .firstOption
+      .map(cont => {
+      ContainerConfigs.configs.filter(_.id === cont.id.get)
+      .map( conf => (conf.host, conf.ports))
+      .update(host, port)
+
+    })
   }
 
   /**

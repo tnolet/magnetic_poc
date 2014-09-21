@@ -93,24 +93,36 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
               case Some(service) =>
 
-                DockerContainers.insert(
+                // Create the container
+                val cntId = DockerContainers.insert(
                   new DockerContainer(Option(0),
                     vrn,
                     "INITIAL",
                     deployable.image.repo,
                     deployable.image.version,
-                    "",
+                    "",                                                 //ports
                     service.id.getOrElse(1),                            //serviceId
                     TimeStamp.now))
 
-              case None => log.error(s"No service found with vrn ${deployable.service}")
-            }
+                // Create the container config linked to the container
+                ContainerConfigs.insert(
+                 new ContainerConfig(Option(0),
+                   "",                                                  //host, we don't know yet
+                   "",                                                  //ports, we don't know yet
+                   0,                                                   //default weight
+                   cntId,                                               // foreign key to container
+                   TimeStamp.now))
 
 
-      // start the deployment
-      deployer ! SubmitDeployment(vrn,
-        deployable.image,
-        deployable.service)
+                // start the deployment
+                deployer ! SubmitDeployment(vrn,
+                  deployable.image,
+                  deployable.service)
+
+              case None =>
+                log.error(s"No service found with vrn ${deployable.service}")
+                self ! addJobEvent("FAILED","deployment")
+                self ! UpdateJob(Jobs.status("failed"))}
     }
   }
 

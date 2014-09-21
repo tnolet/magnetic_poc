@@ -1,6 +1,7 @@
 package models.service
 
 import models.Environments
+import models.docker.DockerContainer
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
@@ -16,7 +17,15 @@ case class Service(id: Option[Long],
 
 case class ServiceCreate(port: Int, environmentId: Long, serviceTypeId: Long)
 
-class Services(tag: Tag) extends Table[Service](tag, "Services") {
+case class ServiceResult(id: Option[Long],
+                         port: Int,
+                         state : String,
+                         vrn: String,
+                         serviceTypeId: Long,
+                         containers: List[DockerContainer]
+                          )
+
+class Services(tag: Tag) extends Table[Service](tag, "SERVICES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def port = column[Int]("port", O.NotNull)
@@ -26,7 +35,7 @@ class Services(tag: Tag) extends Table[Service](tag, "Services") {
   def serviceTypeId = column[Long]("serviceTypeId")
 
   def environment = foreignKey("ENV_FK", environmentId, Environments.environments)(_.id)
-  def service = foreignKey("SERVICE_FK", serviceTypeId, ServiceTypes.serviceTypes)(_.id)
+  def serviceType = foreignKey("SERVICE_TYPE_FK", serviceTypeId, ServiceTypes.serviceTypes)(_.id)
 
   def * = (id.?, port,   state, vrn, environmentId, serviceTypeId)  <> (Service.tupled, Service.unapply _)
 
@@ -72,6 +81,7 @@ object Services {
   def findByEnvironmentId(id: Long)(implicit s: Session) =
     services.filter(_.environmentId === id).list
 
+
   /**
    * Retrieve service based on the vrn it is associated with
    * @param vrn unique vrn for this service
@@ -105,5 +115,8 @@ object ServiceJson {
       (__ \ 'serviceTypeId).read[Long]
     )(ServiceCreate)
 
+  import models.docker.DockerContainerJson.containerWrites
+
+  implicit val ServiceResultWrites = Json.writes[ServiceResult]
 
 }

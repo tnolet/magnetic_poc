@@ -2,7 +2,7 @@ package controllers
 
 
 import lib.job.UnDeploymentJobBuilder
-import models.docker.{DockerContainer, DockerContainers}
+import models.docker.{ContainerConfigs, DockerContainer, DockerContainers}
 import play.api.db.slick._
 import play.api.libs.json._
 import play.api.mvc._
@@ -22,6 +22,22 @@ object ContainerController extends Controller {
     val container = DockerContainers.findById(id)
     Ok(Json.toJson(container))
   }
+
+  def find_config_by_id(id: Long) = DBAction {implicit rs =>
+
+    import models.docker.ContainerConfigJson.configWrites
+
+    val container = DockerContainers.findById(id)
+    container match {
+      case Some(container) =>
+
+        val config = ContainerConfigs.findByContainerId(id)
+        Ok(Json.toJson(config))
+
+      case None => NotFound("No such container found")
+    }
+  }
+
 
   /**
    * Todo: Deletes a container, when it is eligable to be deleted. This means:
@@ -56,5 +72,18 @@ object ContainerController extends Controller {
         errors => BadRequest(Json.toJson(JsError.toFlatJson(errors)))
       }
     )
+  }
+
+  def set_weight(id: Long, weight: Long) = DBAction { implicit rs =>
+
+    val container = DockerContainers.findById(id)
+    container match {
+      case Some(container) =>
+
+       ContainerConfigs.updateWeightByContainerId(id, weight)
+       Ok
+
+      case None => NotFound("No such container found")
+    }
   }
 }
