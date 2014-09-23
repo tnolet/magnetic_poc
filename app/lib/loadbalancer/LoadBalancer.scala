@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
- * Created by tim on 04/09/14.
+ * Al basis, low level calls to the load balancer API. Uses by other functions and objects.
  */
 object LoadBalancer {
 
@@ -34,28 +34,28 @@ object LoadBalancer {
 
   def getConfig: Future[Option[Configuration]] = {
     WS.url(s"$lbApi/config").get().map {
-      case response => {
+      case response =>
         response.json
           .validate[Configuration].asOpt
-      }
     }
   }
 
   def setConfig(config: Configuration): Future[Boolean] = {
     val json = Json.toJson(config)
     WS.url(s"$lbApi/config").post(json).map {
-      case response => (response.status < 399)
+      case response => response.status < 399
     }
   }
 
 
- def getStats : Future[JsValue] = {
-   WS.url(lbApi + "/stats").get().map {
-     case response => {
-       response.json
-     }
-   }
+ def getStats : Future[JsValue] = WS.url(s"l$lbApi/stats").get().map {
+   case response => response.json
  }
 
- // def getWeight
+  def setWeight(backend: String, backendServer: String , weight: Int) : Future[Boolean] = {
+
+    WS.url(s"$lbApi/backend/$backend/$backendServer/weight/$weight").post("test").map {
+      case response => response.status < 399
+    }
+  }
 }

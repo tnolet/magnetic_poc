@@ -1,6 +1,6 @@
 package controllers
 
-import actors.loadbalancer.{GetMetrics}
+import actors.loadbalancer.GetMetrics
 import akka.util.Timeout
 import play.api.libs.EventSource
 import akka.pattern.ask
@@ -22,15 +22,21 @@ object FeedsController extends Controller {
    * lbMetricsFeed returns an SSE feed of load balancer metrics in JSON format
    * @param metricType the type of metric you want to filter on. This can be "backend", "frontend".
    */
-  def lbFeed(metricType: Option[String]) = Action.async {
+  def lbFeed(metricType: Option[String] = None) = Action.async {
 
-    implicit val timeout = Timeout(5 seconds)
+    implicit val timeout = akka.util.Timeout(5 seconds)
 
     (lbMetricsFeed ? GetMetrics).map {
       case MetricsFeed(out) => Ok.feed(out
         &> Concurrent.buffer(60)
         &> EventSource()).as("text/event-stream")
     }
+  }
+
+  // Todo: allow filtering on backend, fronted or server name
+  private def filter(metricType: String) = Enumeratee.filter[JsValue] {
+    json: JsValue =>
+    metricType == (json(0) \ "svname").as[String]
   }
 }
 

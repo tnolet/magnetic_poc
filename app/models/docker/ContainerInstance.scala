@@ -7,56 +7,62 @@ import play.api.libs.json._
 import scala.slick.lifted.Tag
 import play.api.libs.functional.syntax._
 
-
 /**
- * ContainerLbConfig stores the load balancer configuration for a deployed container
+ * ContainerIsntance stores configuration for a deployed container instance
  */
 
-
-case class ContainerConfig(id: Option[Long],
+case class ContainerInstance(id: Option[Long],
                            host: String,
                            ports: String,
-                           weight: Long,
+                           weight: Int,
+                           mesosId: String,
                            containerId: Long,
                            created_at: java.sql.Timestamp)
 
-class ContainerConfigs(tag: Tag) extends Table[ContainerConfig](tag, "CONTAINER_CONFIG") {
+case class ContainerInstanceResult(id: Option[Long],
+                           host: String,
+                           ports: String,
+                           weight: Long)
+
+
+class ContainerInstances(tag: Tag) extends Table[ContainerInstance](tag, "CONTAINER_INSTANCE") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def host = column[String]("host", O.NotNull, O.Default("127.0.0.1"))
   def ports = column[String]("ports", O.NotNull, O.Default("0"))
-  def weight = column[Long]("weight", O.Default(0))
+  def weight = column[Int]("weight", O.Default(0))
+  def mesosId = column[String]("mesosId")
   def containerId = column[Long]("containerId")
   def created_at = column[java.sql.Timestamp]("created_at", O.NotNull)
   def container = foreignKey("CONTAINER_FK", containerId, DockerContainers.containers)(_.id)
 
   def * = {
-    (id.?, host, ports, weight, containerId, created_at) <>(ContainerConfig.tupled, ContainerConfig.unapply)
+    (id.?, host, ports, weight, mesosId, containerId, created_at) <>(ContainerInstance.tupled, ContainerInstance.unapply)
   }
 }
 
-object ContainerConfigs {
+object ContainerInstances {
 
-  val configs = TableQuery[ContainerConfigs]
+  val instances = TableQuery[ContainerInstances]
 
   /**
    * Insert a new config
-   * @param config a new config from the [[ContainerConfig]] type
+   * @param config a new config from the [[ContainerInstance]] type
    */
-  def insert(config: ContainerConfig)(implicit s: Session) : Long  = {
-    (configs returning configs.map(_.id)).insert(config)
+  def insert(config: ContainerInstance)(implicit s: Session) : Long  = {
+    (instances returning instances.map(_.id)).insert(config)
   }
 
-  def findByContainerId(id: Long)(implicit s: Session) = {
-    configs.filter(_.containerId === id).firstOption
+  def findByContainerId(id: Long)(implicit s: Session) : Option[ContainerInstance] = {
+    instances.filter(_.containerId === id).firstOption
   }
 
   /**
    * Update a config
    * @param config the config to update
    */
-  def update(config: ContainerConfig)(implicit s: Session) {
-    configs.filter(_.id === config.id).update(config)
+  def update(config: ContainerInstance)(implicit s: Session) {
+    instances.filter(_.id === config.id).update(config)
   }
 
   /**
@@ -64,8 +70,8 @@ object ContainerConfigs {
    * @param id the id of the config to update
    * @param weight the weight of the container in the load balancer configuration
    */
-  def updateWeight(id: Long, weight: Long)(implicit s: Session) {
-    configs.filter(_.id === id)
+  def updateWeight(id: Long, weight: Int)(implicit s: Session) {
+    instances.filter(_.id === id)
       .map(config => config.weight)
       .update(weight)
   }
@@ -76,7 +82,7 @@ object ContainerConfigs {
    * @param host the host of the container
    */
   def updateHost(id: Long, host: String)(implicit s: Session) {
-    configs.filter(_.id === id)
+    instances.filter(_.id === id)
       .map(config => (config.host))
       .update(host)
   }
@@ -87,36 +93,34 @@ object ContainerConfigs {
    * @param port the port of the container
    */
   def updatePort(id: Long, port: String)(implicit s: Session) {
-    configs.filter(_.id === id)
+    instances.filter(_.id === id)
       .map(config => (config.ports))
       .update(port)
   }
-
-
-
 
   /**
    * Update the weight in a config by container id
    * @param id the id of the container the config belongs to
    * @param weight the weight of the container in the load balancer configuration
    */
-  def updateWeightByContainerId(id: Long, weight: Long)(implicit s: Session) {
-    configs.filter(_.id === id)
+  def updateWeightByContainerId(id: Long, weight: Int)(implicit s: Session) {
+    instances.filter(_.id === id)
       .map(config => (config.weight))
       .update(weight)
   }
 }
 
-object ContainerConfigJson {
+object ContainerInstanceJson {
   // Json reading/writing
-  implicit val configWrites = Json.writes[ContainerConfig]
+  implicit val instanceWrites = Json.writes[ContainerInstance]
 
-  implicit val configReads = (
+  implicit val instanceReads = (
     (__ \ 'id).read[Option[Long]] and
       (__ \ 'host).read[String] and
       (__ \ 'ports).read[String] and
-      (__ \ 'weight).read[Long] and
+      (__ \ 'weight).read[Int] and
+      (__ \ 'mesosId).read[String] and
       (__ \ 'containerId).read[Long] and
       (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
-    )(ContainerConfig)
+    )(ContainerInstance)
 }

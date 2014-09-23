@@ -1,17 +1,23 @@
 package controllers
 
+import actors.loadbalancer.{LbFail, LbSuccess, UpdateBackendServerWeight}
 import lib.util.date.TimeStamp
-import models.docker.DockerContainers
+import models.docker._
 import models.{Job, Jobs}
-import models.service.{ServiceCreate, Services, Service}
-import play.api.db.slick.DBAction
-import play.api.libs.json.{JsError, Json}
+import models.service.{ServiceResult, ServiceCreate, Services, Service}
 import play.api.db.slick._
+import play.api.libs.concurrent.Akka
+import play.api.libs.json.{JsError, Json}
 import play.api.mvc._
 import play.api.Play.current
-
+import scala.concurrent.duration._
+import akka.pattern.ask
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object ServiceController extends Controller {
+
+  val lbManager = Akka.system.actorSelection("akka://application/user/lbManager/lbManager")
+
 
   import models.service.ServiceJson.ServiceWrites
   import models.service.ServiceJson.ServiceReads
@@ -24,25 +30,49 @@ object ServiceController extends Controller {
 
   def find_by_id(id: Long) = DBAction { implicit rs =>
 
+    import models.service.ServiceJson.ServiceResultWrites
+
     val service = Services.findById(id)
 
     service match {
-      case Some(service: Service) => Ok(Json.toJson(service))
+      case Some(srv: Service) =>
+
+        val containers : List[DockerContainer] =  DockerContainers.findByServiceId(srv.id.get)
+
+        val containersResult : List[DockerContainerResult] = containers.map (cnt => {
+          val _instance =  ContainerInstances.findByContainerId(cnt.id.get)
+          _instance match {
+            case Some(instance : ContainerInstance) =>
+              DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.ports, cnt.serviceId, instance, cnt.created_at)
+          }
+        })
+        val servRes = ServiceResult(srv.id,srv.port,srv.state, srv.vrn,srv.serviceTypeId,containersResult)
+
+        Ok(Json.toJson(servRes))
       case None => NotFound("No service found")
     }
   }
 
   def find_containers_by_id(id: Long) = DBAction { implicit rs =>
 
-    import models.docker.DockerContainerJson.containerWrites
+    import models.docker.DockerContainerJson.containerResultWrites
 
     val _service = Services.findById(id)
     _service match {
-      case Some(service) =>
-       val containers = DockerContainers.findByServiceId(service.id.get)
-        Ok(Json.toJson(containers))
+      case Some(service : Service) =>
+        val containers = DockerContainers.findByServiceId(service.id.get)
 
-      case None => NotFound("No such service found")
+        val containersResult : List[DockerContainerResult] = containers.map (cnt => {
+          val _instance =  ContainerInstances.findByContainerId(cnt.id.get)
+          _instance match {
+            case Some(instance : ContainerInstance) =>
+              DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.ports, cnt.serviceId, instance, cnt.created_at)
+          }
+        })
+
+        Ok(Json.toJson(containersResult))
+
+      case None => NotFound(s"No service found with id $id")
     }
   }
 
@@ -67,11 +97,39 @@ object ServiceController extends Controller {
     }
 
   /**
-   * createServiceDeployJob creates a deployment job based on an service and returns the id of the created job
-   * @param newService is an object of the type [[ServiceCreate]]
+   * Updates the load balancer weight of a container in the context of a service
+   * @param id  the id of the service the container belongs to
+   * @param containerVrn the unique VRN of the container
+   * @param weight the weight to set.
+   */
+  def set_weight(id: Long, containerVrn: String, weight: Int) = Action.async {
+
+    implicit val timeout = akka.util.Timeout(5 seconds)
+
+    (lbManager ? UpdateBackendServerWeight(weight, containerVrn, id)).map {
+      case LbSuccess =>
+        DB.withSession( implicit s => {
+          DockerContainers.updateWeightByVrn(vrn = containerVrn, weight = weight)
+          Ok
+        })
+      case LbFail => NotFound
+    }
+
+  }
+
+
+
+  /**
+   *
+   * PRIVATE
+   *
    */
 
 
+  /**
+   * createServiceDeployJob creates a deployment job based on an service and returns the id of the created job
+   * @param newService is an object of the type [[ServiceCreate]]
+   */
   private def createServiceDeployJob(newService: ServiceCreate) : Long = {
 
     import models.service.ServiceJson.ServiceWritesforCreate

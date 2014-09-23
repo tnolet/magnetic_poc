@@ -1,7 +1,7 @@
 package models.service
 
 import models.Environments
-import models.docker.DockerContainer
+import models.docker.{DockerContainerResult, DockerContainer}
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
@@ -22,7 +22,7 @@ case class ServiceResult(id: Option[Long],
                          state : String,
                          vrn: String,
                          serviceTypeId: Long,
-                         containers: List[DockerContainer]
+                         containers: List[DockerContainerResult]
                           )
 
 class Services(tag: Tag) extends Table[Service](tag, "SERVICES") {
@@ -115,7 +115,7 @@ object ServiceJson {
       (__ \ 'serviceTypeId).read[Long]
     )(ServiceCreate)
 
-  import models.docker.DockerContainerJson.containerWrites
+  import models.docker.DockerContainerJson.containerResultWrites
 
   implicit val ServiceResultWrites = Json.writes[ServiceResult]
 

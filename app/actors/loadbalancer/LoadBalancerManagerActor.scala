@@ -2,17 +2,29 @@ package actors.loadbalancer
 
 import akka.actor.{ActorRef, Actor, ActorLogging}
 import lib.loadbalancer.LoadBalancer
+import models.docker.{DockerContainers, DockerContainerResult}
 import models.loadbalancer._
+import models.service.{Service, Services}
+import play.api.db.slick._
 import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.Play.current
 
 sealed trait LbMessage
+
+//Creation and Deletion messages
 case class AddBackendServer( host: String, port: Int, vrn: String, backend: String) extends LbMessage
 case class AddFrontend(vrn: String, port: Int) extends LbMessage
 case class AddFrontendBackend(vrn: String, port: Int) extends LbMessage
 case class AddBackend(vrn: String) extends LbMessage
 case class RemoveBackendServer( vrn: String) extends LbMessage
+
+//Update messages
+
+case class UpdateBackendServerWeight(weight: Int, containerVrn: String, serviceId: Long) extends LbMessage
+
 case object LbSuccess extends LbMessage
 case object LbFail extends LbMessage
+
 
 class LoadBalancerManagerActor extends Actor with ActorLogging {
 
@@ -21,7 +33,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
 
   def receive =  {
 
-    case AddBackendServer(host,port,vrn,service) =>
+    case bes : AddBackendServer =>
 
       originalSender = sender()
       log.info("Getting LB Configuration")
@@ -34,8 +46,8 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
 
             log.debug("Current load balancer configuration is: " + config.toString)
 
-            val newBackendServer = BackendServer(vrn, host, port, 0, None, Some(false), None)
-            val newConf = Configuration.addServerToBackend(config,service,newBackendServer)
+            val newBackendServer = BackendServer(bes.vrn, bes.host, bes.port, 0, None, Some(false), None)
+            val newConf = Configuration.addServerToBackend(config, bes.backend, newBackendServer)
 
             log.debug("New load balancer configuration is:" + newConf.toString)
 
@@ -119,8 +131,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
 
 
             //Get a Future on a Boolean whether the new config was successfully applied
-            val result = LoadBalancer.setConfig(newConf).map { result =>
-              result match {
+            LoadBalancer.setConfig(newConf).map {
                 case true => {
                   log.info("Successfully applied new load balancer configuration")
                   originalSender ! LbSuccess
@@ -129,7 +140,6 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
                   log.info("Error applying new load balancer configuration")
                   originalSender ! LbFail
                 }
-              }
             }
           }
           case None => {
@@ -138,5 +148,31 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
           }
         }
       }
+
+    case bes : UpdateBackendServerWeight =>
+
+      val originalSender = sender()
+
+      DB.withSession { implicit session: Session =>
+
+        val _service = Services.findById(bes.serviceId)
+
+        _service match {
+
+          case Some(srv: Service) =>
+
+            LoadBalancer.setWeight(srv.vrn, bes.containerVrn, bes.weight).map { result =>
+              result match {
+                case true => {
+                  originalSender ! LbSuccess
+                }
+                case false => {
+                  log.error(s"Failed to update the weight of container ${bes.containerVrn}")
+                  originalSender ! LbFail
+                }
+              }
+            }
+        }
+    }
   }
 }

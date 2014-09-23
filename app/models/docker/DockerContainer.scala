@@ -18,6 +18,18 @@ case class DockerContainer(id: Option[Long],
                            serviceId: Long,
                            created_at: java.sql.Timestamp)
 
+case class DockerContainerResult(id: Option[Long],
+                           vrn: String,
+                           status: String,
+                           imageRepo: String,
+                           imageVersion: String,
+                           ports: String,
+                           serviceId: Long,
+                           instances: ContainerInstance,
+                           created_at: java.sql.Timestamp)
+
+case class Test(vrn: String, host: String)
+
 class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CONTAINER") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -102,14 +114,32 @@ object DockerContainers {
    * @param host the host the container runs on
    * @param port the port the container runs on
    */
-  def updateHostAndPortByVrn(vrn: String, host: String, port: String)(implicit s: Session): Unit = {
+  def updateConfigByVrn(vrn: String, host: String, port: String, mesosId: String)(implicit s: Session): Unit = {
     containers.filter(_.vrn === vrn)
       .firstOption
       .map(cont => {
-      ContainerConfigs.configs.filter(_.id === cont.id.get)
-      .map( conf => (conf.host, conf.ports))
-      .update(host, port)
+      ContainerInstances.instances.filter(_.id === cont.id.get)
+      .map( conf => (conf.host, conf.ports, conf.mesosId))
+      .update(host, port, mesosId)
+    })
+  }
 
+
+  /**
+   * Update a container's weight  by vrn
+   * @param vrn the container to update
+   * @param weight the weight to set
+   */
+  def updateWeightByVrn(vrn: String, weight: Int)(implicit s: Session): Unit = {
+
+     println("updating weight")
+
+    containers.filter(_.vrn === vrn)
+      .firstOption
+      .map(cont => {
+      ContainerInstances.instances.filter(_.id === cont.id.get)
+        .map( conf => conf.weight)
+        .update(weight)
     })
   }
 
@@ -134,5 +164,10 @@ object DockerContainerJson {
       (__ \ 'serviceId).read[Long] and
       (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
     )(DockerContainer)
+
+  import models.docker.ContainerInstanceJson.instanceWrites
+
+  implicit val containerResultWrites = Json.writes[DockerContainerResult]
+
 
 }

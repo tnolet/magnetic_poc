@@ -105,11 +105,12 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
                     TimeStamp.now))
 
                 // Create the container config linked to the container
-                ContainerConfigs.insert(
-                 new ContainerConfig(Option(0),
-                   "",                                                  //host, we don't know yet
-                   "",                                                  //ports, we don't know yet
-                   0,                                                   //default weight
+                ContainerInstances.insert(
+                 new ContainerInstance(Option(0),
+                   "",                                                  // host, we don't know yet
+                   "",                                                  // ports, we don't know yet
+                   0,                                                   // default weight
+                   "",                                                  // mesosId, we don't know yet
                    cntId,                                               // foreign key to container
                    TimeStamp.now))
 
