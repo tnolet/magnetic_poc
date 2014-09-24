@@ -48,7 +48,7 @@ object LoadBalancer {
   }
 
 
- def getStats : Future[JsValue] = WS.url(s"l$lbApi/stats").get().map {
+ def getStats : Future[JsValue] = WS.url(s"$lbApi/stats").get().map {
    case response => response.json
  }
 

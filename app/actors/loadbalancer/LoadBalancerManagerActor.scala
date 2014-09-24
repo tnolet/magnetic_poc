@@ -24,6 +24,7 @@ case class UpdateBackendServerWeight(weight: Int, containerVrn: String, serviceI
 
 case object LbSuccess extends LbMessage
 case object LbFail extends LbMessage
+case object LbNotFound extends LbMessage
 
 
 class LoadBalancerManagerActor extends Actor with ActorLogging {
@@ -163,8 +164,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
 
             LoadBalancer.setWeight(srv.vrn, bes.containerVrn, bes.weight).map { result =>
               result match {
-                case true => {
-                  originalSender ! LbSuccess
+                case true => { originalSender ! LbSuccess
                 }
                 case false => {
                   log.error(s"Failed to update the weight of container ${bes.containerVrn}")
@@ -172,6 +172,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
                 }
               }
             }
+          case None => originalSender ! LbNotFound
         }
     }
   }

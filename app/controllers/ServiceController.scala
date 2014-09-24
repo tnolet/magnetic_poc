@@ -1,6 +1,6 @@
 package controllers
 
-import actors.loadbalancer.{LbFail, LbSuccess, UpdateBackendServerWeight}
+import actors.loadbalancer.{LbNotFound, LbFail, LbSuccess, UpdateBackendServerWeight}
 import lib.util.date.TimeStamp
 import models.docker._
 import models.{Job, Jobs}
@@ -112,7 +112,8 @@ object ServiceController extends Controller {
           DockerContainers.updateWeightByVrn(vrn = containerVrn, weight = weight)
           Ok
         })
-      case LbFail => NotFound
+      case LbFail => InternalServerError
+      case LbNotFound => NotFound
     }
 
   }
