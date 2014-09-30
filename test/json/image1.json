@@ -1,0 +1,7 @@
+{
+    "name" : "mesos_test",
+    "repo" : "tnolet/mesos-tester",
+    "version" : "2.0",
+    "arguments" : "",
+    "ports" : "8080"
+}

@@ -9,12 +9,18 @@ import scala.slick.lifted.Tag
 import play.api.libs.functional.syntax._
 
 
+/**
+ * DockerContainers represent a Docker container. The DockerContainer object is a holder for one ore
+ * [[ContainerInstance]] object. DockerContainer maps to an "app" in Marathon, [[ContainerInstance]] maps
+ * to Mesos Tasks.
+ *
+ */
+
 case class DockerContainer(id: Option[Long],
                            vrn: String,
                            status: String,
                            imageRepo: String,
                            imageVersion: String,
-                           ports: String,
                            serviceId: Long,
                            created_at: java.sql.Timestamp)
 
@@ -23,7 +29,6 @@ case class DockerContainerResult(id: Option[Long],
                            status: String,
                            imageRepo: String,
                            imageVersion: String,
-                           ports: String,
                            serviceId: Long,
                            instances: ContainerInstance,
                            created_at: java.sql.Timestamp)
@@ -37,14 +42,13 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
   def status = column[String]("status", O.NotNull)
   def imageRepo = column[String]("imageRepo", O.NotNull)
   def imageVersion = column[String]("imageVersion", O.NotNull)
-  def ports = column[String]("ports")
   def serviceId = column[Long]("serviceId")
   def created_at = column[java.sql.Timestamp]("created_at", O.NotNull)
   def service = foreignKey("SERVICE_FK", serviceId, Services.services)(_.id)
 
 
   def * = {
-    (id.?, vrn, status, imageRepo, imageVersion, ports, serviceId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply)
+    (id.?, vrn, status, imageRepo, imageVersion, serviceId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply)
   }
 }
 
@@ -160,7 +164,6 @@ object DockerContainerJson {
       (__ \ 'status).read[String] and
       (__ \ 'imageRepo).read[String] and
       (__ \ 'imageVersion).read[String] and
-      (__ \ 'ports).read[String] and
       (__ \ 'serviceId).read[Long] and
       (__ \ 'created_at).read[Long].map{ long => new Timestamp(long) }
     )(DockerContainer)

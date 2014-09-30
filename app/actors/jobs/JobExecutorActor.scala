@@ -100,7 +100,6 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
                     "INITIAL",
                     deployable.image.repo,
                     deployable.image.version,
-                    "",                                                 //ports
                     service.id.getOrElse(1),                            //serviceId
                     TimeStamp.now))
 

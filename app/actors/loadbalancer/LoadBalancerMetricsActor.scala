@@ -53,6 +53,6 @@ class LoadBalancerMetricsActor extends Actor with ActorLogging {
 
   private def reschedule() : Unit = {
     // Schedule another check
-    context.system.scheduler.scheduleOnce(3 seconds, self, ReadMetrics)
+    context.system.scheduler.scheduleOnce(1 seconds, self, ReadMetrics)
   }
 }

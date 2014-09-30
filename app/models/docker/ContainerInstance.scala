@@ -8,7 +8,9 @@ import scala.slick.lifted.Tag
 import play.api.libs.functional.syntax._
 
 /**
- * ContainerIsntance stores configuration for a deployed container instance
+ * ContainerInstance stores configuration for a deployed container instance.
+ * A ContainerInstance directly maps to a "Task" in Mesos. Each [[DockerContainer]] has at least
+ * one ContainerInstance, otherwise it isn't doing much.
  */
 
 case class ContainerInstance(id: Option[Long],

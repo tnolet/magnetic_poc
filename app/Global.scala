@@ -92,9 +92,6 @@ object Global extends GlobalSettings {
     // Start up the Load Balancer actor system
     Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
 
-    // Start up the Load Balancer Metrics actor system
-//    Akka.system.actorOf(Props[LoadBalancerMetricsActor], name = "lbMetrics")
-
   }
 }
 
@@ -105,6 +102,7 @@ object InitialData {
       if (DockerImages.count == 0) {
         Seq(
           DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",""),
+          DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","2.0",""),
           DockerImage(Option(2L), "busybox","busybox","latest","""/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""""),
           DockerImage(Option(3L), "hello", "tnolet/hello","latest",""),
           DockerImage(Option(3L), "haproxy-test", "tnolet/haproxy-rest","latest",""))

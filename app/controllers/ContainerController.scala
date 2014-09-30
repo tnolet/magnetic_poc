@@ -39,7 +39,7 @@ object ContainerController extends Controller {
          config match {
           case Some(conf: ContainerInstance) =>
 
-            val contResult = DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.ports, cnt.serviceId, conf, cnt.created_at)
+            val contResult = DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.serviceId, conf, cnt.created_at)
             Ok(Json.toJson(contResult))
 
           case None => NotFound(s"No config found for container ${cnt.vrn}")
