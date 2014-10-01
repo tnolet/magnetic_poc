@@ -14,6 +14,7 @@ import play.api.libs.functional.syntax._
  */
 
 case class ContainerInstance(id: Option[Long],
+                           vrn: String,
                            host: String,
                            ports: String,
                            weight: Int,
@@ -21,7 +22,16 @@ case class ContainerInstance(id: Option[Long],
                            containerId: Long,
                            created_at: java.sql.Timestamp)
 
+case class ContainerInstanceCreate(
+                             vrn: String,
+                             host: String,
+                             ports: String,
+                             weight: Int,
+                             mesosId: String,
+                             created_at: java.sql.Timestamp)
+
 case class ContainerInstanceResult(id: Option[Long],
+                           vrn: String,
                            host: String,
                            ports: String,
                            weight: Long)
@@ -30,6 +40,7 @@ case class ContainerInstanceResult(id: Option[Long],
 class ContainerInstances(tag: Tag) extends Table[ContainerInstance](tag, "CONTAINER_INSTANCE") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+  def vrn = column[String]("vrn", O.NotNull)
   def host = column[String]("host", O.NotNull, O.Default("127.0.0.1"))
   def ports = column[String]("ports", O.NotNull, O.Default("0"))
   def weight = column[Int]("weight", O.Default(0))
@@ -39,7 +50,7 @@ class ContainerInstances(tag: Tag) extends Table[ContainerInstance](tag, "CONTAI
   def container = foreignKey("CONTAINER_FK", containerId, DockerContainers.containers)(_.id)
 
   def * = {
-    (id.?, host, ports, weight, mesosId, containerId, created_at) <>(ContainerInstance.tupled, ContainerInstance.unapply)
+    (id.?, vrn, host, ports, weight, mesosId, containerId, created_at) <>(ContainerInstance.tupled, ContainerInstance.unapply)
   }
 }
 
@@ -49,15 +60,16 @@ object ContainerInstances {
 
   /**
    * Insert a new config
-   * @param config a new config from the [[ContainerInstance]] type
+   * @param instance a new instance from the [[ContainerInstance]] type
    */
-  def insert(config: ContainerInstance)(implicit s: Session) : Long  = {
-    (instances returning instances.map(_.id)).insert(config)
+  def insert(instance: ContainerInstance)(implicit s: Session) : Long  = {
+    (instances returning instances.map(_.id)).insert(instance)
   }
 
-  def findByContainerId(id: Long)(implicit s: Session) : Option[ContainerInstance] = {
-    instances.filter(_.containerId === id).firstOption
+  def findByContainerId(id: Long)(implicit s: Session) : List[ContainerInstance] = {
+    instances.filter(_.containerId === id).list
   }
+
 
   /**
    * Update a config
@@ -68,8 +80,8 @@ object ContainerInstances {
   }
 
   /**
-   * Update the weight in a config
-   * @param id the id of the config to update
+   * Update the weight of an instances
+   * @param id the id of the instance to update
    * @param weight the weight of the container in the load balancer configuration
    */
   def updateWeight(id: Long, weight: Int)(implicit s: Session) {
@@ -79,9 +91,9 @@ object ContainerInstances {
   }
 
   /**
-   * Update the host in a config
-   * @param id the id of the config to update
-   * @param host the host of the container
+   * Update the host of an instance
+   * @param id the id of the instance to update
+   * @param host the host on which the instance runs
    */
   def updateHost(id: Long, host: String)(implicit s: Session) {
     instances.filter(_.id === id)
@@ -90,9 +102,9 @@ object ContainerInstances {
   }
 
   /**
-   * Update the port in a config
-   * @param id the id of the config to update
-   * @param port the port of the container
+   * Update the port of an instance
+   * @param id the id of the instance to update
+   * @param port the port of the instance
    */
   def updatePort(id: Long, port: String)(implicit s: Session) {
     instances.filter(_.id === id)
@@ -101,15 +113,18 @@ object ContainerInstances {
   }
 
   /**
-   * Update the weight in a config by container id
+   * Update the weight in an instance by container id
    * @param id the id of the container the config belongs to
    * @param weight the weight of the container in the load balancer configuration
    */
+
+  @deprecated
   def updateWeightByContainerId(id: Long, weight: Int)(implicit s: Session) {
     instances.filter(_.id === id)
       .map(config => (config.weight))
       .update(weight)
   }
+
 }
 
 object ContainerInstanceJson {
@@ -118,6 +133,7 @@ object ContainerInstanceJson {
 
   implicit val instanceReads = (
     (__ \ 'id).read[Option[Long]] and
+      (__ \ 'vrn).read[String] and
       (__ \ 'host).read[String] and
       (__ \ 'ports).read[String] and
       (__ \ 'weight).read[Int] and

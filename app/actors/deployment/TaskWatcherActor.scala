@@ -13,9 +13,9 @@ import scala.concurrent.duration._
  */
 
 // messages
-sealed trait WatcherMessage
-case class Watch(vrn: String) extends WatcherMessage
-case object CheckTasks extends WatcherMessage
+sealed trait TaskWatcherMessage
+case class Watch(vrn: String) extends TaskWatcherMessage
+case object CheckTasks extends TaskWatcherMessage
 
 class TaskWatcherActor extends Actor with ActorLogging {
 

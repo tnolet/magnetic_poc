@@ -52,6 +52,13 @@ object LoadBalancer {
    case response => response.json
  }
 
+  /**
+   * Set the weight of a backend server
+   * @param backend the unique name of the backend
+   * @param backendServer the unique name of the backend server
+   * @param weight the desired weight. range: 0-256
+   * @return a boolean. True for OK, false for some error.
+   */
   def setWeight(backend: String, backendServer: String , weight: Int) : Future[Boolean] = {
 
     WS.url(s"$lbApi/backend/$backend/$backendServer/weight/$weight").post("test").map {

@@ -3,7 +3,8 @@ package actors.deployment
 import akka.actor._
 import lib.marathon.Marathon
 import actors.loadbalancer.{RemoveBackendServer, AddBackendServer, LbFail, LbSuccess}
-import models.docker.{DockerContainers, DockerImage}
+import lib.util.date.TimeStamp
+import models.docker._
 import actors.jobs.{addJobEvent, UpdateJob}
 import play.api.db.slick._
 import play.api.libs.json.JsValue
@@ -78,7 +79,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       // Initial message for starting a deployment
       case Event(SubmitDeployment(_vrn, _image, _service), Uninitialized) =>
 
-        // Set all variables for he container we are going to deploy
+        // Set all variables for the container we are going to deploy
 
         jobExecutor = sender()
         vrn         = _vrn
@@ -325,7 +326,6 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
           * We grab the published port and IP from Marathon and hand it to the load balancer actor to update the
           * configuration.
           */
-
           val futureTasks = Marathon.tasks(vrn)
           futureTasks.map( tasks => {
             val tasksList = (tasks \ "tasks").as[List[JsValue]]
@@ -339,11 +339,13 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
               val mesosId = (tasksList(0) \ "id").as[String]
 
 
-              // update the container configuration in the database
-              updateContainer(host,port.toString,mesosId)
+              // Create a unique VRN for this instance
+              val vrnInstance = lib.util.vamp.Naming.createVrn("instance")
+
+              createContainerInstance(vrnInstance,host, port.toString, mesosId)
 
               // add the container as a server to the load balancer
-              lbManager ! AddBackendServer(host,port,vrn,service)
+              lbManager ! AddBackendServer(host,port,vrnInstance,service)
 
             }
           }
@@ -439,7 +441,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
    * Updates the state of all who want to know. In this case specifically the container and the job
    * by the means of job events.
    *
-   * @param state the current state of the machine. The evenType is a local var
+   * @param state the current state of the machine. The eventType is a local var
    */
   
   def sendStateUpdate(state: String) : Unit = {
@@ -455,9 +457,19 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
   }
 
-  def updateContainer(host: String, port: String, mesosId: String) : Unit = {
-    DB.withSession {implicit session: Session =>
-    DockerContainers.updateConfigByVrn(vrn = vrn, host = host, port = port, mesosId = mesosId)
+  def createContainerInstance(vrnInstance: String, host: String, port: String, mesosId: String) : Unit = {
+    DB.withSession { implicit session: Session =>
+
+      val instance = ContainerInstanceCreate(
+        vrnInstance,
+        host,
+        port.toString,
+        0,
+        mesosId,
+        TimeStamp.now)
+
+      DockerContainers.createInstanceByVrn(vrn, instance)
+
     }
   }
 

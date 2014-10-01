@@ -68,7 +68,9 @@ GET           /services/:id                                          controllers
 
 GET           /services/:id/containers                               controllers.ServiceController.find_containers_by_id(id: Long)
 
-POST          /services/:id/containers/:containerVrn/weight/:weight       controllers.ServiceController.set_weight(id: Long, containerVrn: String, weight: Int)
+POST          /services/:id/containers/:containerVrn/weight/:weight  controllers.ServiceController.set_weight(id: Long, containerVrn: String, weight: Int)
+
+POST          /services/:id/containers/:containerVrn/amount/:amount  controllers.ServiceController.set_instance_amount(id: Long, containerVrn: String, amount: Long)
 
 POST          /services                                              controllers.ServiceController.create
 

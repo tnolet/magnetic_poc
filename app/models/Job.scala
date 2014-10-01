@@ -79,7 +79,7 @@ object Jobs {
   // Constants
 
   final val status = Map("new" -> "NEW", "active" -> "ACTIVE", "finished" -> "FINISHED", "failed" -> "FAILED")
-  final val queue = Map("deployment" -> "DEPLOYMENT", "undeployment" -> "UNDEPLOYMENT", "serviceDeployment"->"SERVICE_DEPLOYMENT")
+  final val queue = Map("deployment" -> "DEPLOYMENT", "undeployment" -> "UNDEPLOYMENT", "serviceDeployment"->"SERVICE_DEPLOYMENT","scaling"->"SCALING")
 
 }
 

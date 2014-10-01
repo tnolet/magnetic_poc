@@ -37,11 +37,9 @@ object EnvironmentController extends Controller {
           val containers : List[DockerContainer] =  DockerContainers.findByServiceId(srv.id.get)
 
           val containersResult : List[DockerContainerResult] = containers.map (cnt => {
-             val _instance =  ContainerInstances.findByContainerId(cnt.id.get)
-            _instance match {
-              case Some(instance : ContainerInstance) =>
-                DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.serviceId, instance, cnt.created_at)
-            }
+             val instances =  ContainerInstances.findByContainerId(cnt.id.get)
+             DockerContainerResult.createResult(cnt, instances)
+
           })
           ServiceResult(srv.id,srv.port,srv.state, srv.vrn,srv.serviceTypeId,containersResult)
           }

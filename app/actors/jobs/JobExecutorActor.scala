@@ -1,9 +1,10 @@
 package actors.jobs
 
+import actors.deployment.scaling.SubmitInstanceScaling
 import actors.deployment.{SubmitServiceDeployment, SubmitUnDeployment, SubmitDeployment}
 import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
-import lib.job.{UnDeploymentJobReader, DeploymentJobReader}
+import lib.job.{Horizontal, ScaleJobReader, UnDeploymentJobReader, DeploymentJobReader}
 import lib.util.date.TimeStamp
 import models.docker._
 import models.service.{Services, Service, ServiceCreate}
@@ -40,6 +41,8 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
         case "UNDEPLOYMENT" => executeUnDeployment()
 
         case "SERVICE_DEPLOYMENT" => executeServiceDeployment()
+
+        case "SCALING" => executeScaling()
 
         case _ => log.error(s"Found job with unknown queue $queue")
       }
@@ -100,19 +103,10 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
                     "INITIAL",
                     deployable.image.repo,
                     deployable.image.version,
+                    0,
+                    1,
                     service.id.getOrElse(1),                            //serviceId
                     TimeStamp.now))
-
-                // Create the container config linked to the container
-                ContainerInstances.insert(
-                 new ContainerInstance(Option(0),
-                   "",                                                  // host, we don't know yet
-                   "",                                                  // ports, we don't know yet
-                   0,                                                   // default weight
-                   "",                                                  // mesosId, we don't know yet
-                   cntId,                                               // foreign key to container
-                   TimeStamp.now))
-
 
                 // start the deployment
                 deployer ! SubmitDeployment(vrn,
@@ -172,5 +166,30 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
       },
         invalid = { errors => log.error(s"Invalid payload in job with id: ${job.id}. Errors: " + errors) }
       )
+  }
+
+  /**
+   * Parses the payload of a job in the Scaling queue and executes the requested scaling transaction
+   */
+  def executeScaling() : Unit = {
+
+    // The deployer parent actor also manages the scaling actors
+    val deployer = context.actorSelection("/user/deployer")
+
+    val scalable = new ScaleJobReader
+    scalable.read(job)
+
+    scalable.scaleType match {
+
+      case (st : Horizontal) =>
+
+        deployer ! SubmitInstanceScaling(st.serviceVrn, st.container, st.instanceAmount)
+
+      case _ =>
+
+    }
+
+
+
   }
 }

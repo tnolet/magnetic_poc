@@ -30,7 +30,7 @@ class DeploymentJobReader {
       }
     },
     invalid = {
-      errors => Logger.error(s"Invalid image in payload of job ${job.id}. Errors: " + errors)
+      errors => Logger.error(s"Invalid image in the payload of job ${job.id}. Errors: " + errors)
       }
     )
     _service = (payload \ "service").as[String]
@@ -38,7 +38,6 @@ class DeploymentJobReader {
     _priority = job.priority
 
   }
-
 
   def image : DockerImage = {
     _image

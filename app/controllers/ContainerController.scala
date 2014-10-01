@@ -1,8 +1,7 @@
 package controllers
 
 
-import actors.loadbalancer.UpdateBackendServerWeight
-import lib.job.UnDeploymentJobBuilder
+import lib.job.{Horizontal, ScaleJobBuilder, UnDeploymentJobBuilder}
 import models.docker._
 import play.api.db.slick._
 import play.api.libs.concurrent.Akka
@@ -27,23 +26,21 @@ object ContainerController extends Controller {
 
     import models.docker.DockerContainerJson.containerResultWrites
 
-//    import models.docker.ContainerConfigJson.configWrites
-
     val container = DockerContainers.findById(id)
 
     container match {
       case Some(cnt: DockerContainer) =>
 
-        val config : Option[ContainerInstance] = ContainerInstances.findByContainerId(id)
+        val instances : List[ContainerInstance] = ContainerInstances.findByContainerId(id)
 
-         config match {
-          case Some(conf: ContainerInstance) =>
+        if (instances.nonEmpty) {
 
-            val contResult = DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.serviceId, conf, cnt.created_at)
-            Ok(Json.toJson(contResult))
+          // combine the instances and the container to a result
+          val contResult = DockerContainerResult.createResult(cnt, instances)
 
-          case None => NotFound(s"No config found for container ${cnt.vrn}")
-        }
+          Ok(Json.toJson(contResult))
+
+        } else { NotFound(s"No instances found for container ${cnt.vrn}") }
 
       case None => NotFound("No such container found")
     }
@@ -57,7 +54,7 @@ object ContainerController extends Controller {
 
     val container = DockerContainers.findById(id)
     container match {
-      case Some(container) =>
+      case Some(cnt: DockerContainer) =>
 
         val config = ContainerInstances.findByContainerId(id)
         Ok(Json.toJson(config))
@@ -71,7 +68,7 @@ object ContainerController extends Controller {
    * Todo: Deletes a container, when it is eligable to be deleted. This means:
    * - it should not be in the destroyed state already
    * - it should not be part of running/live service
-   * @param id The id of the containers
+   * @param id The id of the container
    */
   def delete(id: Long) = DBAction { implicit rs =>
     val _container = DockerContainers.findById(id)

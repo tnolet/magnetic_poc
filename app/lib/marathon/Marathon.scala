@@ -97,6 +97,26 @@ object Marathon {
   }
 
   /**
+   * Submits a scaling request to Marathon for an existing container
+   * @param vrn unique name for the resource based on [[lib.util.vamp.Naming.createVrn()]] which references the container
+   * @param amount the scale amount. This translates to Mesos tasks assigned to Marathon apps
+   * @return a Future for return code
+   */
+  def scaleContainer(vrn: String, amount: Long) : Future[Int] = {
+
+    val data = Json.parse(s"""{
+                            "instances" : ${amount.toInt}
+                          }"""
+
+    )
+
+    WS.url(s"$marathonApi/apps/$vrn").put(data).map {
+      case response => response.status
+    }
+
+  }
+
+  /**
    * Destroy a container running on Marathon.
    * @param vrn a unique name for this resource based on [[lib.util.vamp.Naming.createVrn()]]
    */
@@ -110,6 +130,12 @@ object Marathon {
 
   def tasks(vrn: String): Future[JsValue] = {
     WS.url(s"$marathonApi/apps/$vrn/tasks").get().map {
+      case response => response.json
+    }
+  }
+
+  def app(vrn: String): Future[JsValue] = {
+    WS.url(s"$marathonApi/apps/$vrn").get().map {
       case response => response.json
     }
   }

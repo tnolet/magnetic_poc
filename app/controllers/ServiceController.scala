@@ -1,10 +1,12 @@
 package controllers
 
-import actors.loadbalancer.{LbNotFound, LbFail, LbSuccess, UpdateBackendServerWeight}
+import actors.loadbalancer.{LbFail, LbSuccess, UpdateBackendServerWeight}
+import lib.job.{Horizontal, ScaleJobBuilder}
 import lib.util.date.TimeStamp
 import models.docker._
 import models.{Job, Jobs}
 import models.service.{ServiceResult, ServiceCreate, Services, Service}
+import play.api.Logger
 import play.api.db.slick._
 import play.api.libs.concurrent.Akka
 import play.api.libs.json.{JsError, Json}
@@ -40,11 +42,8 @@ object ServiceController extends Controller {
         val containers : List[DockerContainer] =  DockerContainers.findByServiceId(srv.id.get)
 
         val containersResult : List[DockerContainerResult] = containers.map (cnt => {
-          val _instance =  ContainerInstances.findByContainerId(cnt.id.get)
-          _instance match {
-            case Some(instance : ContainerInstance) =>
-              DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.serviceId, instance, cnt.created_at)
-          }
+          val instances =  ContainerInstances.findByContainerId(cnt.id.get)
+          DockerContainerResult.createResult(cnt, instances)
         })
         val servRes = ServiceResult(srv.id,srv.port,srv.state, srv.vrn,srv.serviceTypeId,containersResult)
 
@@ -63,11 +62,9 @@ object ServiceController extends Controller {
         val containers = DockerContainers.findByServiceId(service.id.get)
 
         val containersResult : List[DockerContainerResult] = containers.map (cnt => {
-          val _instance =  ContainerInstances.findByContainerId(cnt.id.get)
-          _instance match {
-            case Some(instance : ContainerInstance) =>
-              DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.serviceId, instance, cnt.created_at)
-          }
+          val instances =  ContainerInstances.findByContainerId(cnt.id.get)
+          DockerContainerResult.createResult(cnt, instances)
+
         })
 
         Ok(Json.toJson(containersResult))
@@ -97,28 +94,77 @@ object ServiceController extends Controller {
     }
 
   /**
-   * Updates the load balancer weight of a container in the context of a service
+   * Updates the load balancer weight of a container and its instances/servers in the context of a service
    * @param id  the id of the service the container belongs to
    * @param containerVrn the unique VRN of the container
    * @param weight the weight to set.
    */
   def set_weight(id: Long, containerVrn: String, weight: Int) = Action.async {
 
+    val (serviceVrn,instances) =  DB.withSession( implicit s =>
+      {
+        val _serviceVrn = Services.findById(id).map {
+          case (srv: Service) =>
+            srv.vrn
+        }
+
+        val _instances = DockerContainers.findInstancesByVrn(containerVrn).get
+
+        (_serviceVrn,_instances)
+      }
+    )
+
     implicit val timeout = akka.util.Timeout(5 seconds)
 
-    (lbManager ? UpdateBackendServerWeight(weight, containerVrn, id)).map {
+    (lbManager ? UpdateBackendServerWeight(weight, instances, serviceVrn.get)).map {
       case LbSuccess =>
         DB.withSession( implicit s => {
           DockerContainers.updateWeightByVrn(vrn = containerVrn, weight = weight)
           Ok
         })
       case LbFail => InternalServerError
-      case LbNotFound => NotFound
     }
 
   }
 
+  /**
+   * Updates the amount of instances of an existing container. There is no guarantee the requested amount
+   * will be provisioned. This all depends on the available resources
+   * @param id The id of the service
+   * @param containerVrn  The vrn of the container
+   * @param amount the amount of instances wanted
+   */
+  def set_instance_amount(id: Long, containerVrn: String, amount: Long) = DBAction { implicit rs =>
 
+    val service = Services.findById(id)
+
+    service match {
+      case Some(srv: Service) =>
+
+        val _container = DockerContainers.findByVrn(containerVrn)
+
+        _container match {
+          case Some(cnt: DockerContainer) =>
+
+            //set the desired instance amount
+
+            DockerContainers.setInstanceAmount(cnt.id.get, amount )
+
+            // create a scaleJob
+            val builder = new ScaleJobBuilder
+            val scaleType = Horizontal(srv.vrn, cnt, amount)
+
+            builder.setScaleType(scaleType)
+            val jobId = builder.build
+
+            Created(s"jobId: $jobId ")
+
+          case None => NotFound("No such container found")
+        }
+
+      case None => NotFound("No such service found")
+    }
+  }
 
   /**
    *
