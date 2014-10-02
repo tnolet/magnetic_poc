@@ -1,0 +1,16 @@
+<div class="hbox hbox-auto-xs hbox-auto-sm">
+    <div class="col wrapper-md">
+        <div class="clearfix m-b">
+            <button type="button" class="btn btn-sm btn-primary btn-addon" ng-click="openCreateModal()">
+                <i class="fa fa-plus"></i>Create service
+            </button>
+        </div>
+        <ul class="list-group list-group-lg no-radius m-b-none m-t-n-xxs">
+            <li ng-repeat="service in services" class="list-group-item clearfix b-l-3x ng-scope b-l-info">
+                <div ng-include src="'demo/tpl/services.list.item.html'"></div>
+            </li>
+        </ul>
+    </div>
+</div>
+
+

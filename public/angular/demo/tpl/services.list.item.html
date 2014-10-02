@@ -1,0 +1,10 @@
+<a class="hbox" ui-sref="app.services.detail({serviceId:service.id})">
+    <div class="col text-sm text-muted v-middle w-xxs">
+        <span class="label bg-success h3 ">{{service.state}}</span>
+    </div>
+    <div class="col v-middle">
+            <span class="text-md">{{service.vrn}}</span>
+    </div>
+    <div class="col v-middle m-t-xs hidden-xs">{{service.port}}</div>
+    <div class="col v-middle m-t-xs hidden-xs">{{ service.containers.length}}</div>
+</a>

@@ -404,11 +404,22 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
           sendStateUpdate(state)
 
 
+            /**
+             *  Destroy the container. Some rules apply.
+             *  1. If Marathon, for some reason, cannot find the container and reports a 404, we proceed with deletion
+             */
+
           Marathon.destroyContainer(vrn).map(
             i => {
               if (i < 399) {
                 // Marathon reports everything is OK: the container will be destroyed
                 log.info(s"Destroying $vrn on Marathon successful: response code: $i")
+
+                self ! DestroyFinish
+              } else if ( i == 404) {
+
+                // container is somehow not existent. Proceed with deletion
+                log.warning(s"Did not find container $vrn on Marathon while destroying. Proceeding with destroy")
 
                 self ! DestroyFinish
               }
@@ -418,7 +429,6 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
                 jobExecutor ! UpdateJob(Jobs.status("failed"))
 
                 self ! Fail
-
               }
             }
           )

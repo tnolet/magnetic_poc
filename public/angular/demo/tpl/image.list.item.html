@@ -1,0 +1,20 @@
+<div ng-controller="ImagesListItemCtrl" ng-init="init(image)">
+    <a ui-sref="app.images.detail({imageId:image.id})">
+        <div class="pull-right text-sm text-muted">
+            <span class="hidden-xs ng-binding">2 months ago</span>
+        </div>
+        <div class="clear text-md ng-binding">
+        <span>
+            {{image.name}}
+        </span>
+            <small class="text-ellipsis m-t-xs">{{image.repo}}</small>
+            <small class="text-ellipsis m-t-xs">{{image.version}}</small>
+        </div>
+    </a>
+    <div class="m-b-tx m-t-md">
+        <div class="">
+            <button class="btn m-b-xs btn-sm btn-default btn-addon"><i class="fa fa-trash"></i>Delete</button>
+            <button ng-click="openDeployModal(image.id)" class="btn m-b-xs btn-sm btn-default btn-addon"><i class="fa fa-cube"></i>Deploy</button>
+        </div>
+    </div>
+</div>

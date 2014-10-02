@@ -26,7 +26,6 @@ class ScaleJobBuilder {
   private var scaleType : ScaleType = _
   private val priority = 1
 
-
   def setScaleType(scaleType: ScaleType) = {
     this.scaleType = scaleType
   }

@@ -1,0 +1,20 @@
+<form class="form form-horizontal">
+
+<div class="modal-header">
+    <h4 class="modal-title">Select service to deploy to</h4>
+</div>
+
+<div class="modal-body" ng-controller="ServicesCtrl">
+        <div ng-repeat="service in services" class="radio">
+            <label class="i-checks">
+                <input type="radio" ng-model="$parent.$parent.formData" name="services" value="{{service.vrn}}" ng-required="!formData">
+                <i></i>
+                {{service.vrn}}
+            </label>
+        </div>
+    </div>
+<div class="modal-footer">
+    <button class="btn btn-default" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-info" ng-disabled="!formData" ng-click="ok(formData)">Deploy!</button>
+</div>
+</form>

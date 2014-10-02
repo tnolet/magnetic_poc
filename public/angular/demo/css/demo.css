@@ -1,0 +1,15 @@
+/*demo css overrides*/
+
+/*.panel-default > .panel-heading {*/
+    /*background-color: #ffffff;*/
+/*}*/
+
+.panel-body {
+
+    padding-top: 15px
+}
+
+.list-inline > li {
+    padding-right: 15px;
+    padding-left: 15px;
+}

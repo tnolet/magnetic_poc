@@ -1,0 +1,105 @@
+<div class="panel panel-default" ng-controller="ContainerDetailCtrl" ng-init="init(container)">
+
+    <!-- panel header-->
+
+    <div class="panel-heading wrapper b-b b-light">
+              <span class="pull-right">
+               <span class="label pull-right h4 bg-success">{{status}}</span><br>
+               <small class="text-muted h5 pull-right hidden-xs">{{created_at | fromNow }}</small>
+              </span>
+        <h4 class="text-muted m-t-none m-b-none">{{imageRepo}}
+            <small class="text-sm text-muted">{{imageVersion}}</small>
+        </h4>
+        <small class="text-muted h5">{{vrn}}</small>
+    </div>
+
+    <!--/ panel header-->
+
+    <!--sub header-->
+
+    <!--<div class="wrapper">-->
+      <!--<span class="text-xs text-muted pull-right">-->
+        <!--<i class="fa fa-circle text-primary m-r-xs"></i> 12-->
+        <!--<i class="fa fa-circle text-info m-r-xs m-l-sm"></i> 30-->
+        <!--<i class="fa fa-circle text-warning m-r-xs m-l-sm"></i> 98-->
+      <!--</span>-->
+    <!--</div>-->
+
+    <!--/ sub header-->
+
+    <!--button bar-->
+
+
+    <div class="panel-body">
+        <div class="hbox text-center">
+            <div class="col">
+
+            </div>
+            <div class="col">
+                <div class="hbox text-center">
+                    <div class="col">
+                        <button ng-click="subtractWeight()" class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-minus"></i></button>
+                    </div>
+                    <div class="col"><span class="m-l-sm m-r-sm h4 v-middle" ng-bind="weight">0</span>
+                        <small>weight</small>
+                    </div>
+                    <div class="col">
+                        <button ng-click="addWeight()" class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col"></div>
+        </div>
+    </div>
+
+
+    <!--/ button bar-->
+
+    <!--metrics-->
+
+    <div class="row row-sm text-center">
+        <div class="col-xs-6">
+            <div class="padder-v item">
+                <div class="h2" ng-bind="metrics.rtime | number: 0">112</div>
+                <span class="text-muted">Response time<i class="fa fa-fw fa-caret-down text-warning text-sm"></i></span>
+            </div>
+        </div>
+        <div class="col-xs-6">
+            <a href="" class="block padder-v item">
+                <span class="h2 block" ng-bind="metrics.scur | number: 0">12</span>
+                <span class="text-muted">Current sessions<i class="fa fa-fw fa-caret-down text-warning text-sm"></i></span>
+            </a>
+        </div>
+    </div>
+
+    <!--/ metrics-->
+
+
+
+
+     <!--instances-->
+
+    <div class="list-group list-group-lg">
+        <a class="list-group-item b-l-warning b-l-3x hover-anchor"
+           ng-repeat="instance in instances"
+            ng-include src="'demo/tpl/backends.instances.list.item.html'"
+            ng-controller="InstancesDetailCtrl"
+            ng-init="init(instance)">
+        </a>
+    </div>
+
+    <!--/ instances-->
+
+    <!-- footer -->
+
+    <div class="panel-footer">
+        <button ng-click="scaleIn()" class="btn btn-default btn-addon btn-sm"><i class="fa fa-minus"></i>Scale in</button>
+        <button ng-click="scaleOut()" class="btn btn-default btn-addon btn-sm m-r-md"><i class="fa fa-plus"></i>Scale out</button>
+        <button ng-click="deleteContainer()" class="btn btn-default btn-icon btn-sm pull-right">
+            <i class="fa fa-trash"></i>
+        </button>
+    </div>
+
+    <!--/ footer-->
+</div>
