@@ -3,87 +3,89 @@
 # ~~~~
 
 # Home page
-GET           /                                                      controllers.Application.index
+GET           /                                                            controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
 
-GET           /assets/*file                                          controllers.Assets.at(path="/public", file)
+GET           /assets/*file                                                controllers.Assets.at(path="/public", file)
 
 # Images
-GET           /images                                                controllers.ImagesController.list
+GET           /images                                                      controllers.ImagesController.list
 
-POST          /images                                                controllers.ImagesController.create
+POST          /images                                                      controllers.ImagesController.create
 
-POST          /images/:id/deploy                                     controllers.ImagesController.deploy(id: Long, service: Option[String])
+POST          /images/:id/deploy                                           controllers.ImagesController.deploy(id: Long, service: Option[String])
 
-GET           /images/:id                                            controllers.ImagesController.find_by_id(id: Long)
+GET           /images/:id                                                  controllers.ImagesController.find_by_id(id: Long)
 
-DELETE        /images/:id                                            controllers.ImagesController.delete(id: Long)
+DELETE        /images/:id                                                  controllers.ImagesController.delete(id: Long)
 
 # Containers
 
-GET           /containers                                            controllers.ContainerController.list
+GET           /containers                                                  controllers.ContainerController.list
 
-POST          /containers                                            controllers.ContainerController.create
+POST          /containers                                                  controllers.ContainerController.create
 
-GET           /containers/:id                                        controllers.ContainerController.find_by_id(id: Long)
+GET           /containers/:id                                              controllers.ContainerController.find_by_id(id: Long)
 
-GET           /containers/:id/config                                 controllers.ContainerController.find_config_by_id(id: Long)
+GET           /containers/:id/config                                       controllers.ContainerController.find_config_by_id(id: Long)
 
-DELETE        /containers/:id                                        controllers.ContainerController.delete(id: Long)
+DELETE        /containers/:id                                              controllers.ContainerController.delete(id: Long)
 
 
 # Environments
 
-GET           /environments                                          controllers.EnvironmentController.list
+GET           /environments                                                controllers.EnvironmentController.list
 
-GET           /environments/:id                                      controllers.EnvironmentController.find_by_id(id: Long)
+GET           /environments/:id                                            controllers.EnvironmentController.find_by_id(id: Long)
 
 
 #Jobs
 
-GET           /jobs                                                  controllers.JobsController.list
+GET           /jobs                                                        controllers.JobsController.list
 
-GET           /jobs/:id                                              controllers.JobsController.find_by_id(id: Long)
+GET           /jobs/:id                                                    controllers.JobsController.find_by_id(id: Long)
 
-GET           /jobs/:id/events                                       controllers.JobsController.find_events_by_id(id: Long)
+GET           /jobs/:id/events                                             controllers.JobsController.find_events_by_id(id: Long)
 
 # Service types
 
-GET           /servicetypes                                          controllers.ServiceTypeController.list
+GET           /servicetypes                                                controllers.ServiceTypeController.list
 
-GET           /servicetypes/:id                                      controllers.ServiceTypeController.find_by_id(id: Long)
+GET           /servicetypes/:id                                            controllers.ServiceTypeController.find_by_id(id: Long)
 
-GET           /servicetypes/:id/services                             controllers.ServiceTypeController.find_services_by_servicetype_id(id: Long)
+GET           /servicetypes/:id/services                                   controllers.ServiceTypeController.find_services_by_servicetype_id(id: Long)
 
-GET           /servicetypes/:id/services/:serviceId                  controllers.ServiceTypeController.find_services_by_id(id: Long, serviceId: Long)
+GET           /servicetypes/:id/services/:serviceId                        controllers.ServiceTypeController.find_services_by_id(id: Long, serviceId: Long)
 
-POST          /servicetypes                                          controllers.ServiceTypeController.create
+POST          /servicetypes                                                controllers.ServiceTypeController.create
 
 # Services
 
-GET           /services                                              controllers.ServiceController.list
+GET           /services                                                    controllers.ServiceController.list
 
-GET           /services/:id                                          controllers.ServiceController.find_by_id(id: Long)
+GET           /services/:id                                                controllers.ServiceController.find_by_id(id: Long)
 
-GET           /services/:id/containers                               controllers.ServiceController.find_containers_by_id(id: Long)
+GET           /services/:id/containers                                     controllers.ServiceController.find_containers_by_id(id: Long)
 
-POST          /services/:id/containers/:containerVrn/weight/:weight  controllers.ServiceController.set_weight(id: Long, containerVrn: String, weight: Int)
+POST          /services/:id/containers/:containerVrn/weight/:weight        controllers.ServiceController.set_weight(id: Long, containerVrn: String, weight: Int)
 
-POST          /services/:id/containers/:containerVrn/amount/:amount  controllers.ServiceController.set_instance_amount(id: Long, containerVrn: String, amount: Long)
+POST          /services/:id/containers/:containerVrn/amount/:amount        controllers.ServiceController.set_instance_amount(id: Long, containerVrn: String, amount: Long)
 
-POST          /services                                              controllers.ServiceController.create
+POST          /services                                                    controllers.ServiceController.create
+
+DELETE        /services/:id                                                controllers.ServiceController.delete(id: Long)
 
 # SSE-Feeds
 
-GET           /feeds/metrics/lb                                      controllers.FeedsController.lbFeed(metricType: Option[String])
+GET           /feeds/metrics/lb                                            controllers.FeedsController.lbFeed(metricType: Option[String])
 
 # Load balancer
 
-GET           /loadbalancer/stats                                    controllers.LoadBalancer.stats
+GET           /loadbalancer/stats                                          controllers.LoadBalancer.stats
 
 # Catchall
 
-GET           /*path                                                 controllers.Application.catchAll(path)
+GET           /*path                                                       controllers.Application.catchAll(path)
 
-POST          /*path                                                 controllers.Application.catchAll(path)
+POST          /*path                                                       controllers.Application.catchAll(path)

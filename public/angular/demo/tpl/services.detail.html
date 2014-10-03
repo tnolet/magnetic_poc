@@ -8,7 +8,7 @@
         <div class="btn-group m-r-sm pull-right hidden-xs">
             <button class="btn btn-sm btn-default w-xxs w-auto-xs" tooltip="Archive"><i class="fa fa-archive"></i></button>
             <button class="btn btn-sm btn-default w-xxs w-auto-xs" tooltip="Report"><i class="fa fa-exclamation-circle"></i></button>
-            <button class="btn btn-sm btn-default w-xxs w-auto-xs" tooltip="Delete"><i class="fa fa-trash-o"></i></button>
+            <button ng-click="deleteService()"   class="btn btn-sm btn-default w-xxs w-auto-xs" tooltip="Delete"><i class="fa fa-trash-o"></i></button>
         </div>
     </div>
 
@@ -17,11 +17,23 @@
     <!--frontends header-->
 
     <div class="wrapper">
-        <span class="pull-right text-muted block">Last status change: {{metricsBE.lastchg | secondsSince}}</span>
         <span class="h4">Frontend</span>
     </div>
 
     <!--/ frontends header-->
+
+     <!--frontend chart-->
+
+    <sparklines-chart
+            height= 45
+            metrics="metrics"
+            type="bar"
+            history="20"
+            >
+
+    </sparklines-chart>
+
+    <!--/ frontend chart-->
 
     <!--frontend cumulative metrics-->
 
@@ -65,12 +77,26 @@
 
     <!--/ backends header-->
 
+    <!--backend chart -->
+
+    <sparklines-chart
+            height= 45
+            metrics="metricsBE.rtime"
+            type="bar"
+            history="20"
+            >
+
+    </sparklines-chart>
+
+
+    <!--/ backend chart-->
+
     <!--backend cumulative metrics -->
 
     <div class="wrapper bg-white">
         <div class="row text-center">
             <div class="col-sm-3 col-xs-6 col-sm-offset-3">
-                <div>Response Time <i class="fa fa-fw fa-caret-down text-warning text-sm"></i></div>
+                <div style="z-index: 2">Response Time <i class="fa fa-fw fa-caret-down text-warning text-sm"></i></div>
                 <div class="h2 m-b-sm" ng-bind="metricsBE.rtime">0</div>
             </div>
             <div class="col-sm-3 col-xs-6">

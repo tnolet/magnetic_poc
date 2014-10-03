@@ -57,7 +57,6 @@ case object Uninitialized extends Data
 case class ContainerState(status: String) extends Data
 case class Failure(reason: String)
 
-
 class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
   private var jobExecutor: ActorRef = _
@@ -88,7 +87,6 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
         image       = _image
         service     = _service
         eventType   = "deployment"
-
 
         log.info(s"Staging deployment of image $repo:$version with unique ID $vrn")
 

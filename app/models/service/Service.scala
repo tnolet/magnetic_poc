@@ -99,6 +99,15 @@ object Services {
       .map(s => s.state)
       .update(state)
   }
+
+
+  /**
+   * Delete a service
+   * @param id the id of the image to delete
+   */
+  def delete(id: Long)(implicit s: Session) {
+    services.filter(_.id === id).delete
+  }
 }
 
 object ServiceJson {

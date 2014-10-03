@@ -161,9 +161,14 @@ object ServiceController extends Controller {
 
           case None => NotFound("No such container found")
         }
-
       case None => NotFound("No such service found")
     }
+  }
+
+  // todo: cascade delete depending containers
+  def delete(id: Long) = DBAction { implicit rs =>
+    Services.delete(id)
+    NoContent
   }
 
   /**

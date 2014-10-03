@@ -15,6 +15,7 @@ var app = angular.module('app', [
         'pascalprecht.translate',
         'app.controllers',
         'app.services',
+        'app.directives',
         'app.filters'
 ]);
 

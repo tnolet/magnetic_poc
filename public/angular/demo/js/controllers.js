@@ -127,15 +127,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 $scope.services = data;
             });
 
-        // another controller or even directive
 
-        // deploys an image to a specific service
-        // parameter: serviceObject     object with the fields to create a service, e.g:
-        // {
-        //     "port" : 8988,
-        //     "environmentId" : 1,
-        //     "serviceTypeId" : 1
-        // }
         var createService = function(serviceObject) {
             $http.post('http://localhost:9000/services',serviceObject).
                 success(function(data){
@@ -165,25 +157,22 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     }])
 
 
-    .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed', function ($scope, $stateParams, $http, loadBalancerMetricsFeed) {
-
+    .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed','$timeout', function ($scope, $stateParams, $http, loadBalancerMetricsFeed, $timeout) {
 
             $scope.metricsFE = "";
             $scope.metricsBE = "";
-
-            // keep 17 of the most recent request rate metrics
-           $scope.reqArray = [21,23,34,54,65,34,2,21,43,23,53,14,14,34,5,22,24];
-            // filter out the metrics from the feed relevant to this service
-            // We filter frontend and backend metrics separately
+            $scope.metricEpoch = [
+                { label: 'req_sec', values: [ {x: 1412332490686, y: 11}, {x: 1412332490687, y: 5}, {x: 1412332490688, y: 12} ] }
+            ];
 
             var metricsFilterFE = function(metricData){
                 var filterMetricData = metricData.filter( function( obj ){ return obj.pxname == $scope.vrn && obj.svname == 'FRONTEND'})
                 $scope.$apply($scope.metricsFE = filterMetricData[0])
 
-                if ($scope.reqArray.length == 17) {
-                    $scope.reqArray.shift()
-                }
-                $scope.$apply($scope.reqArray.push(parseInt(filterMetricData[0].req_rate)));
+
+                 $scope.metrics = parseInt(filterMetricData[0].req_rate)
+
+
 
             };
 
@@ -192,6 +181,23 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 $scope.$apply($scope.metricsBE = filterMetricData[0])
             };
 
+            $scope.deleteService = function(){
+                $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
+            };
+
+            $scope.updateModel = function(){
+
+                $timeout(function() {
+
+                $http.get('http://localhost:9000/services/' + $stateParams.serviceId).
+                    success(function(data) {
+                        $scope.containers = data.containers;
+                    });
+
+                    $scope.updateModel();
+
+                }, 1000)
+            };
             // initialise the controller with all basic info
             $http.get('http://localhost:9000/services/' + $stateParams.serviceId).
                 success(function(data) {
@@ -199,6 +205,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     $scope.containers = data.containers;
                     loadBalancerMetricsFeed.register(metricsFilterFE);
                     loadBalancerMetricsFeed.register(metricsFilterBE);
+                  //  $scope.updateModel()
                 }
             );
 
@@ -255,7 +262,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         var metricsFilter = function(metricData){
             var filterMetricData = metricData.filter( function( obj ){ return $scope.instanceVrns().indexOf(obj.svname) > -1});
-            console.log(filterMetricData);
             aggregateMetrics(filterMetricData)
         };
 
