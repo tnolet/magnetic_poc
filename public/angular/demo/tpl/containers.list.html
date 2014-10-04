@@ -1,0 +1,23 @@
+<!--header -->
+
+<div class="wrapper bg-light lter b-b">
+    <a ui-sref="app.containers.list" class="btn btn-sm btn-default w-xxs m-r-sm" tooltip="Back"><i class="fa fa-long-arrow-left"></i></a>
+    <span class="font-thin h4 v-middle">Containers</span>
+</div>
+
+<!--/ header -->
+
+<div class="hbox hbox-auto-xs hbox-auto-sm">
+    <div class="col wrapper-md">
+        <div class="clearfix m-b">
+            <button type="button" class="btn btn-sm btn-primary btn-addon">
+                <i class="fa fa-plus"></i>Import container
+            </button>
+        </div>
+        <ul class="list-group list-group-lg no-radius m-b-none m-t-n-xxs">
+            <li ng-repeat="container in containers" class="list-group-item clearfix b-l-3x ng-scope b-l-info">
+                <div ng-include src="'demo/tpl/containers.list.item.html'"></div>
+            </li>
+        </ul>
+    </div>
+</div>

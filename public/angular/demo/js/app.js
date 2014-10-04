@@ -81,13 +81,19 @@ app.config(['$stateProvider','$urlRouterProvider',
                 url: '/{serviceId:[0-9]}',
                 templateUrl: 'demo/tpl/services.detail.html'
             })
+            // containers
             .state('app.containers', {
+                abstract: true,
                 url: '/containers',
                 templateUrl: 'demo/tpl/containers.html'
             })
             .state('app.containers.list', {
-                url: '/containers/list',
+                url: '/list',
                 templateUrl: 'demo/tpl/containers.list.html'
+            })
+            .state('app.containers.detail', {
+                url: '/{containerId:[0-9]}',
+                templateUrl: 'demo/tpl/container.detail.html'
             })
     }])
 

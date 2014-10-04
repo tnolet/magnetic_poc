@@ -214,6 +214,16 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         // Backends AKA Containers
 
+
+    .controller('ContainersCtrl',[ '$scope', '$http', function ($scope, $http) {
+
+        $http.get('http://localhost:9000/containers').
+            success(function(data) {
+                $scope.containers = data;
+            });
+
+    }])
+
     .controller('ContainerDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed', function ($scope, $stateParams, $http, $loadBalancerMetricsFeed) {
 
         // local constants and functions
