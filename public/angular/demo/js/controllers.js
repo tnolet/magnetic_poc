@@ -391,6 +391,10 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         $scope.init = function(instance) {
 
             $scope.vrn = instance.vrn;
+            $scope.host = instance.host;
+            $scope.ports = instance.ports;
+
+
 
            $loadBalancerMetricsFeed.register(metricsFilter)
         }

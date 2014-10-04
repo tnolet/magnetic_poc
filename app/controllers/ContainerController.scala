@@ -63,7 +63,6 @@ object ContainerController extends Controller {
     }
   }
 
-
   /**
    * Todo: Deletes a container, when it is eligable to be deleted. This means:
    * - it should not be in the destroyed state already

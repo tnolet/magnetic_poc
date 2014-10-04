@@ -1,7 +1,9 @@
 <div ng-controller="ContainerDetailCtrl" ng-init="init(container)">
     <a ui-sref="app.containers.detail({containerId:id})">
-        <div class="pull-right text-sm text-muted">
-            <span class="hidden-xs ng-binding">{{created_at | fromNow }}</span>
+        <div class="pull-right">
+            <span class="label pull-right h4 bg-success">{{status}}</span><br>
+
+            <span class="hidden-xs  text-sm text-muted">{{created_at | fromNow }}</span>
         </div>
         <div class="clear text-md ng-binding">
         <span>

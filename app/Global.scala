@@ -124,7 +124,8 @@ object InitialData {
         Seq(
           ServiceType(Option(1L),"search","1.0"),
           ServiceType(Option(2L),"search","2.0"),
-          ServiceType(Option(3L),"cart","1.1")
+          ServiceType(Option(3L),"cart","1.1"),
+          ServiceType(Option(4L),"load balancer","1.0")
         ).foreach(ServiceTypes.insert)
       }
     }
