@@ -15,21 +15,21 @@ class DeploymentParentActor extends Actor with ActorLogging {
   def receive = LoggingReceive {
 
       // Container deployments
-    case SubmitDeployment(vrn, image, service) =>
+    case (deploy: SubmitDeployment) =>
 
-      val deploymentActor = context.actorOf(Props[DeploymentActor], s"deploy-$vrn-${Number.rnd}")
-      deploymentActor forward SubmitDeployment(vrn, image, service)
+      val deploymentActor = context.actorOf(Props[DeploymentActor], s"deploy-${deploy.vrn}-${Number.rnd}")
+      deploymentActor forward deploy
 
       // Container undeployments
-    case SubmitUnDeployment(vrn) =>
+    case (unDeploy: SubmitUnDeployment) =>
 
-      val unDeploymentActor = context.actorOf(Props[DeploymentActor], s"undeploy-$vrn-${Number.rnd}")
-      unDeploymentActor forward SubmitUnDeployment(vrn)
+      val unDeploymentActor = context.actorOf(Props[DeploymentActor], s"undeploy-${unDeploy.vrn}-${Number.rnd}")
+      unDeploymentActor forward unDeploy
 
       // Service Deployment
-    case SubmitServiceDeployment(vrn, service) =>
-      val serviceDeploymentActor = context.actorOf(Props[ServiceDeploymentActor], s"service-deploy-$vrn-${Number.rnd}")
-      serviceDeploymentActor forward SubmitServiceDeployment(vrn,service)
+    case deploy: SubmitServiceDeployment =>
+      val serviceDeploymentActor = context.actorOf(Props[ServiceDeploymentActor], s"service-deploy-${deploy.vrn}-${Number.rnd}")
+      serviceDeploymentActor forward deploy
 
       // Scaling
     case (scale: SubmitInstanceScaling) =>
