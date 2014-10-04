@@ -1,7 +1,7 @@
 package controllers
 
 import actors.loadbalancer.{LbFail, LbSuccess, UpdateBackendServerWeight}
-import lib.job.{Horizontal, ScaleJobBuilder}
+import lib.job.{ServiceDeploymentJobBuilder, Horizontal, ScaleJobBuilder}
 import lib.util.date.TimeStamp
 import models.docker._
 import models.{Job, Jobs}
@@ -79,13 +79,15 @@ object ServiceController extends Controller {
    */
     def create = DBAction(parse.json) { implicit rs =>
 
-      import models.service.ServiceJson.serviceReadsforCreate
+      import models.service.ServiceJson.ServiceReadsforCreate
 
       rs.request.body.validate[ServiceCreate].fold(
         valid = { newService =>
+          val builder = new ServiceDeploymentJobBuilder
+          builder.setService(newService)
+          val jobId = builder.build
 
-              val jobId = createServiceDeployJob(newService)
-              Created(s"jobId: $jobId ")
+          Created(s"jobId: $jobId ")
         },
         invalid = {
           errors => BadRequest(Json.toJson(JsError.toFlatJson(errors)))
@@ -169,39 +171,6 @@ object ServiceController extends Controller {
   def delete(id: Long) = DBAction { implicit rs =>
     Services.delete(id)
     NoContent
-  }
-
-  /**
-   *
-   * PRIVATE
-   *
-   */
-
-
-  /**
-   * createServiceDeployJob creates a deployment job based on an service and returns the id of the created job
-   * @param newService is an object of the type [[ServiceCreate]]
-   */
-  private def createServiceDeployJob(newService: ServiceCreate) : Long = {
-
-    import models.service.ServiceJson.ServiceWritesforCreate
-    var newJobId: Long = 0
-
-    play.api.db.slick.DB.withTransaction { implicit session =>
-
-      val timestamp = TimeStamp.now
-
-      newJobId = Jobs.insert(new Job(
-        Option(0), // temporary id, will be discarded
-        Jobs.status("new"), // status
-        1, // priority
-        Json.stringify(Json.toJson(newService)), // payload
-        Jobs.queue("serviceDeployment"), // queue
-        timestamp, // created timestamp
-        timestamp) // updated timestamp
-      )
-    }
-    newJobId
   }
 
 }

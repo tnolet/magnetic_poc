@@ -1,7 +1,7 @@
 package actors.deployment
 
 import actors.jobs.{UpdateJob, addJobEvent}
-import actors.loadbalancer.{LbFail, LbSuccess, AddFrontendBackend}
+import actors.loadbalancer.{RemoveFrontendBackend, LbFail, LbSuccess, AddFrontendBackend}
 import akka.actor.{ActorRef, Actor, LoggingFSM}
 import models.Jobs
 import models.service.{Services, ServiceCreate}
@@ -11,9 +11,10 @@ import play.api.Play.current
 
 //events for deploying
 case class SubmitServiceDeployment(vrn: String, service: ServiceCreate) extends DeployEvent
+case class SubmitServiceUnDeployment(vrn: String) extends DeployEvent
 
 
-//states for deploying
+//states data
 case class ServiceState(status: String) extends Data
 
 
@@ -33,20 +34,35 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
   when(Idle) {
 
     // Initial message for starting a deployment
-    case Event(SubmitServiceDeployment(_vrn, _service), Uninitialized) =>
+    case Event(deploy: SubmitServiceDeployment, Uninitialized) =>
 
       // Set all variables for the service we are going to deploy
 
       jobExecutor = sender()
-      vrn = _vrn
-      port = _service.port
+      vrn = deploy.vrn
+      port = deploy.service.port
       eventType = "serviceDeployment"
 
-      log.info(s"Staging deployment of service with unique ID $vrn")
+      log.info(s"Staging deployment of service $vrn")
 
       val newState = new ServiceState("STAGING")
 
       goto(Staging) using newState
+
+
+    case Event(unDeploy: SubmitServiceUnDeployment, Uninitialized) =>
+
+      jobExecutor = sender()
+      vrn = unDeploy.vrn
+      eventType = "serviceUnDeployment"
+
+
+      log.info(s"Starting the undeployment of service $vrn")
+
+      val newState = new ServiceState("WAITING_FOR_UNEXPOSE")
+
+      goto(WaitingUnExpose) using newState
+
   }
 
   when(Staging) {
@@ -86,6 +102,44 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
   }
 
+
+  /**
+   *
+   * undeploy states
+   *
+   */
+
+  when(WaitingUnExpose){
+
+    case Event(LbSuccess, s: ServiceState) =>
+      val newStateData = s.copy("UNEXPOSED")
+      goto(WaitingDestroy) using newStateData
+
+    case Event(LbFail, s: ServiceState) =>
+      val newStateData = s.copy("LIVE_WITH_FAILED_UNEXPOSURE")
+      goto(Failed) using newStateData
+
+    case Event(Fail, f: Failure) =>
+      goto(Failed)
+  }
+
+  when(WaitingDestroy){
+
+    case Event(DestroyFinish,s: ServiceState) =>
+      val newStateData = s.copy("DESTROYED")
+      goto(Destroyed) using newStateData
+
+    case Event(Fail, f: Failure) =>
+      goto(Failed)
+  }
+
+  when(Destroyed){
+    case Event(_,_) =>
+
+      stay()
+  }
+
+
   /**
    *
    * Failed and unhandled states
@@ -121,7 +175,6 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
         sendStateUpdate(state)
 
-        // Todo: merge both actions one
         // Todo: create more intermediate states in case of failure or port/naming collisions
         log.debug("Requesting update of load balancer")
         lbManager ! AddFrontendBackend(vrn,port)
@@ -146,6 +199,22 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
       }
 
+    /**
+     *
+     * Transitions  undeployment
+     *
+     */
+
+    case Idle -> WaitingUnExpose =>
+      nextStateData match {
+        case ContainerState(state) =>
+          sendStateUpdate(state)
+
+          lbManager ! RemoveFrontendBackend(vrn)
+
+      }
+
+
     case _ -> Failed =>
       nextStateData match {
         case ServiceState(state) =>
@@ -154,6 +223,8 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
           jobExecutor ! UpdateJob(Jobs.status("failed"))
       }
+
+
 
   }
 

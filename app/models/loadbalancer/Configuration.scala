@@ -26,7 +26,6 @@ object Configuration {
    * @param vrn represents the vrn associated with the backend
    * @return a new [[Configuration]] object
    */
-
   def removeBackend(conf: Configuration, vrn: String): Configuration = {
 
     conf.copy(backends = conf.backends.filterNot( be => be.name == vrn))

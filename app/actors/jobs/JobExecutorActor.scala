@@ -4,7 +4,7 @@ import actors.deployment.scaling.SubmitInstanceScaling
 import actors.deployment.{SubmitServiceDeployment, SubmitUnDeployment, SubmitDeployment}
 import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
-import lib.job.{Horizontal, ScaleJobReader, UnDeploymentJobReader, DeploymentJobReader}
+import lib.job._
 import lib.util.date.TimeStamp
 import models.docker._
 import models.service.{Services, Service, ServiceCreate}
@@ -140,12 +140,8 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
     val deployer = context.actorSelection("/user/deployer")
 
-    import models.service.ServiceJson.serviceReadsforCreate
-
-    Json.parse(payload)
-      .validate[ServiceCreate]
-      .fold(
-        valid = { service => {
+    val deployable = new ServiceDeploymentJobReader
+    deployable.read(job)
 
           // Create a unique VRN for this resource
           val vrn = lib.util.vamp.Naming.createVrn("service","development")
@@ -154,19 +150,16 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
             Services.insert(
               new Service(Option(0),
-                service.port,
+                deployable.service.port,
                 "INITIAL",
                 vrn,
-                service.environmentId,
-                service.serviceTypeId))
+                deployable.service.environmentId,
+                deployable.service.serviceTypeId))
           }
 
-          deployer ! SubmitServiceDeployment(vrn,service)
-        }
-      },
-        invalid = { errors => log.error(s"Invalid payload in job with id: ${job.id}. Errors: " + errors) }
-      )
-  }
+          deployer ! SubmitServiceDeployment(vrn,deployable.service)
+    }
+
 
   /**
    * Parses the payload of a job in the Scaling queue and executes the requested scaling transaction

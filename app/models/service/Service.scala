@@ -118,7 +118,7 @@ object ServiceJson {
 
   // Json reading/writing of ServiceCreate case class. Used for posting new service to the REST api
   implicit val ServiceWritesforCreate = Json.writes[ServiceCreate]
-  implicit val serviceReadsforCreate = (
+  implicit val ServiceReadsforCreate = (
       (__ \ 'port).read[Int] and
       (__ \ 'environmentId).read[Long] and
       (__ \ 'serviceTypeId).read[Long]

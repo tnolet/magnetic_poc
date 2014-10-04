@@ -3,12 +3,10 @@ package models.docker
 import java.sql.Timestamp
 
 import models.service.Services
-import play.api.Logger
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
 import play.api.libs.functional.syntax._
-import play.api.Play.current
 
 
 /**
@@ -52,7 +50,7 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
   def instanceAmount = column[Long]("instanceAmount")
   def serviceId = column[Long]("serviceId")
   def created_at = column[java.sql.Timestamp]("created_at", O.NotNull)
-  def service = foreignKey("SERVICE_FK", serviceId, Services.services)(_.id)
+  def service = foreignKey("SERVICE_FK", serviceId, Services.services)(_.id,onDelete=ForeignKeyAction.Cascade)
 
 
   def * = {

@@ -47,7 +47,7 @@ class ContainerInstances(tag: Tag) extends Table[ContainerInstance](tag, "CONTAI
   def mesosId = column[String]("mesosId")
   def containerId = column[Long]("containerId")
   def created_at = column[java.sql.Timestamp]("created_at", O.NotNull)
-  def container = foreignKey("CONTAINER_FK", containerId, DockerContainers.containers)(_.id)
+  def container = foreignKey("CONTAINER_FK", containerId, DockerContainers.containers)(_.id,onDelete=ForeignKeyAction.Cascade)
 
   def * = {
     (id.?, vrn, host, ports, weight, mesosId, containerId, created_at) <>(ContainerInstance.tupled, ContainerInstance.unapply)

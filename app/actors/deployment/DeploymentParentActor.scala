@@ -31,6 +31,11 @@ class DeploymentParentActor extends Actor with ActorLogging {
       val serviceDeploymentActor = context.actorOf(Props[ServiceDeploymentActor], s"service-deploy-${deploy.vrn}-${Number.rnd}")
       serviceDeploymentActor forward deploy
 
+    // Service Deployment
+    case unDeploy: SubmitServiceUnDeployment =>
+      val serviceDeploymentActor = context.actorOf(Props[ServiceDeploymentActor], s"service-deploy-${unDeploy.vrn}-${Number.rnd}")
+      serviceDeploymentActor forward unDeploy
+
       // Scaling
     case (scale: SubmitInstanceScaling) =>
       val scalingActor = context.actorOf(Props[ScalingActor], s"container-scale-${scale.container.vrn}-${Number.rnd}")
