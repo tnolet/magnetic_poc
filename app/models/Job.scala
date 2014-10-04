@@ -84,7 +84,7 @@ object Jobs {
     "deployment"          -> "DEPLOYMENT",
     "undeployment"        -> "UNDEPLOYMENT",
     "serviceDeployment"   -> "SERVICE_DEPLOYMENT",
-    "serviceUnDeployment" -> "SERVCE_UNDEPLOYMENT",
+    "serviceUnDeployment" -> "SERVICE_UNDEPLOYMENT",
     "scaling"             -> "SCALING"
   )
 

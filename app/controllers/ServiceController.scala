@@ -1,7 +1,7 @@
 package controllers
 
 import actors.loadbalancer.{LbFail, LbSuccess, UpdateBackendServerWeight}
-import lib.job.{ServiceDeploymentJobBuilder, Horizontal, ScaleJobBuilder}
+import lib.job.{ServiceUndeploymentJobBuilder, ServiceDeploymentJobBuilder, Horizontal, ScaleJobBuilder}
 import lib.util.date.TimeStamp
 import models.docker._
 import models.{Job, Jobs}
@@ -167,10 +167,29 @@ object ServiceController extends Controller {
     }
   }
 
-  // todo: cascade delete depending containers
+
+
+  /**
+   * Delete a service and all its underpinning resources
+   * @param id The id of the service
+   * @return the id of the job that performs the deletion
+   */
   def delete(id: Long) = DBAction { implicit rs =>
-    Services.delete(id)
-    NoContent
+
+    val _service = Services.findById(id)
+
+    _service match {
+
+      case Some(service : Service) =>
+
+        val builder = new ServiceUndeploymentJobBuilder
+        builder.setService(service)
+        val jobId = builder.build
+        Created(s"jobId: $jobId ")
+
+      case None => NotFound("No such service found")
+
+    }
   }
 
 }

@@ -3,16 +3,22 @@ package actors.deployment
 import actors.jobs.{UpdateJob, addJobEvent}
 import actors.loadbalancer.{RemoveFrontendBackend, LbFail, LbSuccess, AddFrontendBackend}
 import akka.actor.{ActorRef, Actor, LoggingFSM}
+import lib.job.UnDeploymentJobBuilder
 import models.Jobs
+import models.docker.DockerContainers
+import models.service.Service
 import models.service.{Services, ServiceCreate}
 import play.api.db.slick._
 import play.api.Play.current
 
+import scala.collection.mutable
+
 
 //events for deploying
 case class SubmitServiceDeployment(vrn: String, service: ServiceCreate) extends DeployEvent
-case class SubmitServiceUnDeployment(vrn: String) extends DeployEvent
 
+// events for undeploying
+case class SubmitServiceUnDeployment(service: Service) extends DeployEvent
 
 //states data
 case class ServiceState(status: String) extends Data
@@ -24,6 +30,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
   private var vrn: String = _
   private var port: Int = _
   private var eventType: String = _
+  private var service : Service = _
 
   val lbManager = context.actorSelection("akka://application/user/lbManager")
 
@@ -53,7 +60,8 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
     case Event(unDeploy: SubmitServiceUnDeployment, Uninitialized) =>
 
       jobExecutor = sender()
-      vrn = unDeploy.vrn
+      service = unDeploy.service
+      vrn = unDeploy.service.vrn
       eventType = "serviceUnDeployment"
 
 
@@ -123,9 +131,14 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
       goto(Failed)
   }
 
+    /**
+     *   When in the WaitingDestroy stage, we are effectively waiting for updates from undeployment jobs
+     */
   when(WaitingDestroy){
 
-    case Event(DestroyFinish,s: ServiceState) =>
+
+    case Event(DestroyFinish, s: ServiceState) =>
+
       val newStateData = s.copy("DESTROYED")
       goto(Destroyed) using newStateData
 
@@ -163,6 +176,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
    * Transitions
    *
    */
+
   onTransition {
 
 
@@ -207,13 +221,69 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
     case Idle -> WaitingUnExpose =>
       nextStateData match {
-        case ContainerState(state) =>
+        case ServiceState(state) =>
           sendStateUpdate(state)
 
+          log.debug("Requesting removal of service from load balancer")
+
+          // first remove the service from the load balancer
           lbManager ! RemoveFrontendBackend(vrn)
 
       }
 
+    case WaitingUnExpose -> WaitingDestroy =>
+      nextStateData match {
+        case ServiceState(state) =>
+          sendStateUpdate(state)
+
+          log.debug("Requesting undeployment of underpinning containers")
+
+
+          // then start destroying all containers.
+          // This is done by getting all the container and submitting an undeploy job for each.
+          // In the same action, we supply the amount of containers to the next state, so we can
+          // wait for all of them to be destroyed.
+
+          // Todo: use jobs list to watch for successful completion of jobs before proceeding
+          // Todo: split destruction of containers and service
+          DB.withTransaction( implicit session => {
+
+            val containers = DockerContainers.findByServiceId(service.id.get)
+
+            val jobsList : List[Long] = List(0)
+
+            containers.map( cnt => {
+
+              val builder = new UnDeploymentJobBuilder
+              builder.setContainer(cnt)
+              val jobId = builder.build
+              jobsList.::(List(jobId))
+              log.debug("List is " + jobsList.toString())
+            })
+
+            // Destroy the service in the database
+            DB.withSession( implicit session => {
+
+              Services.delete(service.id.get)
+
+            })
+
+            self ! DestroyFinish
+
+          })
+
+      }
+
+
+    case WaitingDestroy -> Destroyed =>
+      nextStateData match {
+        case ServiceState(state) =>
+
+          sendStateUpdate(state)
+
+          jobExecutor ! UpdateJob(Jobs.status("finished"))
+
+      }
 
     case _ -> Failed =>
       nextStateData match {

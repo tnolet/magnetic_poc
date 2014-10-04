@@ -1,7 +1,7 @@
 package actors.jobs
 
 import actors.deployment.scaling.SubmitInstanceScaling
-import actors.deployment.{SubmitServiceDeployment, SubmitUnDeployment, SubmitDeployment}
+import actors.deployment.{SubmitServiceUnDeployment, SubmitServiceDeployment, SubmitUnDeployment, SubmitDeployment}
 import akka.actor.{Actor, ActorLogging}
 import akka.event.LoggingReceive
 import lib.job._
@@ -41,6 +41,8 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
         case "UNDEPLOYMENT" => executeUnDeployment()
 
         case "SERVICE_DEPLOYMENT" => executeServiceDeployment()
+
+        case "SERVICE_UNDEPLOYMENT" => executeServiceUnDeployment()
 
         case "SCALING" => executeScaling()
 
@@ -160,6 +162,17 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
           deployer ! SubmitServiceDeployment(vrn,deployable.service)
     }
 
+
+  def executeServiceUnDeployment(): Unit = {
+
+    val deployer = context.actorSelection("/user/deployer")
+    val undeployable = new ServiceUndeploymentJobReader
+
+    undeployable.read(job)
+
+    deployer ! SubmitServiceUnDeployment(undeployable.service)
+
+  }
 
   /**
    * Parses the payload of a job in the Scaling queue and executes the requested scaling transaction

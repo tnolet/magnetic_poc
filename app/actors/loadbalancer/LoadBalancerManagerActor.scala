@@ -124,6 +124,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
         case Some(config: Configuration) =>
 
           log.debug("Current load balancer configuration is: " + config.toString)
+
           val _newConf = Configuration.removeBackend(config,vrn)
           val newConf = Configuration.removeFrontend(_newConf,vrn)
 

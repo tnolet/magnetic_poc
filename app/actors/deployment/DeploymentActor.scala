@@ -59,7 +59,7 @@ case class Failure(reason: String)
 
 class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
-  private var jobExecutor: ActorRef = _
+  private var originalSender: ActorRef = _
   private var watcher: ActorRef = _
   private var eventType: String = _
 
@@ -80,7 +80,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
         // Set all variables for the container we are going to deploy
 
-        jobExecutor = sender()
+        originalSender = sender()
         vrn         = _vrn
         repo        = _image.repo
         version     = _image.version
@@ -95,10 +95,10 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
         goto(Submitted) using newState
 
 
-      // Inital message for starting an undeployment
+      // Initial message for starting an undeployment
       case Event(SubmitUnDeployment(_vrn), Uninitialized) =>
 
-        jobExecutor = sender()
+        originalSender = sender()
         vrn         = _vrn
         eventType   = "undeployment"
 
@@ -356,7 +356,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
           sendStateUpdate(state)
 
-          jobExecutor ! UpdateJob(Jobs.status("finished"))
+          originalSender ! UpdateJob(Jobs.status("finished"))
       }
 
     case WaitingExposure -> Failed =>
@@ -365,7 +365,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
           sendStateUpdate(state)
 
-          jobExecutor ! UpdateJob(Jobs.status("failed"))
+          originalSender ! UpdateJob(Jobs.status("failed"))
       }
 
     case _ -> Failed =>
@@ -374,7 +374,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
           sendStateUpdate(state)
 
-          jobExecutor ! UpdateJob(Jobs.status("failed"))
+          originalSender ! UpdateJob(Jobs.status("failed"))
       }
 
 /**
@@ -424,7 +424,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
               else {
                 log.error(s"Destroying $vrn on Marathon has errors: response code: $i")
 
-                jobExecutor ! UpdateJob(Jobs.status("failed"))
+                originalSender ! UpdateJob(Jobs.status("failed"))
 
                 self ! Fail
               }
@@ -437,7 +437,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
         case ContainerState(state) =>
           sendStateUpdate(state)
 
-          jobExecutor ! UpdateJob(Jobs.status("finished"))
+          originalSender ! UpdateJob(Jobs.status("finished"))
 
       }
   }
@@ -456,7 +456,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
     // Update the job events
 
-    jobExecutor ! addJobEvent(state, eventType)
+    originalSender ! addJobEvent(state, eventType)
 
     // Update the container
     DB.withSession { implicit session: Session =>
