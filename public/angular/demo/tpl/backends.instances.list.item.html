@@ -1,7 +1,21 @@
-<i class="fa fa-cube m-r hidden-xs"></i>
-<span class="m-r text-muted">{{host}}:{{ports}}</span>
-<span class="m-r text-muted hidden-xs">{{vrn}}</span>
-<i class="fa fa-clock-o icon m-r m-l"></i><span class="m-r-xs text-muted">{{metrics.rtime}}</span>
-<i class="fa fa-users icon m-r m-l"></i><span class="m-r-xs text-muted">{{metrics.scur}}</span>
-<span class="pull-right text-muted hover-action"><i class="fa fa-bars"></i></span>
 
+
+    <span class="col w-auto">
+        <span class="hidden-xs">
+                    <i class="fa fa-cube m-r inline"></i>
+
+        </span>
+        <span class="m-r text-muted">{{host}}:{{ports}}</span>
+
+    </span>
+    <div class="col hidden-xs">
+        <span class="m-r text-muted">{{vrn}}</span>
+
+    </div>
+    <div class="col w-xxs">
+        <i class="fa fa-clock-o icon m-r-xs"></i><span class="m-r-xs text-muted">{{metrics.rtime}}</span>
+
+    </div>
+    <div class="col w-xxs ">
+        <i class="fa fa-users icon m-r-xs"></i><span class="m-r-xs text-muted">{{metrics.scur}}</span>
+    </div>

@@ -178,6 +178,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
             var metricsFilterBE = function(metricData){
                 var filterMetricData = metricData.filter( function( obj ){ return obj.pxname == $scope.vrn && obj.svname == 'BACKEND'})
+                console.log(filterMetricData)
                 $scope.$apply($scope.metricsBE = filterMetricData[0])
             };
 
@@ -203,6 +204,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 success(function(data) {
                     $scope.vrn = data.vrn;
                     $scope.containers = data.containers;
+                    $scope.port = data.port;
                     loadBalancerMetricsFeed.register(metricsFilterFE);
                     loadBalancerMetricsFeed.register(metricsFilterBE);
                   //  $scope.updateModel()
@@ -368,6 +370,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $scope.weight = container.masterWeight;
             $scope.status = container.status;
             $scope.instances = container.instances;
+            $scope.instanceAmount = container.instanceAmount;
             $scope.created_at = container.created_at;
 
             $loadBalancerMetricsFeed.register(metricsFilter)

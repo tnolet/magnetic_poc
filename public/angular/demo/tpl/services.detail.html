@@ -17,7 +17,8 @@
     <!--frontends header-->
 
     <div class="wrapper">
-        <span class="h4">Frontend</span>
+        <span class="h4 m-r-xs">Frontend</span>
+        <span class="text-muted">port: {{port}}</span>
     </div>
 
     <!--/ frontends header-->
@@ -97,7 +98,7 @@
         <div class="row text-center">
             <div class="col-sm-3 col-xs-6 col-sm-offset-3">
                 <div style="z-index: 2">Response Time <i class="fa fa-fw fa-caret-down text-warning text-sm"></i></div>
-                <div class="h2 m-b-sm" ng-bind="metricsBE.rtime">0</div>
+                <div class="h2 m-b-sm">{{metricsBE.rtime}}</div>
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>Status<i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>

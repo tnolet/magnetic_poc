@@ -1,8 +1,10 @@
 
 import actors.deployment.DeploymentParentActor
 import actors.jobs.{CheckJobs, JobManagerActor}
-import actors.loadbalancer.{LoadBalancerMetricsActor, LoadBalancerParentActor}
+import actors.loadbalancer.LoadBalancerParentActor
 import akka.actor.Props
+import controllers.FeedsController
+import lib.feeds.Feeds
 import lib.marathon.Marathon
 import lib.mesos.Mesos
 import lib.loadbalancer.LoadBalancer
@@ -86,13 +88,20 @@ object Global extends GlobalSettings {
     // Start up the JobManager actor system
     val jobManager = Akka.system.actorOf(Props[JobManagerActor], name = "jobManager")
 
-    Akka.system.scheduler.schedule(0.second, 5.second, jobManager, CheckJobs)
-
+    Akka.system.scheduler.schedule(0.second, 2.second, jobManager, CheckJobs)
 
     // Start up the Load Balancer actor system
-    Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
+    val lbSystem = Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
+
+    // Start the feeds system
+    val feeds = new Feeds
+    feeds.startFeedsParent()
+
+    // Start specific feeds
+    feeds.startFeeds
 
   }
+
 }
 
 object InitialData {

@@ -1,21 +1,35 @@
-<div ng-controller="ContainerDetailCtrl" ng-init="init(container)">
-    <a ui-sref="app.containers.detail({containerId:id})">
+<a ui-sref="app.containers.detail({containerId:id})" class="r item hbox no-border" ng-controller="ContainerDetailCtrl" ng-init="init(container)">
+    <div class="col r-r text-md">
+        <span>
+            {{vrn}}
+        </span>
+        <small class="text-muted m-t-xs block">{{imageRepo}}</small>
+        <small class="text-muted m-t-xs">{{imageVersion}}</small>
+        <div class="m-b-tx m-t-md">
+            <div class="">
+                <button class="btn m-b-xs btn-sm btn-default btn-addon"><i class="fa fa-trash"></i>Delete</button>
+            </div>
+        </div>
+    </div>
+    <span class="col hidden-xs">
+
+    </span>
+    <div class="col r-r hidden-xs">
+        <div class="v-middle">
+            <dl class="dl-horizontal v-middle">
+                <dt class=""> instances</dt>
+                <dd class="h4">{{instanceAmount}}</dd>
+                <dt class=""> weight</dt>
+                <dd class="h4">{{weight}}</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="col r-r">
         <div class="pull-right">
             <span class="label pull-right h4 bg-success">{{status}}</span><br>
 
             <span class="hidden-xs  text-sm text-muted">{{created_at | fromNow }}</span>
         </div>
-        <div class="clear text-md ng-binding">
-        <span>
-            {{vrn}}
-        </span>
-            <small class="text-ellipsis m-t-xs">{{imageRepo}}</small>
-            <small class="text-ellipsis m-t-xs">{{imageVersion}}</small>
-        </div>
-    </a>
-    <div class="m-b-tx m-t-md">
-        <div class="">
-            <button class="btn m-b-xs btn-sm btn-default btn-addon"><i class="fa fa-trash"></i>Delete</button>
-        </div>
     </div>
-</div>
+</a>
