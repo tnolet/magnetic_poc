@@ -416,17 +416,63 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
     })
 
+    .controller('createImageModalCtrl', function ($scope, $modalInstance) {
 
-    .controller('ImagesCtrl',[ '$scope', '$http', function ($scope, $http) {
+        $scope.ok = function (formData) {
+
+            $modalInstance.close(formData);
+        };
+
+        $scope.cancel = function () {
+            $modalInstance.dismiss('cancel');
+        };
+    })
+
+
+    .controller('ImagesCtrl',[ '$scope','$http', '$modal', function ($scope, $http, $modal) {
 
         $http.get('http://localhost:9000/images').
             success(function(data) {
                 $scope.images = data;
             });
 
+        var createImage = function(img) {
+
+            $http.post('http://localhost:9000/images', img).
+                success(function(data){
+                    console.log(data)
+                })
+        };
+
+        // launches the modal for creating a new image
+        $scope.openCreateModal = function(){
+
+            var modalInstance = $modal.open({
+                templateUrl: 'demo/tpl/modals/createImageModal.html',
+                controller: 'createImageModalCtrl'
+            });
+
+            modalInstance.result.then(function(formData) {
+
+                var imageObject = {};
+                imageObject.name = formData.name;
+                imageObject.repo = formData.repo;
+                imageObject.version = formData.version;
+                imageObject.arguments = formData.args;
+                imageObject.id = 0 // some arbitrary id that will be discarded
+
+                createImage(imageObject);
+                console.log('Modal dismissed with: ' + JSON.stringify(formData));
+            });
+
+        };
+
+
     }])
 
     .controller('ImagesListItemCtrl',[ '$scope', '$stateParams','$http', '$modal', function ($scope, $stateParams, $http, $modal) {
+
+
 
 
         // deploys an image to a specific service
@@ -439,7 +485,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 })
         };
 
-
+        // launches the modal for deploying an image
         $scope.openDeployModal = function() {
             var modalInstance = $modal.open({
                 templateUrl: 'demo/tpl/modals/deployImageModal.html',
@@ -451,6 +497,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 deployImageToService($scope.image.id, serviceVrn)
             });
         };
+
 
         $scope.init = function(image) {
             $scope.image = image

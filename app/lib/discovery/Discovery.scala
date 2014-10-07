@@ -15,13 +15,11 @@ class Discovery {
 
   val conf = ConfigFactory.load()
 
-  val zkHost = conf.getString("discovery.zookeeper.host")
-  val zkPort = conf.getInt("discovery.zookeeper.port")
+  val zkConnect = conf.getString("discovery.zookeeper.connect")
   val zkRoot = conf.getString("discovery.zookeeper.root")
-  val zkBaseUri = s"$zkHost:$zkPort"
 
   val retryPolicy = new ExponentialBackoffRetry(1000, 3)
-  val zkClient = CuratorFrameworkFactory.newClient(zkBaseUri,retryPolicy)
+  val zkClient = CuratorFrameworkFactory.newClient(zkConnect,retryPolicy)
   zkClient.start()
 
   val serviceDiscovery =  ServiceDiscoveryBuilder

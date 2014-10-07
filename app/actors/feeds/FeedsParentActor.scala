@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 */
 
 trait FeedsMessages
-case class StartFeeds(zkConfig: String) extends FeedsMessages
+case class StartFeeds(zkConnect: String) extends FeedsMessages
 
 class FeedsParentActor extends Actor with ActorLogging {
 
@@ -32,7 +32,7 @@ class FeedsParentActor extends Actor with ActorLogging {
 
       val consumerProps = AkkaConsumerProps.forContext(
         context = context,
-        zkConnect = s.zkConfig,
+        zkConnect = s.zkConnect,
         topic = "loadbalancer.all",
         group = "magnetic-lb-stream-consumer",
         streams = 1,

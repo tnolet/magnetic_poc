@@ -12,9 +12,7 @@ import play.api.Play.current
 class Feeds {
 
   val conf = ConfigFactory.load()
-  val zkHost = conf.getString("kafka.zookeeper.host")
-  val zkPort = conf.getInt("kafka.zookeeper.port")
-  val zkBaseUri = s"$zkHost:$zkPort"
+  val zkConnect = conf.getString("kafka.zookeeper.connect")
   var feedsParent : ActorRef = _
 
   def startFeedsParent() : ActorRef = {
@@ -26,7 +24,7 @@ class Feeds {
 
   def startFeeds = {
 
-    feedsParent ! StartFeeds(zkConfig = zkBaseUri)
+    feedsParent ! StartFeeds(zkConnect = zkConnect)
 
   }
 
