@@ -18,7 +18,7 @@ case class AddBackend(vrn: String) extends LbMessage
 case class AddBackendServer( host: String, port: Int, vrn: String, backend: String, weight: Int = 0) extends LbMessage
 case class RemoveBackendServer( vrn: String) extends LbMessage
 
-case class AddFrontendBackend(vrn: String, port: Int) extends LbMessage
+case class AddFrontendBackend(vrn: String, port: Int, mode: String) extends LbMessage
 case class RemoveFrontendBackend( vrn: String) extends LbMessage
 
 
@@ -86,7 +86,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
 
       }
 
-    case AddFrontendBackend(vrn,port) =>
+    case fb: AddFrontendBackend =>
 
       originalSender = sender()
 
@@ -97,8 +97,8 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
           log.debug("Current load balancer configuration is: " + config.toString)
 
           val dummyBackendServer = BackendServer("dummy-vrn", "127.0.0.1", 9999, 0, None, None, None)
-          val newBackend = Backend(vrn, List(dummyBackendServer), Map("transparent" -> false))
-          val newFrontend = Frontend(vrn, port, "0.0.0.0", vrn, Map("transparent" -> false))
+          val newBackend = Backend(fb.vrn, fb.mode, List(dummyBackendServer), Map("transparent" -> false))
+          val newFrontend = Frontend(fb.vrn, fb.mode, fb.port, "0.0.0.0", fb.vrn, Map("transparent" -> false))
 
           val _newConf = Configuration.addBackend(config, newBackend)
           val newConf = Configuration.addFrontend(_newConf, newFrontend)

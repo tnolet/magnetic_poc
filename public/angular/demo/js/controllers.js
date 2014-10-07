@@ -144,7 +144,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
             modalInstance.result.then(function(formData) {
                 var serviceObject = {};
-                serviceObject.port = formData.port;
                 serviceObject.environmentId = parseInt(formData.environmentId);
                 serviceObject.serviceTypeId = parseInt(formData.serviceTypeId);
 

@@ -15,7 +15,7 @@ import scala.collection.mutable
 
 
 //events for deploying
-case class SubmitServiceDeployment(vrn: String, service: ServiceCreate) extends DeployEvent
+case class SubmitServiceDeployment(vrn: String, port: Int, mode: String) extends DeployEvent
 
 // events for undeploying
 case class SubmitServiceUnDeployment(service: Service) extends DeployEvent
@@ -29,8 +29,10 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
   private var jobExecutor: ActorRef = _
   private var vrn: String = _
   private var port: Int = _
+  private var mode: String = _
   private var eventType: String = _
   private var service : Service = _
+
 
   val lbManager = context.actorSelection("akka://application/user/lbManager")
 
@@ -47,7 +49,8 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
       jobExecutor = sender()
       vrn = deploy.vrn
-      port = deploy.service.port
+      port = deploy.port
+      mode = deploy.mode
       eventType = "serviceDeployment"
 
       log.info(s"Staging deployment of service $vrn")
@@ -191,7 +194,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
         // Todo: create more intermediate states in case of failure or port/naming collisions
         log.debug("Requesting update of load balancer")
-        lbManager ! AddFrontendBackend(vrn,port)
+        lbManager ! AddFrontendBackend(vrn = vrn, port = port, mode = mode)
 
         self ! RunExpose
     }

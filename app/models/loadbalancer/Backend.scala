@@ -6,6 +6,7 @@ import play.api.libs.json.Json
  * Created by tim on 04/09/14.
  */
 case class Backend ( name: String,
+                     mode: String,
                      servers: List[BackendServer],
                      options: Map[String,Boolean]) {
   def addServer(server: BackendServer) : Backend = this.copy(

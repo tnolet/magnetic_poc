@@ -3,6 +3,7 @@ package models.loadbalancer
 import play.api.libs.json.Json
 
 case class Frontend (name: String,
+                     mode: String,
                      bindPort: Int,
                      bindIp: String,
                      useBackend: String,

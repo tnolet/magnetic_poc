@@ -7,7 +7,7 @@ import akka.event.LoggingReceive
 import lib.job._
 import lib.util.date.TimeStamp
 import models.docker._
-import models.service.{Services, Service, ServiceCreate}
+import models.service._
 import models._
 import play.api.db.slick._
 import play.api.libs.json._
@@ -150,16 +150,24 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
           DB.withTransaction { implicit session =>
 
+            // determine a free port for this service
+            val freePort = Services.findFreePortByServiceType(deployable.service.serviceTypeId)
+
+            // get the http or tcp mode of the service from the type
+            val mode = ServiceTypes.findById(deployable.service.serviceTypeId).get.mode
+
             Services.insert(
               new Service(Option(0),
-                deployable.service.port,
+                freePort,
                 "INITIAL",
                 vrn,
                 deployable.service.environmentId,
                 deployable.service.serviceTypeId))
+
+            deployer ! SubmitServiceDeployment(vrn = vrn, port = freePort, mode = mode)
+
           }
 
-          deployer ! SubmitServiceDeployment(vrn,deployable.service)
     }
 
 

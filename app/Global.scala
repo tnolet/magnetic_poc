@@ -4,6 +4,7 @@ import actors.jobs.{CheckJobs, JobManagerActor}
 import actors.loadbalancer.LoadBalancerParentActor
 import akka.actor.Props
 import controllers.FeedsController
+import lib.discovery.MagneticServiceInstance
 import lib.feeds.Feeds
 import lib.marathon.Marathon
 import lib.mesos.Mesos
@@ -100,6 +101,16 @@ object Global extends GlobalSettings {
     // Start specific feeds
     feeds.startFeeds
 
+
+    /**
+     *
+     * EXPERIMENTAL SD
+     */
+
+
+    val service = MagneticServiceInstance(name = "myMagneticService2", host= "local", port = 8933, vrn = "vrn-development-")
+    val sd = new lib.discovery.Discovery
+    sd.registerService(service)
   }
 
 }
@@ -131,10 +142,11 @@ object InitialData {
       }
       if (ServiceTypes.count == 0 ) {
         Seq(
-          ServiceType(Option(1L),"search","1.0"),
-          ServiceType(Option(2L),"search","2.0"),
-          ServiceType(Option(3L),"cart","1.1"),
-          ServiceType(Option(4L),"load balancer","1.0")
+          ServiceType(id = Option(1L), name = "search", version = "1.0", mode = "http" , basePort = 21000),
+          ServiceType(id = Option(2L), name = "search", version = "2.0", mode = "http" , basePort = 21000),
+          ServiceType(id = Option(3L), name = "cart", version = "1.0", mode = "http" , basePort = 22000),
+          ServiceType(id = Option(4L), name = "memcached", version = "1.0", mode = "tcp" , basePort = 11211),
+          ServiceType(id = Option(5L), name = "mySQL", version = "1.0", mode = "tcp" , basePort = 23306)
         ).foreach(ServiceTypes.insert)
       }
     }

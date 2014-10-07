@@ -87,6 +87,7 @@ object Configuration {
     // Pump all he backends in to a new List, while filtering out the unwanted server
   val newBackends : List[Backend] = for ( backend <- conf.backends ) yield {
     Backend(backend.name,
+            backend.mode,
             backend.servers.filter(srv => srv.name != serverVrn),
             backend.options
     )

@@ -6,15 +6,19 @@ import scala.slick.lifted.Tag
 
 case class ServiceType(id: Option[Long],
                     name: String,
-                    version: String)
+                    version: String,
+                    mode: String,    // "tcp" or "http"
+                    basePort: Int)
 
 class ServiceTypes(tag: Tag) extends Table[ServiceType](tag, "SERVICE_TYPES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def name = column[String]("name", O.NotNull)
   def version = column[String]("version", O.NotNull)
+  def mode = column[String]("mode", O.NotNull)
+  def basePort = column[Int]("basePort", O.NotNull)
 
-  def * = (id.?, name, version)  <> (ServiceType.tupled, ServiceType.unapply _)
+  def * = (id.?, name, version, mode, basePort)  <> (ServiceType.tupled, ServiceType.unapply _)
 
 }
 
