@@ -2,6 +2,7 @@ package lib.marathon
 
 import com.typesafe.config.ConfigFactory
 import models.docker.DockerImage
+import models.marathon.{MarathonApp, Docker, MarathonAppJson}
 import play.api.libs.ws.WS
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -17,6 +18,7 @@ import play.api.libs.json._
 object Marathon {
 
   import play.api.Play.current
+
 
   val conf = ConfigFactory.load()
   val marathonHost = conf.getString("marathon.host")
@@ -48,23 +50,14 @@ object Marathon {
    * @param image a Docker image, represented by [[DockerImage]]
    */
   def submitContainer(vrn: String, image: DockerImage) : Future[Int] = {
-    val data = Json.parse(s"""
-                            {
-                                "container": {
-                                    "type": "DOCKER",
-                                    "docker": {
-                                        "image": "${image.repo}"
-                                    }
-                              },
-                              "id": "$vrn",
-                              "instances": "0",
-                              "cpus": "0.2",
-                              "mem": "512",
-                              "ports": [0],
-                              "cmd": "${image.arguments}"
-                              }
-                    """)
-     WS.url(s"$marathonApi/apps").post(data).map {
+
+    import MarathonAppJson.MarathonAppWrites
+
+
+    val app = Json.toJson(MarathonApp.simpleAppBuilder(vrn, image.repo,0))
+    println(Json.stringify(app))
+
+     WS.url(s"$marathonApi/apps").post(app).map {
        case response => response.status
      }
   }
@@ -75,23 +68,12 @@ object Marathon {
    * @param image a Docker image, represented by [[DockerImage]]
    */
   def stageContainer(vrn: String, image: DockerImage) : Future[Int] = {
-    val data = Json.parse(s"""
-                            {
-                                "container": {
-                                    "type": "DOCKER",
-                                    "docker": {
-                                        "image": "${image.repo}"
-                                    }
-                              },
-                              "id": "$vrn",
-                              "instances": "1",
-                              "cpus": "0.2",
-                              "mem": "512",
-                              "ports": [0],
-                              "cmd": "${image.arguments}"
-                              }
-                    """)
-    WS.url(s"$marathonApi/apps/$vrn").put(data).map {
+
+    import MarathonAppJson.MarathonAppWrites
+
+    val app = Json.toJson(MarathonApp.simpleAppBuilder(vrn, image.repo,1))
+
+    WS.url(s"$marathonApi/apps/$vrn").put(app).map {
       case response => response.status
     }
   }
@@ -103,6 +85,7 @@ object Marathon {
    * @return a Future for return code
    */
   def scaleContainer(vrn: String, amount: Long) : Future[Int] = {
+
 
     val data = Json.parse(s"""{
                             "instances" : ${amount.toInt}

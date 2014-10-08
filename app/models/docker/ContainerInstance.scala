@@ -118,7 +118,7 @@ object ContainerInstances {
    * @param weight the weight of the container in the load balancer configuration
    */
 
-  @deprecated
+  @deprecated("will be deleted","oct 1")
   def updateWeightByContainerId(id: Long, weight: Int)(implicit s: Session) {
     instances.filter(_.id === id)
       .map(config => (config.weight))
