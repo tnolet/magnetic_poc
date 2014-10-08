@@ -1,9 +1,12 @@
 package lib.discovery
 
 import com.typesafe.config.ConfigFactory
+import org.apache.curator.CuratorConnectionLossException
 import org.apache.curator.framework.CuratorFrameworkFactory
 import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.curator.x.discovery.{ServiceInstance, UriSpec, ServiceDiscoveryBuilder}
+import org.apache.zookeeper.KeeperException.ConnectionLossException
+import play.api.Logger
 
 /**
  * The Zookeeper class takes care of communicating with Zookeeper for service discovery
@@ -20,14 +23,35 @@ class Discovery {
 
   val retryPolicy = new ExponentialBackoffRetry(1000, 3)
   val zkClient = CuratorFrameworkFactory.newClient(zkConnect,retryPolicy)
-  zkClient.start()
+
+  try {
+
+    zkClient.start()
+
+  } catch {
+
+    case cle : CuratorConnectionLossException => Logger.error("Connection to Zookeeper lost")
+    case e : Exception => Logger.error("Error connection to Zookeeper")
+
+  } finally {
+
+
+  }
 
   val serviceDiscovery =  ServiceDiscoveryBuilder
     .builder(null)
     .client(zkClient)
     .basePath(zkRoot)
     .build()
-  serviceDiscovery.start()
+
+  try {
+    serviceDiscovery.start()
+
+  } catch {
+
+    case cl : ConnectionLossException => Logger.error("Error connecting to Zookeeper for service")
+
+  }
 
 
   def registerService(srv: MagneticServiceInstance) = {
@@ -40,7 +64,14 @@ class Discovery {
       .id(srv.vrn)
       .build()
 
-    serviceDiscovery.registerService(instance)
+    try {
+
+      serviceDiscovery.registerService(instance)
+
+    } catch {
+
+     case cl : ConnectionLossException => Logger.error("Connection lost to Zookeeper")
+    }
 
 
   }

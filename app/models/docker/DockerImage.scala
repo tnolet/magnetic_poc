@@ -6,7 +6,13 @@ import play.api.libs.json.Json
 import scala.slick.lifted.Tag
 
 
-case class DockerImage(id: Option[Long], name: String, repo: String,version: String, arguments: String)
+case class DockerImage(id: Option[Long],
+                       name: String,
+                       repo: String,
+                       version: String,
+                       port: Int = 0,
+                       mode: String = "http",
+                       arguments: String)
 
 class DockerImages(tag: Tag) extends Table[DockerImage](tag, "DOCKER_IMAGE") {
 
@@ -14,9 +20,11 @@ class DockerImages(tag: Tag) extends Table[DockerImage](tag, "DOCKER_IMAGE") {
   def name = column[String]("name", O.NotNull)
   def repo = column[String]("repo", O.NotNull)
   def version = column[String]("version", O.NotNull)
+  def port = column[Int]("port")
+  def mode = column[String]("mode", O.NotNull)
   def arguments = column[String]("arguments")
 
-  def * = (id.?, name, repo, version, arguments) <> (DockerImage.tupled, DockerImage.unapply _)
+  def * = (id.?, name, repo, version, port,mode, arguments) <> (DockerImage.tupled, DockerImage.unapply _)
 }
 
 object DockerImages {

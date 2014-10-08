@@ -159,6 +159,7 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
             Services.insert(
               new Service(Option(0),
                 freePort,
+                mode,
                 "INITIAL",
                 vrn,
                 deployable.service.environmentId,

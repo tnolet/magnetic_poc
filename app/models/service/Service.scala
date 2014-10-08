@@ -10,6 +10,7 @@ import play.api.libs.functional.syntax._
 
 case class Service(id: Option[Long],
                    port: Int,
+                   mode: String,
                    state: String,
                    vrn: String,
                    environmentId: Long,
@@ -19,6 +20,7 @@ case class ServiceCreate(environmentId: Long, serviceTypeId: Long)
 
 case class ServiceResult(id: Option[Long],
                          port: Int,
+                         mode: String,
                          state : String,
                          vrn: String,
                          serviceTypeId: Long,
@@ -29,6 +31,7 @@ class Services(tag: Tag) extends Table[Service](tag, "SERVICES") {
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def port = column[Int]("port", O.NotNull)
+  def mode = column[String]("mode", O.NotNull)
   def state = column[String]("state", O.NotNull)
   def vrn = column[String]("vrn", O.NotNull)
   def environmentId = column[Long]("environmentId")
@@ -37,7 +40,7 @@ class Services(tag: Tag) extends Table[Service](tag, "SERVICES") {
   def environment = foreignKey("ENV_FK", environmentId, Environments.environments)(_.id)
   def serviceType = foreignKey("SERVICE_TYPE_FK", serviceTypeId, ServiceTypes.serviceTypes)(_.id)
 
-  def * = (id.?, port,   state, vrn, environmentId, serviceTypeId)  <> (Service.tupled, Service.unapply _)
+  def * = (id.?, port, mode, state, vrn, environmentId, serviceTypeId)  <> (Service.tupled, Service.unapply _)
 
 }
 

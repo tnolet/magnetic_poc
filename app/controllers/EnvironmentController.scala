@@ -41,7 +41,7 @@ object EnvironmentController extends Controller {
              DockerContainerResult.createResult(cnt, instances)
 
           })
-          ServiceResult(srv.id,srv.port,srv.state, srv.vrn,srv.serviceTypeId,containersResult)
+          ServiceResult(srv.id,srv.port, srv.mode, srv.state, srv.vrn,srv.serviceTypeId,containersResult)
           }
         )
 

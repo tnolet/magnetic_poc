@@ -12,6 +12,8 @@ import lib.loadbalancer.LoadBalancer
 
 import models.docker.{DockerImages, DockerImage}
 import models.service.{ServiceType, ServiceTypes}
+import org.apache.curator.CuratorConnectionLossException
+import org.apache.zookeeper.KeeperException.ConnectionLossException
 import play.api._
 import play.api.libs.concurrent.Akka
 import models._
@@ -95,11 +97,11 @@ object Global extends GlobalSettings {
     val lbSystem = Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
 
     // Start the feeds system
-    val feeds = new Feeds
-    feeds.startFeedsParent()
+   // val feeds = new Feeds
+   // feeds.startFeedsParent()
 
     // Start specific feeds
-    feeds.startFeeds
+  //  feeds.startFeeds
 
 
     /**
@@ -110,7 +112,9 @@ object Global extends GlobalSettings {
 
     val service = MagneticServiceInstance(name = "myMagneticService2", host= "local", port = 8933, vrn = "vrn-development-")
     val sd = new lib.discovery.Discovery
+
     sd.registerService(service)
+
   }
 
 }
@@ -121,13 +125,13 @@ object InitialData {
     DB.withSession{ implicit s: Session =>
       if (DockerImages.count == 0) {
         Seq(
-          DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",""),
-          DockerImage(Option(2L), "mesos_test", "tnolet/mesos-tester","2.0",""),
-          DockerImage(Option(3L), "busybox","busybox","latest","""/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""""),
-          DockerImage(Option(4L), "hello", "tnolet/hello","latest",""),
-          DockerImage(Option(5L), "haproxy-test", "tnolet/haproxy-rest","latest",""),
-          DockerImage(Option(6L), "memchached", "sylvainlasnier/memcached","latest",""),
-          DockerImage(Option(7L), "mariaDB", "paintedfox/mariadb","latest","")
+          DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",0,"http",""),
+          DockerImage(Option(2L), "mesos_test", "tnolet/mesos-tester","2.0",0,"http",""),
+          DockerImage(Option(3L), "busybox","busybox","latest",0,"http","""/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""""),
+          DockerImage(Option(4L), "hello", "tnolet/hello","latest",0,"http",""),
+          DockerImage(Option(5L), "haproxy-test", "tnolet/haproxy-rest","latest",0,"http",""),
+          DockerImage(Option(6L), "memchached", "sylvainlasnier/memcached","latest",11211,"tcp",""),
+          DockerImage(Option(7L), "mariaDB", "paintedfox/mariadb","latest",3306,"tcp","")
         )
           .foreach(DockerImages.insert)
       }

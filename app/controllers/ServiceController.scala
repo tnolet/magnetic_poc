@@ -45,7 +45,7 @@ object ServiceController extends Controller {
           val instances =  ContainerInstances.findByContainerId(cnt.id.get)
           DockerContainerResult.createResult(cnt, instances)
         })
-        val servRes = ServiceResult(srv.id,srv.port,srv.state, srv.vrn,srv.serviceTypeId,containersResult)
+        val servRes = ServiceResult(srv.id,srv.port, srv.mode,srv.state, srv.vrn,srv.serviceTypeId,containersResult)
 
         Ok(Json.toJson(servRes))
       case None => NotFound("No service found")

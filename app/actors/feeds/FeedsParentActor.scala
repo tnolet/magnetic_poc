@@ -3,6 +3,7 @@ package actors.feeds
 import akka.actor.{Props, Actor, ActorLogging}
 import com.sclasen.akka.kafka.{AkkaConsumer, AkkaConsumerProps, CommitConfig}
 import kafka.serializer.{StringDecoder, DefaultDecoder}
+import org.I0Itec.zkclient.exception.ZkTimeoutException
 import scala.concurrent.duration._
 /**
 * FeedsParentActor functions as the parent to all actors communicating with Kafka and other feeds suppliers
@@ -43,7 +44,13 @@ class FeedsParentActor extends Actor with ActorLogging {
       )
 
       val lbFeedsConsumer = new AkkaConsumer(consumerProps)
-      lbFeedsConsumer.start()
+      try {
+        lbFeedsConsumer.start()
+
+      } catch {
+
+        case zkt: ZkTimeoutException => log.error("Connecting to Zookeeper for feeds failed")
+      }
 
   }
 

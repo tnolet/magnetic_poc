@@ -252,7 +252,8 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
           sendStateUpdate(state)
 
-          Marathon.submitContainer(vrn, image).map(
+          // firt submit to Marathon so we can catch any early errors before scaling to > 0 instances
+          Marathon.submitContainer(vrn, image, 0).map(
             i => {
               if (i < 399) {
                 // Marathon reports everything is OK
@@ -277,7 +278,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
           sendStateUpdate(state)
 
-          Marathon.stageContainer(vrn, image).map(
+          Marathon.submitContainer(vrn, image, 1).map(
             i => {
               if (i < 399) {
                 

@@ -44,38 +44,36 @@ object Marathon {
 
 
   /**
-   * Submit a Docker image and all its meta-data to Marathon, but with 0 instances. This helps us check for errors and
-   * delay the actual start up.
+   * Submit a Docker image and all its meta-data to Marathon.
    * @param vrn an unique name for this resource based on [[lib.util.vamp.Naming.createVrn()]]
    * @param image a Docker image, represented by [[DockerImage]]
+   * @param instanceAmount the amount of instances to start up
    */
-  def submitContainer(vrn: String, image: DockerImage) : Future[Int] = {
+  def submitContainer(vrn: String, image: DockerImage, instanceAmount: Int) : Future[Int] = {
 
     import MarathonAppJson.MarathonAppWrites
 
 
-    val app = Json.toJson(MarathonApp.simpleAppBuilder(vrn, image.repo,0))
-    println(Json.stringify(app))
+    /**
+     * Container with HTTP based coms are started as non-bridged Docker container.
+     * For this we use the [[models.marathon.MarathonApp.simpleAppBuilder]]
+     */
+
+    val app = image.mode match {
+
+      case "http" =>
+
+        Json.toJson(MarathonApp.simpleAppBuilder(vrn, image.repo,instanceAmount))
+
+      case "tcp" =>
+
+        Json.toJson(MarathonApp.bridgedAppBuilder(vrn, image.repo, image.port, instanceAmount))
+
+    }
 
      WS.url(s"$marathonApi/apps").post(app).map {
        case response => response.status
      }
-  }
-
-  /**
-   * Submit a Docker image and all its meta-data to Marathon and start the staging process.
-   * @param vrn a unique name for this resource based on [[lib.util.vamp.Naming.createVrn()]]
-   * @param image a Docker image, represented by [[DockerImage]]
-   */
-  def stageContainer(vrn: String, image: DockerImage) : Future[Int] = {
-
-    import MarathonAppJson.MarathonAppWrites
-
-    val app = Json.toJson(MarathonApp.simpleAppBuilder(vrn, image.repo,1))
-
-    WS.url(s"$marathonApi/apps/$vrn").put(app).map {
-      case response => response.status
-    }
   }
 
   /**

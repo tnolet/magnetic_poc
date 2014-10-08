@@ -204,6 +204,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     $scope.vrn = data.vrn;
                     $scope.containers = data.containers;
                     $scope.port = data.port;
+                    $scope.mode = data.mode;
                     loadBalancerMetricsFeed.register(metricsFilterFE);
                     loadBalancerMetricsFeed.register(metricsFilterBE);
                   //  $scope.updateModel()

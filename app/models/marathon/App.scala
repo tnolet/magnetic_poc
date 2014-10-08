@@ -10,9 +10,9 @@ import play.api.libs.json._
 case class Constraint(attribute: String, operator: String, value: String)
 
 case class PortMapping(
-                        containerPort: Double,
-                        hostPort: Double,
-                        servicePort: Double,
+                        containerPort: Int,
+                        hostPort: Int = 0,
+                        servicePort: Int = 9000,
                         protocol: String
                         )
 
@@ -54,8 +54,8 @@ case class MarathonApp(
                            cmd: String = "",
                            args: List[String] = List(),
                            container: Container,
-                           cpus: Double = 0.2,
-                           mem: Double = 512,
+                           cpus: Double = 1,
+                           mem: Double = 1024,
                            disk: Double = 0,
                            env: Option[List[Map[String,String]]] = None,
                            constraints: List[Constraint] = List(),
@@ -85,6 +85,22 @@ object MarathonApp  {
 
   }
 
+  /**
+   * Helper that builds a marathon app based on bridged Docker instances.
+   * See: https://mesosphere.github.io/marathon/docs/native-docker.html
+   * @param appId the id of the app. Should be a VRN
+   * @param appImage the Docker image to deploy
+   * @param instanceAmount number of instances
+   * @return
+   */
+  def bridgedAppBuilder(appId: String, appImage: String, port: Int, instanceAmount: Int) : MarathonApp = {
+
+    val portMap = PortMapping( containerPort = port, protocol = "tcp" )
+    val docker = Docker( image = appImage, network = Some("BRIDGE"), portMappings = List(portMap))
+    val container = Container( docker = docker)
+    MarathonApp( id = appId, container = container, instances = instanceAmount)
+
+  }
 }
 
 object MarathonAppJson {
