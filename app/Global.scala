@@ -4,7 +4,6 @@ import actors.jobs.{CheckJobs, JobManagerActor}
 import actors.loadbalancer.LoadBalancerParentActor
 import akka.actor.Props
 import controllers.FeedsController
-import lib.discovery.MagneticServiceInstance
 import lib.feeds.Feeds
 import lib.marathon.Marathon
 import lib.mesos.Mesos
@@ -12,8 +11,6 @@ import lib.loadbalancer.LoadBalancer
 
 import models.docker.{DockerImages, DockerImage}
 import models.service.{ServiceType, ServiceTypes}
-import org.apache.curator.CuratorConnectionLossException
-import org.apache.zookeeper.KeeperException.ConnectionLossException
 import play.api._
 import play.api.libs.concurrent.Akka
 import models._
@@ -97,26 +94,13 @@ object Global extends GlobalSettings {
     val lbSystem = Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
 
     // Start the feeds system
-   // val feeds = new Feeds
-   // feeds.startFeedsParent()
+   //val feeds = new Feeds
+   //feeds.startFeedsParent()
 
-    // Start specific feeds
-  //  feeds.startFeeds
-
-
-    /**
-     *
-     * EXPERIMENTAL SD
-     */
-
-
-    val service = MagneticServiceInstance(name = "myMagneticService2", host= "local", port = 8933, vrn = "vrn-development-")
-    val sd = new lib.discovery.Discovery
-
-    sd.registerService(service)
+    //Start specific feeds
+    //feeds.startFeeds
 
   }
-
 }
 
 object InitialData {
@@ -130,7 +114,7 @@ object InitialData {
           DockerImage(Option(3L), "busybox","busybox","latest",0,"http","""/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""""),
           DockerImage(Option(4L), "hello", "tnolet/hello","latest",0,"http",""),
           DockerImage(Option(5L), "haproxy-test", "tnolet/haproxy-rest","latest",0,"http",""),
-          DockerImage(Option(6L), "memchached", "sylvainlasnier/memcached","latest",11211,"tcp",""),
+          DockerImage(Option(6L), "memcached", "sylvainlasnier/memcached","latest",11211,"tcp",""),
           DockerImage(Option(7L), "mariaDB", "paintedfox/mariadb","latest",3306,"tcp","")
         )
           .foreach(DockerImages.insert)
@@ -153,7 +137,9 @@ object InitialData {
           ServiceType(id = Option(2L), name = "search", version = "2.0", mode = "http" , basePort = 21000),
           ServiceType(id = Option(3L), name = "cart", version = "1.0", mode = "http" , basePort = 22000),
           ServiceType(id = Option(4L), name = "cache", version = "1.0", mode = "tcp" , basePort = 11211),
-          ServiceType(id = Option(5L), name = "database", version = "1.0", mode = "tcp" , basePort = 23306)
+          ServiceType(id = Option(5L), name = "database", version = "1.0", mode = "tcp" , basePort = 23306),
+          ServiceType(id = Option(5L), name = "localproxy", version = "1.0", mode = "htpp" , basePort = 10002, systemService = true),
+          ServiceType(id = Option(5L), name = "loadbalancer", version = "1.0", mode = "http" , basePort = 10001, systemService = true)
         ).foreach(ServiceTypes.insert)
       }
     }

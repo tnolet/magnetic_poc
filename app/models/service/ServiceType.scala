@@ -8,7 +8,9 @@ case class ServiceType(id: Option[Long],
                     name: String,
                     version: String,
                     mode: String,    // "tcp" or "http"
-                    basePort: Int)
+                    basePort: Int,
+                    systemService: Boolean = false
+                        )
 
 class ServiceTypes(tag: Tag) extends Table[ServiceType](tag, "SERVICE_TYPES") {
 
@@ -17,8 +19,9 @@ class ServiceTypes(tag: Tag) extends Table[ServiceType](tag, "SERVICE_TYPES") {
   def version = column[String]("version", O.NotNull)
   def mode = column[String]("mode", O.NotNull)
   def basePort = column[Int]("basePort", O.NotNull)
+  def systemService = column[Boolean]("systemService", O.NotNull)
 
-  def * = (id.?, name, version, mode, basePort)  <> (ServiceType.tupled, ServiceType.unapply _)
+  def * = (id.?, name, version, mode, basePort, systemService)  <> (ServiceType.tupled, ServiceType.unapply _)
 
 }
 
