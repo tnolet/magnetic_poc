@@ -1,7 +1,7 @@
 package models.service
 
 import models.Environments
-import models.docker.{DockerContainerResult, DockerContainer}
+import models.docker.{ContainerInstances, DockerContainers, DockerContainerResult, DockerContainer}
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
@@ -22,6 +22,8 @@ case class ServiceResult(id: Option[Long],
                          port: Int,
                          mode: String,
                          state : String,
+                         serviceType: String,
+                         version: String,
                          vrn: String,
                          serviceTypeId: Long,
                          containers: List[DockerContainerResult]
@@ -48,7 +50,10 @@ object Services {
 
   val services = TableQuery[Services]
 
-  def all(implicit s: Session): List[Service] = services.list
+  def all(implicit s: Session): List[ServiceResult] = services.list.map ( srv =>
+
+    findDetailsById(srv.id.get).get
+  )
 
   /**
    * count returns the amount of Services
@@ -70,19 +75,48 @@ object Services {
   def findById(id: Long)(implicit s: Session) =
     services.filter(_.id === id).firstOption
 
+
+  /**
+   * Retrieve a Service and its underpinning dependencies based on its id
+   * @param id unique id for this Service
+   */
+  def findDetailsById(id: Long)(implicit s: Session) : Option[ServiceResult] = {
+    services.filter(_.id === id).firstOption.map( srv =>  {
+
+      val srvType  = ServiceTypes.findById(srv.serviceTypeId).get
+      val containers : List[DockerContainer] =  DockerContainers.findByServiceId(srv.id.get)
+
+      val containersResult : List[DockerContainerResult] = containers.map (cnt => {
+        val instances =  ContainerInstances.findByContainerId(cnt.id.get)
+        DockerContainerResult.createResult(cnt, instances)
+      })
+
+       ServiceResult(srv.id,srv.port, srv.mode,srv.state,srvType.name, srvType.version, srv.vrn,srv.serviceTypeId,containersResult)
+
+    })
+  }
+
   /**
    * Retrieve services based the service type it is associated with
    * @param id unique id for the [[ServiceType]]
    */
-  def findByServiceTypeId(id: Long)(implicit s: Session) =
-    services.filter(_.serviceTypeId === id).list
+  def findByServiceTypeId(id: Long)(implicit s: Session) : List[ServiceResult] =
+    services.filter(_.serviceTypeId === id).list.map ( srv =>
+
+      findDetailsById(srv.id.get).get
+    )
+
 
   /**
    * Retrieve services based on the environment it is associated with
    * @param id unique id for the [[models.Environment]]
    */
   def findByEnvironmentId(id: Long)(implicit s: Session) =
-    services.filter(_.environmentId === id).list
+    services.filter(_.environmentId === id).list.map ( srv =>
+
+      findDetailsById(srv.id.get).get
+
+    )
 
 
   /**

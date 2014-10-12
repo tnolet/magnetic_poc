@@ -188,6 +188,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     $scope.containers = data.containers;
                     $scope.port = data.port;
                     $scope.mode = data.mode;
+                    $scope.serviceType = data.serviceType;
+                    $scope.version = data.version;
                     loadBalancerMetricsFeed.register(metricsFilterFE);
                     loadBalancerMetricsFeed.register(metricsFilterBE);
                 }

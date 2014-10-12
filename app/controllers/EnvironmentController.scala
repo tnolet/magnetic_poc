@@ -12,6 +12,8 @@ import play.api.libs.functional.syntax._
 
 object EnvironmentController extends Controller {
 
+  import models.service.ServiceJson.ServiceResultWrites
+
   import models.EnvironmentJson.envWrites
 
   def list = DBAction { implicit rs =>
@@ -30,22 +32,8 @@ object EnvironmentController extends Controller {
 
       case Some(env : Environment) =>
 
-        val services : List[Service] = Services.findByEnvironmentId(env.id.get)
-
-        val servicesWithContainers : List[ServiceResult] = services.map( srv => {
-
-          val containers : List[DockerContainer] =  DockerContainers.findByServiceId(srv.id.get)
-
-          val containersResult : List[DockerContainerResult] = containers.map (cnt => {
-             val instances =  ContainerInstances.findByContainerId(cnt.id.get)
-             DockerContainerResult.createResult(cnt, instances)
-
-          })
-          ServiceResult(srv.id,srv.port, srv.mode, srv.state, srv.vrn,srv.serviceTypeId,containersResult)
-          }
-        )
-
-        val envResult  = EnvironmentResult(env.id,env.name,env.state,servicesWithContainers)
+        val services : List[ServiceResult] = Services.findByEnvironmentId(env.id.get)
+        val envResult  = EnvironmentResult(env.id,env.name,env.state,services)
         Ok(Json.toJson(envResult))
 
       case None => NotFound("No such environment found")

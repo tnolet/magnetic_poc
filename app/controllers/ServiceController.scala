@@ -23,7 +23,7 @@ object ServiceController extends Controller {
 
   import models.service.ServiceJson.ServiceWrites
   import models.service.ServiceJson.ServiceReads
-
+  import models.service.ServiceJson.ServiceResultWrites
 
   def list = DBAction { implicit rs =>
     val services = Services.all
@@ -32,25 +32,14 @@ object ServiceController extends Controller {
 
   def find_by_id(id: Long) = DBAction { implicit rs =>
 
-    import models.service.ServiceJson.ServiceResultWrites
-
-    val service = Services.findById(id)
-
-    service match {
-      case Some(srv: Service) =>
-
-        val containers : List[DockerContainer] =  DockerContainers.findByServiceId(srv.id.get)
-
-        val containersResult : List[DockerContainerResult] = containers.map (cnt => {
-          val instances =  ContainerInstances.findByContainerId(cnt.id.get)
-          DockerContainerResult.createResult(cnt, instances)
-        })
-        val servRes = ServiceResult(srv.id,srv.port, srv.mode,srv.state, srv.vrn,srv.serviceTypeId,containersResult)
-
-        Ok(Json.toJson(servRes))
-      case None => NotFound("No service found")
+   val srv = Services.findDetailsById(id)
+    srv match {
+      case Some(service: ServiceResult) => Ok(Json.toJson(service))
+      case None => NotFound("No such service found")
     }
   }
+
+
 
   def find_containers_by_id(id: Long) = DBAction { implicit rs =>
 

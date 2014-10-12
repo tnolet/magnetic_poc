@@ -33,7 +33,7 @@ object ServiceTypeController extends Controller {
 
   def find_services_by_servicetype_id(id: Long) = DBAction { implicit rs =>
 
-    import models.service.ServiceJson.ServiceWrites
+    import models.service.ServiceJson.ServiceResultWrites
 
     val services = Services.findByServiceTypeId(id)
     Ok(Json.toJson(services))

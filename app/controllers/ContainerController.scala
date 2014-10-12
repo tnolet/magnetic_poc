@@ -17,9 +17,25 @@ object ContainerController extends Controller {
   import models.docker.DockerContainerJson.containerReads
   import models.docker.DockerContainerJson.containerWrites
 
-  def list = DBAction { implicit rs =>
-    val containers = DockerContainers.all
-    Ok(Json.toJson(containers))
+  /**
+   * List all the container.
+   * @param imageId filter on imageId, listing only containers deployed from a specific image
+   * @return
+   */
+  def list(imageId: Option[Long]) = DBAction { implicit rs =>
+
+
+     imageId match {
+      case Some(id: Long) =>
+
+        val containers = DockerContainers.findByImageId(id)
+        Ok(Json.toJson(containers))
+
+      case None =>
+        val containers = DockerContainers.all
+        Ok(Json.toJson(containers))
+    }
+
   }
 
   def find_by_id(id: Long) = DBAction { implicit rs =>
