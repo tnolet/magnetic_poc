@@ -167,12 +167,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             var metricsFilterFE = function(metricData){
                 var filterMetricData = metricData.filter( function( obj ){ return obj.pxname == $scope.vrn && obj.svname == 'FRONTEND'})
                 $scope.$apply($scope.metricsFE = filterMetricData[0])
-
-
                  $scope.metrics = parseInt(filterMetricData[0].req_rate)
-
-
-
             };
 
             var metricsFilterBE = function(metricData){
@@ -185,19 +180,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
             };
 
-            $scope.updateModel = function(){
 
-                $timeout(function() {
-
-                $http.get('http://localhost:9000/services/' + $stateParams.serviceId).
-                    success(function(data) {
-                        $scope.containers = data.containers;
-                    });
-
-                    $scope.updateModel();
-
-                }, 1000)
-            };
             // initialise the controller with all basic info
             $http.get('http://localhost:9000/services/' + $stateParams.serviceId).
                 success(function(data) {
@@ -207,7 +190,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     $scope.mode = data.mode;
                     loadBalancerMetricsFeed.register(metricsFilterFE);
                     loadBalancerMetricsFeed.register(metricsFilterBE);
-                  //  $scope.updateModel()
                 }
             );
 
@@ -274,6 +256,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         var metricsFilter = function(metricData){
             var filterMetricData = metricData.filter( function( obj ){ return $scope.instanceVrns().indexOf(obj.svname) > -1});
+            console.log(filterMetricData)
             aggregateMetrics(filterMetricData)
         };
 
@@ -474,8 +457,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     .controller('ImagesListItemCtrl',[ '$scope', '$stateParams','$http', '$modal', function ($scope, $stateParams, $http, $modal) {
 
 
-
-
         // deploys an image to a specific service
         // parameter: id     id of the image
         // parameter: vrn   vrn of the service
@@ -506,6 +487,23 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
 
     }])
+
+    .controller('ImagesDetailCtrl',[ '$scope', '$stateParams','$http', '$modal', function ($scope, $stateParams, $http, $modal) {
+//       get details for this image
+        $http.get('http://localhost:9000/images/' + $stateParams.imageId).
+            success(function(data) {
+                $scope.image = data;
+            });
+
+        // also grab all containers that are based on this image
+
+        $http.get('http://localhost:9000/containers?image=' + $stateParams.imageId).
+            success(function(data) {
+                $scope.containers = data;
+            });
+
+    }])
+
 
 
 

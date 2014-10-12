@@ -9,13 +9,36 @@
 
     <!-- / header-->
 
-    <div class="wrapper">
-            <h3>{{image.repo}}</h3>
-            <h5>{{image.version}}</h5>
-            <h5>{{image.attributes}}</h5>
+    <!-- body-->
 
+    <div class="panel">
+        <div class="wrapper-lg">
+            <h4 class="m-t-none">{{image.repo}}</h4>
+            <div class="line line-lg b-b b-light"></div>
+            <dl class="m-b">
+                <dt>repo</dt>
+                <dd>{{image.repo}}</dd>
+                <dt> version</dt>
+                <dd>{{image.version}}</dd>
+                <dt> mode</dt>
+                <dd>{{image.mode}}</dd>
+                <dt> arguments</dt>
+                <dd class="clearfix">{{image.arguments}}</dd>
+            </dl>
+            <div class="line line-lg b-b b-light"></div>
+
+    <!--container-->
+
+            <h4 class="m-t-none m-b">Containers</h4>
+            <ul class="list-group list-group-lg no-radius m-b-none m-t-n-xxs">
+                <li ng-repeat="container in containers" class="list-group-item clearfix b-l-3x ng-scope b-l-info">
+                    <div ng-include src="'demo/tpl/containers.list.item.html'"></div>
+                </li>
+            </ul>
+
+    <!--/ containers-->
+
+    <!--/ body-->
+        </div>
     </div>
-
-
-
 </div>

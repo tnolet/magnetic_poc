@@ -82,6 +82,18 @@ object DockerContainers {
     containers.filter(_.id === id).firstOption
 
   /**
+   * Retrieve a container from the id
+   * @param id the image's id
+   */
+  def findByImageId(id: Long)(implicit s: Session) =
+    DockerImages.findById(id).map( image =>
+
+      containers.filter(_.imageRepo === image.repo ).list
+
+    )
+
+
+  /**
    * Retrieve a container from the serviceId
    * @param id the service's id
    */
