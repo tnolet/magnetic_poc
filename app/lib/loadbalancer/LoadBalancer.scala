@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
- * Al basis, low level calls to the load balancer API. Uses by other functions and objects.
+ * Al basic, low level calls to the load balancer API. Uses by other functions and objects.
  */
 object LoadBalancer {
 

@@ -154,18 +154,19 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
             val freePort = Services.findFreePortByServiceType(deployable.service.serviceTypeId)
 
             // get the http or tcp mode of the service from the type
-            val mode = ServiceTypes.findById(deployable.service.serviceTypeId).get.mode
+            val servType = ServiceTypes.findById(deployable.service.serviceTypeId).get
+
 
             Services.insert(
               new Service(Option(0),
                 freePort,
-                mode,
+                servType.mode,
                 "INITIAL",
                 vrn,
                 deployable.service.environmentId,
                 deployable.service.serviceTypeId))
 
-            deployer ! SubmitServiceDeployment(vrn = vrn, port = freePort, mode = mode)
+            deployer ! SubmitServiceDeployment(servType = servType.name, vrn = vrn, port = freePort, mode = servType.mode)
 
           }
 
@@ -179,8 +180,11 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
     undeployable.read(job)
 
-    deployer ! SubmitServiceUnDeployment(undeployable.service)
+    DB.withSession { implicit session =>
 
+      val servType = ServiceTypes.findById(undeployable.service.serviceTypeId).get
+      deployer ! SubmitServiceUnDeployment(servType = servType, service = undeployable.service)
+    }
   }
 
   /**

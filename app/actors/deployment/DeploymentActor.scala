@@ -196,7 +196,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
       goto(WaitingDestroy) using newStateData
 
     case Event(LbFail, c: ContainerState) =>
-      val newStateData = c.copy("LIVE_WITH_FAILED_EXPOSURE")
+      val newStateData = c.copy("LIVE_WITH_FAILED_UNEXPOSURE")
       goto(Failed) using newStateData
 
     case Event(Fail, f: Failure) =>

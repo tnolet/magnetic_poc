@@ -1,18 +1,20 @@
 package lib.discovery
 
+
+import java.net.InetSocketAddress
+
 import com.typesafe.config.ConfigFactory
-import org.apache.curator.CuratorConnectionLossException
-import org.apache.curator.framework.CuratorFrameworkFactory
-import org.apache.curator.retry.ExponentialBackoffRetry
-import org.apache.curator.x.discovery.{ServiceInstance, UriSpec, ServiceDiscoveryBuilder}
-import org.apache.zookeeper.KeeperException.ConnectionLossException
 import play.api.Logger
+import com.loopfor.zookeeper._
+import scala.concurrent.duration._
+import play.api.libs.json.{JsValue, Json}
 
 /**
  * The Zookeeper class takes care of communicating with Zookeeper for service discovery
  */
 
-case class MagneticServiceInstance(name: String, host: String, port: Int, vrn: String)
+case class MagneticServiceInstance(serviceType: String, host: String, port: Int, vrn: String)
+
 
 class Discovery {
 
@@ -21,58 +23,79 @@ class Discovery {
   val zkConnect = conf.getString("discovery.zookeeper.connect")
   val zkRoot = conf.getString("discovery.zookeeper.root")
 
-  val retryPolicy = new ExponentialBackoffRetry(1000, 3)
-  val zkClient = CuratorFrameworkFactory.newClient(zkConnect,retryPolicy)
+  val config = Configuration {
 
-  try {
+    Seq[InetSocketAddress](("10.151.59.229", 2181),("10.101.29.217", 2181),("10.195.59.140",2181)) } withTimeout{ 60 seconds } withWatcher {(event, session) =>
 
-    zkClient.start()
-
-  } catch {
-
-    case cle : CuratorConnectionLossException => Logger.error("Connection to Zookeeper lost")
-    case e : Exception => Logger.error("Error connection to Zookeeper")
-
-  } finally {
-
+    Logger.info("Zookeeper event: " + event.toString)
 
   }
 
-  val serviceDiscovery =  ServiceDiscoveryBuilder
-    .builder(null)
-    .client(zkClient)
-    .basePath(zkRoot)
-    .build()
+  val client = SynchronousZookeeper(config)
 
-  try {
-    serviceDiscovery.start()
-
-  } catch {
-
-    case cl : ConnectionLossException => Logger.error("Error connecting to Zookeeper for service")
-
-  }
-
-
+  /**
+   * Registers a service in Zookeeper
+   * @param srv an instance of [[MagneticServiceInstance]]
+   */
   def registerService(srv: MagneticServiceInstance) = {
 
-    val builder = ServiceInstance.builder()
-    val instance : ServiceInstance[Nothing] = builder
-      .address(srv.host)
-      .port(srv.port)
-      .name(srv.name)
-      .id(srv.vrn)
-      .build()
+    implicit val instanceWrites = Json.writes[MagneticServiceInstance]
+
+    val zkMessage : JsValue = Json.obj(
+      "name" -> srv.vrn,
+      "bindPort" -> srv.port,
+      "endPoint" -> "123.123.123.123",
+      "mode" -> "tcp"
+
+  )
+
+    val data = Json.stringify(Json.toJson(zkMessage))
+    val bytes = data.map(_.toByte).toArray
+
+    val acl = new ACL(Id.Anyone, ACL.All)
+    val path = s"/$zkRoot/${srv.vrn}"
+
+
+    Logger.info(s"Creating zkNode: $path")
 
     try {
-
-      serviceDiscovery.registerService(instance)
+      client.create(path,bytes,List(acl),Persistent)
 
     } catch {
 
-     case cl : ConnectionLossException => Logger.error("Connection lost to Zookeeper")
+      case cle: ConnectionLossException => Logger.error("Lost connection to Zookeeper")
     }
 
+  }
 
+  /**
+   * delete a service from the registry
+   * @param vrn the vrn of the service instance
+   */
+  def unRegisterService(vrn: String) = {
+
+    val path = s"/$zkRoot/$vrn"
+
+    // if the node, for some reason, is not there,there is no reason to delete it
+    val directoryStatus : Option[Status]= client.exists(path)
+
+    directoryStatus match {
+
+      case Some(stat: Status) =>
+
+        Logger.info(s"Deleting zkNode: $path")
+
+        try {
+          client.delete(path,None)
+
+        } catch {
+          case cle: ConnectionLossException => Logger.error("Lost connection to Zookeeper")
+
+        }
+
+      case None =>
+        Logger.info(s"No zkNode $path found for deletion")
+
+    }
   }
 }

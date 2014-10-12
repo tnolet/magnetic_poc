@@ -22,7 +22,7 @@ DELETE        /images/:id                                                  contr
 
 # Containers
 
-GET           /containers                                                  controllers.ContainerController.list
+GET           /containers                                                  controllers.ContainerController.list(image: Option[Long])
 
 POST          /containers                                                  controllers.ContainerController.create
 

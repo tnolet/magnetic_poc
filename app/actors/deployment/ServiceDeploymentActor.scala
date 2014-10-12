@@ -3,22 +3,21 @@ package actors.deployment
 import actors.jobs.{UpdateJob, addJobEvent}
 import actors.loadbalancer.{RemoveFrontendBackend, LbFail, LbSuccess, AddFrontendBackend}
 import akka.actor.{ActorRef, Actor, LoggingFSM}
+import lib.discovery.MagneticServiceInstance
 import lib.job.UnDeploymentJobBuilder
 import models.Jobs
 import models.docker.DockerContainers
-import models.service.Service
-import models.service.{Services, ServiceCreate}
+import models.service.{ServiceType, Service, Services}
 import play.api.db.slick._
 import play.api.Play.current
 
-import scala.collection.mutable
 
 
 //events for deploying
-case class SubmitServiceDeployment(vrn: String, port: Int, mode: String) extends DeployEvent
+case class SubmitServiceDeployment(servType: String, vrn: String, port: Int, mode: String) extends DeployEvent
 
 // events for undeploying
-case class SubmitServiceUnDeployment(service: Service) extends DeployEvent
+case class SubmitServiceUnDeployment(servType: ServiceType, service: Service) extends DeployEvent
 
 //states data
 case class ServiceState(status: String) extends Data
@@ -27,6 +26,7 @@ case class ServiceState(status: String) extends Data
 class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
   private var jobExecutor: ActorRef = _
+  private var servType: String = _
   private var vrn: String = _
   private var port: Int = _
   private var mode: String = _
@@ -51,6 +51,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
       vrn = deploy.vrn
       port = deploy.port
       mode = deploy.mode
+      servType = deploy.servType
       eventType = "serviceDeployment"
 
       log.info(s"Staging deployment of service $vrn")
@@ -65,6 +66,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
       jobExecutor = sender()
       service = unDeploy.service
       vrn = unDeploy.service.vrn
+      servType = unDeploy.servType.name
       eventType = "serviceUnDeployment"
 
 
@@ -192,7 +194,6 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
         sendStateUpdate(state)
 
-        // Todo: create more intermediate states in case of failure or port/naming collisions
         log.debug("Requesting update of load balancer")
         lbManager ! AddFrontendBackend(vrn = vrn, port = port, mode = mode)
 
@@ -212,6 +213,12 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
           sendStateUpdate(state)
 
+          //create entry in service register
+          val instance = MagneticServiceInstance(serviceType = servType , host= "localhost", port = port, vrn = vrn)
+          val sd = new lib.discovery.Discovery
+
+          sd.registerService(instance)
+
           jobExecutor ! UpdateJob(Jobs.status("finished"))
 
       }
@@ -227,9 +234,17 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
         case ServiceState(state) =>
           sendStateUpdate(state)
 
-          log.debug("Requesting removal of service from load balancer")
+          //todo: Split removal from lb and zookeeper in separate states
 
-          // first remove the service from the load balancer
+          log.info("Removing service from Zookeeper")
+
+          val sd = new lib.discovery.Discovery
+          sd.unRegisterService(vrn = vrn )
+
+
+          log.debug("Removing service from load balancer")
+
+          // remove the service from the load balancer
           lbManager ! RemoveFrontendBackend(vrn)
 
       }
@@ -249,6 +264,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
           // Todo: use jobs list to watch for successful completion of jobs before proceeding
           // Todo: split destruction of containers and service
+          // Todo: destroying multiple containers in one go does not work.
           DB.withTransaction( implicit session => {
 
             val containers = DockerContainers.findByServiceId(service.id.get)

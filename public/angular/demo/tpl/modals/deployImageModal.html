@@ -9,7 +9,7 @@
             <label class="i-checks">
                 <input type="radio" ng-model="$parent.$parent.formData" name="services" value="{{service.vrn}}" ng-required="!formData">
                 <i></i>
-                {{service.vrn}}
+                {{service.serviceType}} {{service.version}} ({{service.environment}})
             </label>
         </div>
     <div class="line line-dashed b-b line-lg pull-in"></div>

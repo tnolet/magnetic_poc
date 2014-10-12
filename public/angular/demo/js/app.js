@@ -50,7 +50,7 @@ app.config(['$stateProvider','$urlRouterProvider',
                 templateUrl: 'demo/tpl/images.list.html'
             })
             .state('app.images.detail', {
-                url: '/{imageId:[0-9]}',
+                url: '/{imageId:[0-9]*}',
                 templateUrl: 'demo/tpl/images.detail.html'
             })
             // environments
@@ -64,7 +64,7 @@ app.config(['$stateProvider','$urlRouterProvider',
                 templateUrl: 'demo/tpl/environments.list.html'
             })
             .state('app.environments.detail', {
-                url: '/{environmentId:[0-9]}',
+                url: '/{environmentId:[0-9]*}',
                 templateUrl: 'demo/tpl/environments.detail.html'
             })
             // services
@@ -78,7 +78,7 @@ app.config(['$stateProvider','$urlRouterProvider',
                 templateUrl: 'demo/tpl/services.list.html'
             })
             .state('app.services.detail', {
-                url: '/{serviceId:[0-9]}',
+                url: '/{serviceId:[0-9]*}',
                 templateUrl: 'demo/tpl/services.detail.html'
             })
             // containers
@@ -92,7 +92,7 @@ app.config(['$stateProvider','$urlRouterProvider',
                 templateUrl: 'demo/tpl/containers.list.html'
             })
             .state('app.containers.detail', {
-                url: '/{containerId:[0-9]}',
+                url: '/{containerId:[0-9]*}',
                 templateUrl: 'demo/tpl/container.detail.html'
             })
     }])

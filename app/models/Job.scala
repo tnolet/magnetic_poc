@@ -22,7 +22,7 @@ class Jobs(tag: Tag) extends Table[Job](tag, "JOB") {
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def status = column[String]("status", O.NotNull)
   def priority = column[Int]("priority", O.NotNull)
-  def payload = column[String]("payload")
+  def payload = column[String]("payload", O.DBType("text"))
   def queue = column[String]("queue")
   def created_at = column[java.sql.Timestamp]("created_at")
   def updated_at = column[java.sql.Timestamp]("updated_at")

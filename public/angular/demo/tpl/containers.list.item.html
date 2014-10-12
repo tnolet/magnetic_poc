@@ -1,5 +1,5 @@
 <a ui-sref="app.containers.detail({containerId:id})" class="r item hbox no-border" ng-controller="ContainerDetailCtrl" ng-init="init(container)">
-    <div class="col r-r text-md">
+    <div class="col r-r text-md b-r">
         <span>
             {{vrn}}
         </span>
@@ -11,18 +11,14 @@
             </div>
         </div>
     </div>
-    <span class="col hidden-xs">
 
-    </span>
     <div class="col r-r hidden-xs">
-        <div class="v-middle">
-            <dl class="dl-horizontal v-middle">
-                <dt class=""> instances</dt>
-                <dd class="h4">{{instanceAmount}}</dd>
-                <dt class=""> weight</dt>
-                <dd class="h4">{{weight}}</dd>
-            </dl>
-        </div>
+        <dl class="m-b">
+            <dt>instances</dt>
+            <dd>{{instanceAmount}}</dd>
+            <dt>weight</dt>
+            <dd>{{weight}}</dd>
+        </dl>
     </div>
 
     <div class="col r-r">

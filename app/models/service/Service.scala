@@ -23,6 +23,7 @@ case class ServiceResult(id: Option[Long],
                          mode: String,
                          state : String,
                          serviceType: String,
+                         environment: String,
                          version: String,
                          vrn: String,
                          serviceTypeId: Long,
@@ -83,6 +84,7 @@ object Services {
   def findDetailsById(id: Long)(implicit s: Session) : Option[ServiceResult] = {
     services.filter(_.id === id).firstOption.map( srv =>  {
 
+      val env = Environments.findById(srv.environmentId).get
       val srvType  = ServiceTypes.findById(srv.serviceTypeId).get
       val containers : List[DockerContainer] =  DockerContainers.findByServiceId(srv.id.get)
 
@@ -91,7 +93,7 @@ object Services {
         DockerContainerResult.createResult(cnt, instances)
       })
 
-       ServiceResult(srv.id,srv.port, srv.mode,srv.state,srvType.name, srvType.version, srv.vrn,srv.serviceTypeId,containersResult)
+       ServiceResult(srv.id,srv.port, srv.mode,srv.state,srvType.name, env.name, srvType.version, srv.vrn,srv.serviceTypeId,containersResult)
 
     })
   }

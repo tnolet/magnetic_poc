@@ -94,11 +94,11 @@ object Global extends GlobalSettings {
     val lbSystem = Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
 
     // Start the feeds system
-   //val feeds = new Feeds
-   //feeds.startFeedsParent()
+   val feeds = new Feeds
+   feeds.startFeedsParent()
 
     //Start specific feeds
-    //feeds.startFeeds
+    feeds.startFeeds
 
   }
 }
@@ -134,12 +134,12 @@ object InitialData {
       if (ServiceTypes.count == 0 ) {
         Seq(
           ServiceType(id = Option(1L), name = "search", version = "1.0", mode = "http" , basePort = 21000),
-          ServiceType(id = Option(2L), name = "search", version = "2.0", mode = "http" , basePort = 21000),
+          ServiceType(id = Option(2L), name = "search", version = "2.0", mode = "http" , basePort = 21500),
           ServiceType(id = Option(3L), name = "cart", version = "1.0", mode = "http" , basePort = 22000),
           ServiceType(id = Option(4L), name = "cache", version = "1.0", mode = "tcp" , basePort = 11211),
           ServiceType(id = Option(5L), name = "database", version = "1.0", mode = "tcp" , basePort = 23306),
-          ServiceType(id = Option(5L), name = "localproxy", version = "1.0", mode = "htpp" , basePort = 10002, systemService = true),
-          ServiceType(id = Option(5L), name = "loadbalancer", version = "1.0", mode = "http" , basePort = 10001, systemService = true)
+          ServiceType(id = Option(6L), name = "localproxy", version = "1.0", mode = "htpp" , basePort = 10002, systemService = true),
+          ServiceType(id = Option(7L), name = "loadbalancer", version = "1.0", mode = "http" , basePort = 10001, systemService = true)
         ).foreach(ServiceTypes.insert)
       }
     }
