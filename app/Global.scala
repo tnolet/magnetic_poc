@@ -111,6 +111,7 @@ object InitialData {
         Seq(
           DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",0,"http",""),
           DockerImage(Option(2L), "mesos_test", "tnolet/mesos-tester","2.0",0,"http",""),
+          DockerImage(Option(2L), "test_shop", "tnolet/test-shop","0.2",80,"tcp","./start.sh"),
           DockerImage(Option(3L), "busybox","busybox","latest",0,"http","""/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""""),
           DockerImage(Option(4L), "hello", "tnolet/hello","latest",0,"http",""),
           DockerImage(Option(5L), "haproxy-test", "tnolet/haproxy-rest","latest",0,"http",""),
@@ -136,6 +137,7 @@ object InitialData {
           ServiceType(id = Option(1L), name = "search", version = "1.0", mode = "http" , basePort = 21000),
           ServiceType(id = Option(2L), name = "search", version = "2.0", mode = "http" , basePort = 21500),
           ServiceType(id = Option(3L), name = "cart", version = "1.0", mode = "http" , basePort = 22000),
+          ServiceType(id = Option(3L), name = "shop", version = "1.0", mode = "http" , basePort = 22500),
           ServiceType(id = Option(4L), name = "cache", version = "1.0", mode = "tcp" , basePort = 11211),
           ServiceType(id = Option(5L), name = "database", version = "1.0", mode = "tcp" , basePort = 23306),
           ServiceType(id = Option(6L), name = "localproxy", version = "1.0", mode = "htpp" , basePort = 10002, systemService = true),

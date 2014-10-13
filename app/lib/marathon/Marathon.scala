@@ -63,11 +63,24 @@ object Marathon {
 
       case "http" =>
 
-        Json.toJson(MarathonApp.simpleAppBuilder(vrn, image.repo,instanceAmount))
+        Json.toJson(MarathonApp.simpleAppBuilder(
+          vrn,
+          image.repo,
+          image.version,
+          image.arguments,
+          instanceAmount)
+        )
 
       case "tcp" =>
 
-        Json.toJson(MarathonApp.bridgedAppBuilder(vrn, image.repo, image.port, instanceAmount))
+        Json.toJson(MarathonApp.bridgedAppBuilder(
+          vrn,
+          image.repo,
+          image.version,
+          image.arguments,
+          image.port,
+          instanceAmount)
+        )
 
     }
 

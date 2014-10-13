@@ -78,10 +78,10 @@ object MarathonApp  {
    * @param instanceAmount number of instances
    * @return
    */
-  def simpleAppBuilder(appId: String, appImage: String, instanceAmount: Int) : MarathonApp = {
+  def simpleAppBuilder(appId: String, appImage: String, version: String, args: String ,instanceAmount: Int) : MarathonApp = {
 
-    val container = Container( docker = Docker(image = appImage))
-    MarathonApp( id = appId, container = container, instances = instanceAmount)
+    val container = Container( docker = Docker(image = s"$appImage:$version" ))
+    MarathonApp( id = appId, container = container, instances = instanceAmount, args = List(args))
 
   }
 
@@ -93,12 +93,12 @@ object MarathonApp  {
    * @param instanceAmount number of instances
    * @return
    */
-  def bridgedAppBuilder(appId: String, appImage: String, port: Int, instanceAmount: Int) : MarathonApp = {
+  def bridgedAppBuilder(appId: String, appImage: String, version: String, args: String, port: Int, instanceAmount: Int) : MarathonApp = {
 
     val portMap = PortMapping( containerPort = port, protocol = "tcp" )
-    val docker = Docker( image = appImage, network = Some("BRIDGE"), portMappings = List(portMap))
+    val docker = Docker( image = s"$appImage:$version", network = Some("BRIDGE"), portMappings = List(portMap))
     val container = Container( docker = docker)
-    MarathonApp( id = appId, container = container, instances = instanceAmount)
+    MarathonApp( id = appId, container = container, instances = instanceAmount, args = List(args))
 
   }
 }

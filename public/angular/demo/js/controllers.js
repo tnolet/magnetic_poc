@@ -425,7 +425,11 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         var createImage = function(img) {
 
-            $http.post('http://localhost:9000/images', img).
+            var imageObj = img
+            imageObj.mode = "http"
+            imageObj.port = 80
+
+            $http.post('http://localhost:9000/images', imageObj).
                 success(function(data){
                     console.log(data)
                 })

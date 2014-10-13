@@ -312,9 +312,6 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
           jobExecutor ! UpdateJob(Jobs.status("failed"))
       }
-
-
-
   }
 
   initialize()

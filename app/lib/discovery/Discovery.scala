@@ -22,6 +22,7 @@ class Discovery {
 
   val zkConnect = conf.getString("discovery.zookeeper.connect")
   val zkRoot = conf.getString("discovery.zookeeper.root")
+  val serviceEndPoint = conf.getString("loadbalancer.host")
 
   val config = Configuration {
 
@@ -44,9 +45,8 @@ class Discovery {
     val zkMessage : JsValue = Json.obj(
       "name" -> srv.vrn,
       "bindPort" -> srv.port,
-      "endPoint" -> "123.123.123.123",
+      "endPoint" -> this.serviceEndPoint,
       "mode" -> "tcp"
-
   )
 
     val data = Json.stringify(Json.toJson(zkMessage))

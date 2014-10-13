@@ -1,0 +1,17 @@
+{
+    "container": {
+        "type": "DOCKER",
+        "docker": {
+            "image": "tnolet/test-shop:0.1"
+
+        }
+    },
+    "id": "test_shop",
+    "args": ["./start.sh"],
+    "cpus": "0.2",
+    "mem": "512",
+    "ports": [
+        0
+    ],
+    "instances": 1
+}
