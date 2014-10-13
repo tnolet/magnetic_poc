@@ -119,8 +119,41 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
     })
 
+    .controller('StreamlineCtrl',[ '$scope', '$http', 'Streamliner', function ($scope, $http, $Streamliner) {
+        $scope.$on('jobs.update', function(event, data) {
+            console.log('EVENT jobs.update catched');
+            console.log(data);
+            // @TODO: should be dynamically based on data type (partials are in demo/tpl/streamliner/*)
+            if (data['id']) {
+                var partialDefault = '<div class="bg-info wrapper-sm m-l-n m-r-n m-b r r-2x">'+data['queue']+'</div>';
+                $(partialDefault).prependTo('.streamline');
+            }
+        });
 
-    .controller('ServicesCtrl',[ '$scope', '$http', '$modal', function ($scope, $http, $modal) {
+        $scope.$on('jobevent.update', function(event, data) {
+            console.log('EVENT jobevent.update catched');
+            console.log(data);
+            if (data.length > 0) {
+                var partialDefault, i, output = [];
+                for (var i = data.length - 1; i >= 0; i--) {
+                    // @TODO: should be dynamically based on data type (partials are in demo/tpl/streamliner/*)
+                    partialDefault = '<div class="sl-item">'
+                        +'<div class="m-l">'
+                            +'<div class="text-muted">' + moment(data[i]['timestamp']).format('ddd, D MMM HH:mm:ss') + '</div>'
+                            +'<p>' + data[i]['status'] + '</p>'
+                        +'</div>'
+                    +'</div>';
+                    output.push(partialDefault);
+                }
+                console.log(output);
+                $(output.join('\n')).prependTo('.streamline');
+            }
+        });
+    }])
+
+    .controller('ServicesCtrl',[ '$scope', '$http', '$modal', 'Streamliner', function ($scope, $http, $modal, $Streamliner) {
+
+        console.log($Streamliner);
 
         $http.get('http://localhost:9000/services').
             success(function(data) {
@@ -129,9 +162,11 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
 
         var createService = function(serviceObject) {
-            $http.post('http://localhost:9000/services',serviceObject).
+            $http.post('http://localhost:9000/services', serviceObject).
                 success(function(data){
                     console.log(data)
+                    //@todo: add to streamliner Object {jobId: <Number>}
+                    $Streamliner.addJob(data.jobId);
                 })
         };
 
@@ -155,8 +190,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
     }])
 
-
-    .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed','$timeout', function ($scope, $stateParams, $http, loadBalancerMetricsFeed, $timeout) {
+    .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed','$timeout', 'Streamliner', function ($scope, $stateParams, $http, loadBalancerMetricsFeed, $timeout, $Streamliner) {
 
             $scope.metricsFE = "";
             $scope.metricsBE = "";
@@ -178,6 +212,12 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
             $scope.deleteService = function(){
                 $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
+                    .success(function(data, status, headers, config) {
+                        $Streamliner.addJob(data.jobId);
+                    })
+                    .error(function(data, status, headers, config) {
+                        // @todo: implement?
+                    })
             };
 
 

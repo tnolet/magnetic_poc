@@ -1,6 +1,22 @@
-<div ng-controller="ServicesCtrl">
-    <div class="wrapper-md bg-light b-b">
-        <h1 class="m-n font-thin h3">Services</h1>
+<div class="hbox hbox-auto-xs hbox-auto-sm ng-scope">
+    <!-- main -->
+    <div class="col">
+        <div ng-controller="ServicesCtrl">
+            <div class="wrapper-md bg-light b-b">
+                <h1 class="m-n font-thin h3">Services</h1>
+            </div>
+            <div class="fade-in-up" ui-view></div>
+        </div>
     </div>
-    <div class="app-content-body fade-in-up" ui-view ></div>
+    <!-- / main -->
+    <!-- right col -->
+    <div class="col w-md bg-white-only b-l bg-auto no-border-xs">
+        <div class="padder-md" ng-controller="StreamlineCtrl">
+            <!-- streamline -->
+            <div class="m-b text-md">Recent Activity</div>
+            <div class="streamline b-l m-b"></div>
+            <!-- / streamline -->
+        </div>
+    </div>
+    <!-- / right col -->
 </div>
