@@ -51,7 +51,7 @@ object ImagesController extends Controller {
           builder.setService(service.getOrElse("dummyservice"))
           builder.setPriority(1)
           val jobId = builder.build
-          Created(s"jobId: $jobId ")
+          Created(Json.toJson(Json.obj("jobId" -> JsNumber(jobId))))
 
         case None => NotFound("No such image found")
       }

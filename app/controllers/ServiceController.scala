@@ -2,14 +2,11 @@ package controllers
 
 import actors.loadbalancer.{LbFail, LbSuccess, UpdateBackendServerWeight}
 import lib.job.{ServiceUndeploymentJobBuilder, ServiceDeploymentJobBuilder, Horizontal, ScaleJobBuilder}
-import lib.util.date.TimeStamp
 import models.docker._
-import models.{Job, Jobs}
 import models.service.{ServiceResult, ServiceCreate, Services, Service}
-import play.api.Logger
 import play.api.db.slick._
 import play.api.libs.concurrent.Akka
-import play.api.libs.json.{JsError, Json}
+import play.api.libs.json.{JsNumber, JsError, Json}
 import play.api.mvc._
 import play.api.Play.current
 import scala.concurrent.duration._
@@ -76,7 +73,8 @@ object ServiceController extends Controller {
           builder.setService(newService)
           val jobId = builder.build
 
-          Created(s"jobId: $jobId ")
+          Created(Json.toJson(Json.obj("jobId" -> JsNumber(jobId))))
+
         },
         invalid = {
           errors => BadRequest(Json.toJson(JsError.toFlatJson(errors)))
@@ -148,7 +146,7 @@ object ServiceController extends Controller {
             builder.setScaleType(scaleType)
             val jobId = builder.build
 
-            Created(s"jobId: $jobId ")
+            Created(Json.toJson(Json.obj("jobId" -> JsNumber(jobId))))
 
           case None => NotFound("No such container found")
         }
@@ -174,7 +172,7 @@ object ServiceController extends Controller {
         val builder = new ServiceUndeploymentJobBuilder
         builder.setService(service)
         val jobId = builder.build
-        Created(s"jobId: $jobId ")
+        Created(Json.toJson(Json.obj("jobId" -> JsNumber(jobId))))
 
       case None => NotFound("No such service found")
 

@@ -95,7 +95,7 @@ object ContainerController extends Controller {
         builder.setContainer(container)
         val jobId = builder.build
 
-        Created(s"jobId: $jobId ")
+        Created(Json.toJson(Json.obj("jobId" -> JsNumber(jobId))))
 
       case None => NotFound("No such container found")
     }
