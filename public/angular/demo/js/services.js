@@ -1,3 +1,4 @@
+/* global window, angular, console, EventSource, $ */
 'use strict';
 
 /* Services */
@@ -16,86 +17,93 @@ angular.module('app.services', [])
 
 .factory('loadBalancerMetricsFeed', function () {
 
-        console.log("Registered service loadBalancerMetricsFeed")
+        console.log("Registered service loadBalancerMetricsFeed");
 
         var source = new EventSource('/feeds/metrics/lb');
 
         var registerCallback = function(callback){
             source.addEventListener('message',function(msg){
-            callback(JSON.parse(msg.data))
-            })
+              callback(JSON.parse(msg.data));
+            });
         };
 
         return {
             register: function(callback) {
-                registerCallback(callback)
+                registerCallback(callback);
             }
         };
 
 })
 
 .service('Streamliner', ['$rootScope', '$http', function ($rootScope, $http) {
-    /* public */
-    var service = {
-        processes: [],
-
-        addJob: function (jobId) {
-            console.info('addJob', jobId);
-            service.processes['job'+jobId] = {type: 'job', id: jobId};
-            startPoller('job'+jobId);
-        },
-
-        removeJob: function (jobId) {
-            // @todo: implement
-            console.info('removeJob', jobId);
-        }
-    };
-
     /* private */
-    var requestJobStatus = function(obj) {
+    var jobs = [];
+
+    var requestJobStatus = function (jobId) {
         console.info('>> requestJobStatus');
         console.info(arguments);
-        $http.get('/jobs/'+obj.id)
+
+        var currentJob = jobs[jobId];
+
+        $http.get('/jobs/' + jobId)
             .success(function(data, status, headers, config) {
-                console.log(data);
-                $rootScope.$broadcast('jobs.update', data);
-                requestJobEvents(obj);
-                // startPoller('job'+obj.id);
+                if (!currentJob || currentJob.status !== data.status) {
+                  currentJob.status = data.status;
+                  $rootScope.$broadcast('jobs.update', data);
+                }
+
+                requestJobEvents(jobId);
             })
             .error(function(data, status, headers, config) {
                 console.error(data);
-                startPoller('job'+obj.id);
-            })
-        ;
+                stopPolling(jobId);
+            });
     };
 
-    var requestJobEvents = function(obj) {
+    var requestJobEvents = function (jobId) {
         console.info('>> requestJobEvents');
         console.info(arguments);
-        $http.get('/jobs/'+obj.id+'/events')
+
+        var currentJob = jobs[jobId];
+
+        $http.get('/jobs/' + jobId + '/events')
             .success(function(data, status, headers, config) {
-                console.log(data);
-                $rootScope.$broadcast('jobevent.update', data);
-                // requestJobEvents(obj);
-                // @todo: if (status == 'LIVE' || status == 'DESTROYED')
-                service.processes['job'+obj.id]['timerId'] = setTimeout(requestJobEvents.bind(service.processes, service.processes['job'+obj.id]), 5000);
+                var toUpdate = [];
+
+                angular.forEach(data, function (event) {
+                  if (currentJob.events && currentJob.events[event.id] && currentJob.events[event.id] === event.status) {
+                    return;
+                  }
+
+                  currentJob.events[event.id] = event.status;
+                  toUpdate.push(event);
+                });
+
+                $rootScope.$broadcast('jobevent.update', toUpdate);
             })
             .error(function(data, status, headers, config) {
                 console.error(data);
-                startPoller('job'+obj.id);
+                stopPolling(jobId);
             })
         ;
     };
 
-    var startPoller = function(identifier) {
-        console.info('>> startPoller');
-        console.log(service.processes);
-        if (!service.processes[identifier]['timerId']) {
-            service.processes[identifier]['timerId'] = -1;
-        }
-        // @todo: should be setInterval ?
-        service.processes[identifier]['timerId'] = setTimeout(requestJobStatus.bind(service.processes, service.processes[identifier]), 0);
+    var startPolling = function (jobId) {
+        var job = jobs[jobId] || {
+          events: []
+        };
+
+        job.timerId = window.setInterval(requestJobStatus.bind(jobs, jobId), 1500);
+        jobs[jobId] = job;
     };
 
-    return service;
+    var stopPolling = function (jobId) {
+        if (jobs[jobId] && jobs[jobId].timerId) {
+          window.clearInterval(jobs[jobId].timerId);
+        }
+    };
+
+    return {
+      addJob: startPolling
+    };
 }]);

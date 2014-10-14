@@ -1,0 +1,17 @@
+<div class="padder-md" ng-controller="StreamlineCtrl">
+    <!-- streamline -->
+    <div class="m-b text-md">Recent Activity</div>
+    <div class="streamline b-l m-b">
+      <!-- streamline items -->
+      <span ng-repeat="item in streamline" ng-switch="item.type">
+        <span ng-switch-when="job">
+          <span ng-include src="'demo/tpl/streamliner/job.html'"></span>
+        </span>
+        <span ng-switch-default>
+          <span ng-include src="'demo/tpl/streamliner/event.html'"></span>
+        </span>
+      </span>
+      <!-- / streamline items -->
+    </div>
+    <!-- / streamline -->
+</div>
