@@ -41,11 +41,13 @@ angular.module('app.directives', [])
                         var barSpacing = 1;
                         var barWidth = (graph.width() - ( attrs.history * barSpacing)) / attrs.history ;
 
-                        graph.sparkline(myvalues,{type: 'bar', height: attrs.height, barWidth: barWidth, barSpacing: barSpacing, barColor:'#dce5ec'});
-
+                        if (graph.sparkline) {
+                            graph.sparkline(myvalues,{type: 'bar', height: attrs.height, barWidth: barWidth, barSpacing: barSpacing, barColor:'#dce5ec'});
+                        }
                     } else if ( attrs.type == 'line') {
-                        graph.sparkline(myvalues, {type: 'line', height: attrs.height, width: '100%', lineWidth:2, valueSpots:{'0:':'#fff'}, lineColor:'#fff', spotColor:'#fff', fillColor:'#dce5ec', highlightLineColor:'#fff', spotRadius:3});
-
+                        if (graph.sparkline) {
+                            graph.sparkline(myvalues, {type: 'line', height: attrs.height, width: '100%', lineWidth:2, valueSpots:{'0:':'#fff'}, lineColor:'#fff', spotColor:'#fff', fillColor:'#dce5ec', highlightLineColor:'#fff', spotRadius:3});
+                        }
                     }
                 });
             }
