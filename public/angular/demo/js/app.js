@@ -94,7 +94,7 @@ app.config(['$stateProvider','$urlRouterProvider',
             .state('app.containers.detail', {
                 url: '/{containerId:[0-9]*}',
                 templateUrl: 'demo/tpl/container.detail.html'
-            })
+            });
     }])
 
 .constant('JQ_CONFIG', {

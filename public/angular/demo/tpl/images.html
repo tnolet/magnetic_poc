@@ -1,3 +1,14 @@
-<div ng-controller="ImagesCtrl">
-    <div class="app-content-body fade-in-up" ui-view ></div>
+<div class="hbox hbox-auto-xs hbox-auto-sm ng-scope">
+    <!-- main -->
+    <div class="col">
+      <div ng-controller="ImagesCtrl">
+          <div class="app-content-body fade-in-up" ui-view ></div>
+      </div>
+    </div>
+    <!-- / main -->
+    <!-- right col -->
+    <div class="col w-md bg-white-only b-l bg-auto no-border-xs">
+      <div ng-include src="'demo/tpl/streamliner.html'"></div>
+    </div>
+    <!-- / right col -->
 </div>

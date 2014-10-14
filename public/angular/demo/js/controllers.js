@@ -1,9 +1,10 @@
+/* global window, angular, console, EventSource, $, moment, navigator */
 'use strict';
 
 /* Controllers */
 
 angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
-  .controller('AppCtrl', ['$scope', '$translate', '$localStorage', '$window', 
+  .controller('AppCtrl', ['$scope', '$translate', '$localStorage', '$window',
     function(              $scope,   $translate,   $localStorage,   $window ) {
       // add 'ie' classes to html
       var isIE = !!navigator.userAgent.match(/MSIE/i);
@@ -36,7 +37,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
           asideDock: false,
           container: false
         }
-      }
+      };
 
       // save settings to local storage
       if ( angular.isDefined($localStorage.settings) ) {
@@ -68,7 +69,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
       function isSmartDevice( $window )
       {
           // Adapted from http://www.detectmobilebrowsers.com
-          var ua = $window['navigator']['userAgent'] || $window['navigator']['vendor'] || $window['opera'];
+          var ua = $window.navigator.userAgent || $window.navigator.vendor || $window.opera;
           // Checks for iOs, Android, Blackberry, Opera Mini, and Windows mobile devices
           return (/iPhone|iPod|iPad|Silk|Android|BlackBerry|Opera Mini|IEMobile/).test(ua);
       }
@@ -80,28 +81,22 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
     // Environments
 
-  .controller('EnvironmentsCtrl',[
-        '$scope',
-        '$http',
-        function ($scope, $http) {
-
-            $http.get('http://localhost:9000/environments').
-                success(function(data) {
-                    $scope.environments = data;
-                });
+  .controller('EnvironmentsCtrl', ['$scope', '$http', function ($scope, $http) {
+      $http.get('http://localhost:9000/environments').
+          success(function(data) {
+              $scope.environments = data;
+          });
    }])
 
     .controller('EnvironmentsDetailCtrl',[ '$scope', '$stateParams','$http',function ($scope, $stateParams, $http) {
-
         $http.get('http://localhost:9000/environments/' + $stateParams.environmentId).
             success(function(data) {
                 $scope.environment = data;
             });
 
-         $scope.addContainer = function(){
-            console.log("not implemented yet")
+        $scope.addContainer = function () {
+            console.log("not implemented yet");
         };
-
     }])
 
 
@@ -119,35 +114,33 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
     })
 
-    .controller('StreamlineCtrl',[ '$scope', '$http', 'Streamliner', function ($scope, $http, $Streamliner) {
+    .controller('StreamlineCtrl', ['$scope', '$http', 'Streamliner', function ($scope, $http, $Streamliner) {
+        function addToStreamline(streamline, item) {
+          streamline.unshift(item);
+        }
+
+        $scope.streamline = $scope.streamline || [];
+
         $scope.$on('jobs.update', function(event, data) {
-            console.log('EVENT jobs.update catched');
-            console.log(data);
-            // @TODO: should be dynamically based on data type (partials are in demo/tpl/streamliner/*)
-            if (data['id']) {
-                var partialDefault = '<div class="bg-info wrapper-sm m-l-n m-r-n m-b r r-2x">'+data['queue']+'</div>';
-                $(partialDefault).prependTo('.streamline');
+            if (!data.id) {
+              return;
             }
+
+            addToStreamline($scope.streamline, {
+              type: 'job',
+              queue: data.queue,
+              status: data.status
+            });
         });
 
         $scope.$on('jobevent.update', function(event, data) {
-            console.log('EVENT jobevent.update catched');
-            console.log(data);
-            if (data.length > 0) {
-                var partialDefault, i, output = [];
-                for (var i = data.length - 1; i >= 0; i--) {
-                    // @TODO: should be dynamically based on data type (partials are in demo/tpl/streamliner/*)
-                    partialDefault = '<div class="sl-item">'
-                        +'<div class="m-l">'
-                            +'<div class="text-muted">' + moment(data[i]['timestamp']).format('ddd, D MMM HH:mm:ss') + '</div>'
-                            +'<p>' + data[i]['status'] + '</p>'
-                        +'</div>'
-                    +'</div>';
-                    output.push(partialDefault);
-                }
-                console.log(output);
-                $(output.join('\n')).prependTo('.streamline');
-            }
+            angular.forEach(data, function (value) {
+              addToStreamline($scope.streamline, {
+                type: 'event',
+                timestamp: moment(value.timestamp).format('ddd, D MMM HH:mm:ss'),
+                data: value.status
+              });
+            });
         });
     }])
 
@@ -164,10 +157,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         var createService = function(serviceObject) {
             $http.post('http://localhost:9000/services', serviceObject).
                 success(function(data){
-                    console.log(data)
-                    //@todo: add to streamliner Object {jobId: <Number>}
+                    console.log(data);
                     $Streamliner.addJob(data.jobId);
-                })
+                });
         };
 
         $scope.openCreateModal = function(){
@@ -199,15 +191,19 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             ];
 
             var metricsFilterFE = function(metricData){
-                var filterMetricData = metricData.filter( function( obj ){ return obj.pxname == $scope.vrn && obj.svname == 'FRONTEND'})
-                $scope.$apply($scope.metricsFE = filterMetricData[0])
-                 $scope.metrics = parseInt(filterMetricData[0].req_rate)
+                var filterMetricData = metricData.filter( function( obj ) {
+                  return obj.pxname === $scope.vrn && obj.svname === 'FRONTEND';
+                });
+                $scope.$apply($scope.metricsFE = filterMetricData[0]);
+                $scope.metrics = parseInt(filterMetricData[0].req_rate);
             };
 
             var metricsFilterBE = function(metricData){
-                var filterMetricData = metricData.filter( function( obj ){ return obj.pxname == $scope.vrn && obj.svname == 'BACKEND'})
-                console.log(filterMetricData)
-                $scope.$apply($scope.metricsBE = filterMetricData[0])
+                var filterMetricData = metricData.filter( function ( obj ) {
+                  return obj.pxname === $scope.vrn && obj.svname === 'BACKEND';
+                });
+                console.log(filterMetricData);
+                $scope.$apply($scope.metricsBE = filterMetricData[0]);
             };
 
             $scope.deleteService = function(){
@@ -217,9 +213,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     })
                     .error(function(data, status, headers, config) {
                         // @todo: implement?
-                    })
+                    });
             };
-
 
             // initialise the controller with all basic info
             $http.get('http://localhost:9000/services/' + $stateParams.serviceId).
@@ -235,26 +230,21 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     loadBalancerMetricsFeed.register(metricsFilterBE);
                 }
             );
-
-
     }])
 
         // Backends AKA Containers
 
 
     .controller('ContainersCtrl',[ '$scope', '$http', function ($scope, $http) {
-
         $http.get('http://localhost:9000/containers').
             success(function(data) {
                 $scope.containers = data;
             });
-
     }])
 
-    .controller('ContainerDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed', function ($scope, $stateParams, $http, $loadBalancerMetricsFeed) {
+    .controller('ContainerDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed', 'Streamliner', function ($scope, $stateParams, $http, $loadBalancerMetricsFeed, $Streamliner) {
 
         // local constants and functions
-
         var WEIGHT_MAX = 256;
         var WEIGHT_MIN = 0;
         var WEIGHT_STEP = 5;
@@ -276,7 +266,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 var holder = [];
                 var sum = 0;
                 data.forEach(function(d){
-                    holder.push(d[m.name])
+                    holder.push(d[m.name]);
                 });
 
                 for(var i = 0; i < holder.length; i++){
@@ -285,7 +275,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
                 if (m.mode == "avg") {
                     var avg = sum/holder.length;
-                    result[m.name] = avg
+                    result[m.name] = avg;
                 } else {
                     result[m.name] = sum;
                 }
@@ -298,23 +288,27 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
 
         var metricsFilter = function(metricData){
-            var filterMetricData = metricData.filter( function( obj ){ return $scope.instanceVrns().indexOf(obj.svname) > -1});
-            console.log(filterMetricData)
-            aggregateMetrics(filterMetricData)
+            var filterMetricData = metricData.filter(function (obj) {
+              return $scope.instanceVrns().indexOf(obj.svname) > -1;
+            });
+            console.log(filterMetricData);
+            aggregateMetrics(filterMetricData);
         };
 
         var updateWeightOnServer = function(serviceId,containerVrn, weight) {
 
             $http.post('http://localhost:9000/services/' + serviceId + '/containers/' + containerVrn + '/weight/' + weight).
-            success(function() {
-                console.log('updated weight OK:' + $scope.weight)
+            success(function(data) {
+                console.log('updated weight OK:' + $scope.weight);
+                $Streamliner.addJob(data.jobId);
             });
         };
 
         var updateContainerInstances = function(serviceId,containerVrn,amount){
            $http.post('http://localhost:9000/services/' + serviceId + '/containers/' + containerVrn+ '/amount/' + amount).
                success(function(data) {
-                   console.log(data)
+                   console.log(data);
+                   $Streamliner.addJob(data.jobId);
                });
         };
 
@@ -326,15 +320,15 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
             // keep the weight under WEIGHT_MAX
             if ($scope.weight < WEIGHT_MAX) {
-                $scope.weight += WEIGHT_STEP
+                $scope.weight += WEIGHT_STEP;
             }
 
             if( $scope.weight >= WEIGHT_MAX - WEIGHT_STEP) {
-                $scope.weight = WEIGHT_MAX
+                $scope.weight = WEIGHT_MAX;
             }
 
             // update the weight
-            updateWeightOnServer($stateParams.serviceId, $scope.vrn, $scope.weight)
+            updateWeightOnServer($stateParams.serviceId, $scope.vrn, $scope.weight);
 
         };
 
@@ -342,21 +336,22 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         $scope.subtractWeight = function(){
 
             if( $scope.weight <= WEIGHT_MIN + WEIGHT_STEP) {
-                $scope.weight = WEIGHT_MIN
+                $scope.weight = WEIGHT_MIN;
             }
 
             else if ($scope.weight > WEIGHT_MIN) {
-                $scope.weight -= WEIGHT_STEP
+                $scope.weight -= WEIGHT_STEP;
             }
 
-            updateWeightOnServer($stateParams.serviceId, $scope.vrn, $scope.weight)
+            updateWeightOnServer($stateParams.serviceId, $scope.vrn, $scope.weight);
         };
 
         // delete the container
         $scope.deleteContainer = function() {
             $http.delete('http://localhost:9000/containers/' + $scope.id).
                 success(function(data) {
-                    console.log(data)
+                    console.log(data);
+                    $Streamliner.addJob(data.jobId);
                 });
         };
 
@@ -365,24 +360,24 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
             if ($scope.instances.length >= 1) {
                 var amount = $scope.instances.length - 1;
-                updateContainerInstances($stateParams.serviceId,$scope.vrn,amount)
+                updateContainerInstances($stateParams.serviceId,$scope.vrn,amount);
             }
         };
 
         //scale out the container instances
         $scope.scaleOut = function() {
             var amount = $scope.instances.length + 1;
-            updateContainerInstances($stateParams.serviceId,$scope.vrn,amount)
+            updateContainerInstances($stateParams.serviceId,$scope.vrn,amount);
 
         };
 
         $scope.instanceVrns = function() {
             var vrns = [];
             $scope.instances.forEach(function(instance){
-                    vrns.push(instance.vrn)
+                    vrns.push(instance.vrn);
                 }
             );
-            return vrns
+            return vrns;
         };
 
         // initialise the controller with all basic info
@@ -399,34 +394,29 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $scope.instanceAmount = container.instanceAmount;
             $scope.created_at = container.created_at;
 
-            $loadBalancerMetricsFeed.register(metricsFilter)
-
+            $loadBalancerMetricsFeed.register(metricsFilter);
         };
-
-
     }])
 
     // Container Instances
 
     .controller('InstancesDetailCtrl', ['$scope','loadBalancerMetricsFeed' ,function ($scope, $loadBalancerMetricsFeed) {
-
-
         var metricsFilter = function(metricData){
-            var filterMetricData = metricData.filter( function( obj ){ return obj.svname == $scope.vrn});
-            $scope.$apply($scope.metrics = filterMetricData[0])
+            var filterMetricData = metricData.filter(function (obj) {
+              return obj.svname === $scope.vrn;
+            });
+            $scope.$apply($scope.metrics = filterMetricData[0]);
         };
 
         // initialise the controller with all basic info
-        $scope.init = function(instance) {
+        $scope.init = function (instance) {
 
             $scope.vrn = instance.vrn;
             $scope.host = instance.host;
             $scope.ports = instance.ports;
 
-
-
-           $loadBalancerMetricsFeed.register(metricsFilter)
-        }
+           $loadBalancerMetricsFeed.register(metricsFilter);
+        };
     }])
 
     // Images
@@ -456,7 +446,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     })
 
 
-    .controller('ImagesCtrl',[ '$scope','$http', '$modal', function ($scope, $http, $modal) {
+    .controller('ImagesCtrl', ['$scope','$http', '$modal', function ($scope, $http, $modal, $Streamliner) {
 
         $http.get('http://localhost:9000/images').
             success(function(data) {
@@ -465,18 +455,18 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         var createImage = function(img) {
 
-            var imageObj = img
-            imageObj.mode = "http"
-            imageObj.port = 80
+            var imageObj = img;
+            imageObj.mode = "http";
+            imageObj.port = 80;
 
             $http.post('http://localhost:9000/images', imageObj).
                 success(function(data){
-                    console.log(data)
-                })
+                    console.log(data);
+                });
         };
 
         // launches the modal for creating a new image
-        $scope.openCreateModal = function(){
+        $scope.openCreateModal = function () {
 
             var modalInstance = $modal.open({
                 templateUrl: 'demo/tpl/modals/createImageModal.html',
@@ -490,7 +480,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 imageObject.repo = formData.repo;
                 imageObject.version = formData.version;
                 imageObject.arguments = formData.args;
-                imageObject.id = 0 // some arbitrary id that will be discarded
+                imageObject.id = 0; // some arbitrary id that will be discarded
 
                 createImage(imageObject);
                 console.log('Modal dismissed with: ' + JSON.stringify(formData));
@@ -501,17 +491,16 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
     }])
 
-    .controller('ImagesListItemCtrl',[ '$scope', '$stateParams','$http', '$modal', function ($scope, $stateParams, $http, $modal) {
-
-
+    .controller('ImagesListItemCtrl',[ '$scope', '$stateParams','$http', '$modal', 'Streamliner', function ($scope, $stateParams, $http, $modal, $Streamliner) {
         // deploys an image to a specific service
         // parameter: id     id of the image
         // parameter: vrn   vrn of the service
         var deployImageToService = function(id,vrn) {
             $http.post('http://localhost:9000/images/' + id + '/deploy?service=' + vrn).
                 success(function(data){
-                    console.log(data)
-                })
+                    console.log(data);
+                    $Streamliner.addJob(data.jobId);
+                });
         };
 
         // launches the modal for deploying an image
@@ -523,16 +512,13 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             });
 
             modalInstance.result.then(function (serviceVrn) {
-                deployImageToService($scope.image.id, serviceVrn)
+                deployImageToService($scope.image.id, serviceVrn);
             });
         };
 
-
         $scope.init = function(image) {
-            $scope.image = image
-        }
-
-
+            $scope.image = image;
+        };
     }])
 
     .controller('ImagesDetailCtrl',[ '$scope', '$stateParams','$http', '$modal', function ($scope, $stateParams, $http, $modal) {
@@ -882,7 +868,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
   }])
 
-  // Flot Chart controller 
+  // Flot Chart controller
   .controller('FlotChartDemoCtrl', ['$scope', function($scope) {
     $scope.d = [ [1,6.5],[2,6.5],[3,7],[4,8],[5,7.5],[6,7],[7,6.8],[8,7],[9,7.2],[10,7],[11,6.8],[12,7] ];
 
@@ -900,10 +886,10 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
     for (var i = 0; i < 20; ++i) {
       $scope.d2.push([i, Math.sin(i)]);
-    }   
+    }
 
-    $scope.d3 = [ 
-      { label: "iPhone5S", data: 40 }, 
+    $scope.d3 = [
+      { label: "iPhone5S", data: 40 },
       { label: "iPad Mini", data: 10 },
       { label: "iPad Mini Retina", data: 20 },
       { label: "iPhone4S", data: 12 },
