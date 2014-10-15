@@ -33,8 +33,48 @@ angular.module('app.services', [])
     };
 
 })
+.service('Polling', ['$rootScope', '$http', function ($rootScope, $http) {
+  /**
+  * Roughly based on https://www.altamiracorp.com/blog/employee-posts/simple-polling-service-in-angularjs
+  */
+  var pollers = {};
+  var DEFAULT_INTERVAL = 1500;
+  var that = this;
 
-.service('Streamliner', ['$rootScope', '$http', function ($rootScope, $http) {
+  this.startPolling = function (name, url, $scope, success) {
+    if (pollers[name]) {
+      return;
+    }
+    var poller = function () {
+      $http.get(url).then(function (data) {
+        success(data.data);
+      }, function () {
+        that.destroyPoller(name);
+      });
+    };
+    poller();
+    pollers[name] = window.setInterval(poller, DEFAULT_INTERVAL);
+
+    $scope.$on('$destroy', function () {
+      that.destroyAllPollers();
+    });
+  };
+
+  this.destroyPoller = function (name) {
+    if (!pollers[name]) {
+      return true;
+    }
+    window.clearInterval(pollers[name]);
+    delete pollers[name];
+  };
+
+  this.destroyAllPollers = function () {
+    angular.forEach(pollers, function (timer, name) {
+      that.destroyPoller(name);
+    });
+  };
+}])
+.factory('Streamliner', ['$rootScope', '$http', function ($rootScope, $http) {
     /* private */
     var jobs = {};
     var timers = {};
@@ -134,6 +174,8 @@ angular.module('app.services', [])
           jobs[jobId] = job;
       },
       allJobs: function (callback) {
+        requestJobs(callback);
+        
         timers['*'] = window.setInterval(requestJobs.bind(jobs, callback), INTERVAL);
       }
     };
