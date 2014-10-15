@@ -43,7 +43,7 @@ object Jobs {
 
       case Some(f: Int) =>
         Logger.info(s"getting $f jobs: ")
-        jobs.take(f).sortBy(_.created_at.desc).list
+        jobs.sortBy(_.created_at.desc).take(f).list
 
       case None =>
 
