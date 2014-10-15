@@ -35,3 +35,12 @@ dd {
 .streamline:after {
     visibility: hidden;
 }
+
+.app-content {
+  margin-right: 200px;
+}
+
+.app-aside-right {
+  float: right;
+  width: 200px;
+}

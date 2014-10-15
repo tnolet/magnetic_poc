@@ -37,7 +37,40 @@ angular.module('app.services', [])
 
 .service('Streamliner', ['$rootScope', '$http', function ($rootScope, $http) {
     /* private */
-    var jobs = [];
+    var jobs = {};
+    var timers = {};
+    var INTERVAL = 500;
+
+    var isNewJob = function (job) {
+      return !jobs || typeof jobs[job.id] === 'undefined' || !angular.equals(jobs[job.id], job);
+    };
+
+    var handleJob = function (callback, job) {
+      if (!job.id || !isNewJob(job)) {
+        return;
+      }
+
+      if (typeof callback === 'function') {
+        callback(job);
+      }
+
+      jobs[job.id] = job;
+    };
+
+    var requestJobs = function (callback) {
+      console.log('>> requestJobs');
+
+      $http.get('/jobs?filter=10')
+        .success(function (data, status, headers, config) {
+          console.log(data);
+          if (data.length) {
+            angular.forEach(data, handleJob.bind(this, callback));
+          }
+        })
+        .error(function(data, status, headers, config) {
+          stopPolling('*');
+        });
+    };
 
     var requestJobStatus = function (jobId) {
         console.info('>> requestJobStatus');
@@ -47,12 +80,10 @@ angular.module('app.services', [])
 
         $http.get('/jobs/' + jobId)
             .success(function(data, status, headers, config) {
-                if (!currentJob || currentJob.status !== data.status) {
-                  currentJob.status = data.status;
-                  $rootScope.$broadcast('jobs.update', data);
-                }
-
-                requestJobEvents(jobId);
+              handleJob(data, function (job) {
+                $rootScope.$broadcast('jobs.update', job);
+                requestJobEvents(job.id);
+              });
             })
             .error(function(data, status, headers, config) {
                 console.error(data);
@@ -88,22 +119,23 @@ angular.module('app.services', [])
         ;
     };
 
-    var startPolling = function (jobId) {
-        var job = jobs[jobId] || {
-          events: []
-        };
-
-        job.timerId = window.setInterval(requestJobStatus.bind(jobs, jobId), 1500);
-        jobs[jobId] = job;
-    };
-
-    var stopPolling = function (jobId) {
-        if (jobs[jobId] && jobs[jobId].timerId) {
-          window.clearInterval(jobs[jobId].timerId);
+    var stopPolling = function (timerId) {
+        if (timers[timerId]) {
+          window.clearInterval(timers[timerId]);
         }
     };
 
     return {
-      addJob: startPolling
+      singleJob: function (jobId) {
+          // var job = jobs[jobId] || {
+          //   events: []
+          // };
+          //
+          // timers[jobId] = window.setInterval(requestJobStatus.bind(jobs, jobId), INTERVAL);
+          // jobs[jobId] = job;
+      },
+      allJobs: function (callback) {
+        timers['*'] = window.setInterval(requestJobs.bind(jobs, callback), INTERVAL);
+      }
     };
 }]);

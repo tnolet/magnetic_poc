@@ -1,3 +1,9 @@
-<div class="bg-info wrapper-sm m-l-n m-r-n m-b r r-2x">
-  {{item.status}}
+<div class="sl-item">
+  <div class="m-l">
+    <div class="text-muted">{{ item.timestamp | fromNow }}</div>
+    <p>{{ item.queue }} ({{ item.id }})<br /><span class="label bg-success h3">{{ item.status }}</span></p>
+  </div>
 </div>
+<!-- <div class="bg-info wrapper-sm m-l-n m-r-n m-b r r-2x">
+  {{item.status}}
+</div> -->

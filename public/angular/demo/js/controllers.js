@@ -115,33 +115,57 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     })
 
     .controller('StreamlineCtrl', ['$scope', '$http', 'Streamliner', function ($scope, $http, $Streamliner) {
-        function addToStreamline(streamline, item) {
-          streamline.unshift(item);
+        function parseToArrayAndOrder(items) {
+          var keys = Object.keys(items).sort(function (a, b) {
+            //Needs reverse ordering: biggest key comes first
+            return b - a;
+          });
+          var finalArray = [];
+
+          angular.forEach(keys, function (key) {
+            finalArray.push(items[key]);
+          });
+
+          return finalArray;
         }
 
         $scope.streamline = $scope.streamline || [];
 
-        $scope.$on('jobs.update', function(event, data) {
-            if (!data.id) {
-              return;
-            }
+        var streamlineItems = {};
 
-            addToStreamline($scope.streamline, {
-              type: 'job',
-              queue: data.queue,
-              status: data.status
-            });
+        $Streamliner.allJobs(function (job) {
+          streamlineItems[job.id] = {
+            type: 'job',
+            id: job.id,
+            timestamp: job.updated_at,
+            queue: job.queue,
+            status: job.status
+          };
+          $scope.streamline = parseToArrayAndOrder(streamlineItems);
         });
 
-        $scope.$on('jobevent.update', function(event, data) {
-            angular.forEach(data, function (value) {
-              addToStreamline($scope.streamline, {
-                type: 'event',
-                timestamp: moment(value.timestamp).format('ddd, D MMM HH:mm:ss'),
-                data: value.status
-              });
-            });
-        });
+        // OLD-FASHIONED STREAMLINE FILLING - CAN BE INITIATED FROM ANYWHERE
+        // $scope.$on('jobs.update', function(event, data) {
+        //     if (!data.id) {
+        //       return;
+        //     }
+        //
+        //     addToStreamline($scope.streamline, {
+        //       type: 'job',
+        //       queue: data.queue,
+        //       status: data.status
+        //     });
+        // });
+
+        // $scope.$on('jobevent.update', function(event, data) {
+        //     angular.forEach(data, function (value) {
+        //       addToStreamline($scope.streamline, {
+        //         type: 'event',
+        //         timestamp: moment(value.timestamp).format('ddd, D MMM HH:mm:ss'),
+        //         data: value.status
+        //       });
+        //     });
+        // });
     }])
 
     .controller('ServicesCtrl',[ '$scope', '$http', '$modal', 'Streamliner', function ($scope, $http, $modal, $Streamliner) {
@@ -158,7 +182,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $http.post('http://localhost:9000/services', serviceObject).
                 success(function(data){
                     console.log(data);
-                    $Streamliner.addJob(data.jobId);
+                    $Streamliner.singleJob(data.jobId);
                 });
         };
 
@@ -209,7 +233,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $scope.deleteService = function(){
                 $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
                     .success(function(data, status, headers, config) {
-                        $Streamliner.addJob(data.jobId);
+                        $Streamliner.singleJob(data.jobId);
                     })
                     .error(function(data, status, headers, config) {
                         // @todo: implement?
@@ -300,7 +324,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $http.post('http://localhost:9000/services/' + serviceId + '/containers/' + containerVrn + '/weight/' + weight).
             success(function(data) {
                 console.log('updated weight OK:' + $scope.weight);
-                $Streamliner.addJob(data.jobId);
+                $Streamliner.singleJob(data.jobId);
             });
         };
 
@@ -308,7 +332,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
            $http.post('http://localhost:9000/services/' + serviceId + '/containers/' + containerVrn+ '/amount/' + amount).
                success(function(data) {
                    console.log(data);
-                   $Streamliner.addJob(data.jobId);
+                   $Streamliner.singleJob(data.jobId);
                });
         };
 
@@ -351,7 +375,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $http.delete('http://localhost:9000/containers/' + $scope.id).
                 success(function(data) {
                     console.log(data);
-                    $Streamliner.addJob(data.jobId);
+                    $Streamliner.singleJob(data.jobId);
                 });
         };
 
@@ -499,7 +523,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $http.post('http://localhost:9000/images/' + id + '/deploy?service=' + vrn).
                 success(function(data){
                     console.log(data);
-                    $Streamliner.addJob(data.jobId);
+                    $Streamliner.singleJob(data.jobId);
                 });
         };
 
