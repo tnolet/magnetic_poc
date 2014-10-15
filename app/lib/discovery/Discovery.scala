@@ -10,6 +10,7 @@ import com.loopfor.zookeeper._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import play.api.libs.json.{JsValue, Json}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * The Zookeeper class takes care of communicating with Zookeeper for service discovery
@@ -70,12 +71,11 @@ class Discovery {
       case cle: ConnectionLossException => Logger.error("Lost connection to Zookeeper")
     }
 
-    futureZkResponse.map( resp => {
+    futureZkResponse.map {
 
       case s: String => Logger.info(s"Zookeeper response:" + s)
 
      }
-    )
 
   }
 

@@ -1,0 +1,20 @@
+{
+    "container": {
+        "type": "DOCKER",
+        "docker": {
+            "image": "tnolet/haproxy-rest:0.2.1"
+
+        }
+    },
+    "id": "local-proxy",
+    "args": ["--mode=localproxy","--zooConString=10.151.59.229:2181,10.101.29.217:2181,10.195.59.140:2181", "--kafkaSwitch=on","--kafkaHost=10.151.59.229"],
+    "cpus": "0.2",
+    "mem": "512",
+    "ports": [
+        0
+    ],
+    "constraints": [["hostname", "UNIQUE"]],
+    "instances": 9
+}
+
+

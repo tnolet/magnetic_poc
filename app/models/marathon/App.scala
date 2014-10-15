@@ -12,7 +12,7 @@ case class Constraint(attribute: String, operator: String, value: String)
 case class PortMapping(
                         containerPort: Int,
                         hostPort: Int = 0,
-                        servicePort: Int = 9000,
+                        servicePort: Int = 9001,
                         protocol: String
                         )
 
@@ -52,7 +52,7 @@ case class HealthCheck(
 case class MarathonApp(
                            id: String,
                            cmd: String = "",
-                           args: List[String] = List(),
+                           args: Option[List[String]] = None,
                            container: Container,
                            cpus: Double = 1,
                            mem: Double = 1024,
@@ -81,7 +81,7 @@ object MarathonApp  {
   def simpleAppBuilder(appId: String, appImage: String, version: String, args: String ,instanceAmount: Int) : MarathonApp = {
 
     val container = Container( docker = Docker(image = s"$appImage:$version" ))
-    MarathonApp( id = appId, container = container, instances = instanceAmount, args = List(args))
+    MarathonApp( id = appId, container = container, instances = instanceAmount, args = compileArgs(args))
 
   }
 
@@ -98,10 +98,22 @@ object MarathonApp  {
     val portMap = PortMapping( containerPort = port, protocol = "tcp" )
     val docker = Docker( image = s"$appImage:$version", network = Some("BRIDGE"), portMappings = List(portMap))
     val container = Container( docker = docker)
-    MarathonApp( id = appId, container = container, instances = instanceAmount, args = List(args))
+    MarathonApp( id = appId, container = container, instances = instanceAmount, args = compileArgs(args))
 
   }
+
+  private def compileArgs(args: String) : Option[List[String]] = {
+
+    args match {
+
+      case  "" => None
+
+      case _ => Some(List(args))
+    }
+  }
 }
+
+
 
 object MarathonAppJson {
 
