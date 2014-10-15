@@ -5,11 +5,15 @@
 
 angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
   .controller('AppCtrl', ['$scope', '$translate', '$localStorage', '$window',
-    function(              $scope,   $translate,   $localStorage,   $window ) {
+    function ($scope, $translate, $localStorage, $window) {
       // add 'ie' classes to html
       var isIE = !!navigator.userAgent.match(/MSIE/i);
-      isIE && angular.element($window.document.body).addClass('ie');
-      isSmartDevice( $window ) && angular.element($window.document.body).addClass('smart');
+      if (isIE) {
+        angular.element($window.document.body).addClass('ie');
+      }
+      if (isSmartDevice( $window )) {
+        angular.element($window.document.body).addClass('smart');
+      }
 
       // config
       $scope.app = {
@@ -40,7 +44,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
       };
 
       // save settings to local storage
-      if ( angular.isDefined($localStorage.settings) ) {
+      if (angular.isDefined($localStorage.settings)) {
         $scope.app.settings = $localStorage.settings;
       } else {
         $localStorage.settings = $scope.app.settings;
@@ -73,7 +77,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
           // Checks for iOs, Android, Blackberry, Opera Mini, and Windows mobile devices
           return (/iPhone|iPod|iPad|Silk|Android|BlackBerry|Opera Mini|IEMobile/).test(ua);
       }
-
   }])
 
 
@@ -81,22 +84,16 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
     // Environments
 
-  .controller('EnvironmentsCtrl', ['$scope', '$http', function ($scope, $http) {
-      $http.get('http://localhost:9000/environments').
-          success(function(data) {
-              $scope.environments = data;
-          });
+  .controller('EnvironmentsCtrl', ['$scope', '$http', 'Polling', function ($scope, $http, $polling) {
+    $polling.startPolling('environments', 'http://localhost:9000/environments', $scope, function (data) {
+      $scope.environments = data;
+    });
    }])
 
-    .controller('EnvironmentsDetailCtrl',[ '$scope', '$stateParams','$http',function ($scope, $stateParams, $http) {
-        $http.get('http://localhost:9000/environments/' + $stateParams.environmentId).
-            success(function(data) {
-                $scope.environment = data;
-            });
-
-        $scope.addContainer = function () {
-            console.log("not implemented yet");
-        };
+    .controller('EnvironmentsDetailCtrl', ['$scope', '$stateParams', '$http', 'Polling', function ($scope, $stateParams, $http, $polling) {
+        $polling.startPolling('environmentsDetail', 'http://localhost:9000/environments/' + $stateParams.environmentId, $scope, function (data) {
+          $scope.environment = data;
+        });
     }])
 
 
@@ -146,14 +143,11 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         // });
     }])
 
-    .controller('ServicesCtrl',[ '$scope', '$http', '$modal', 'Streamliner', function ($scope, $http, $modal, $Streamliner) {
+    .controller('ServicesCtrl',[ '$scope', '$http', '$modal', 'Polling', function ($scope, $http, $modal, $polling) {
 
-        console.log($Streamliner);
-
-        $http.get('http://localhost:9000/services').
-            success(function(data) {
-                $scope.services = data;
-            });
+        $polling.startPolling('services', 'http://localhost:9000/services', $scope, function (data) {
+          $scope.services = data;
+        });
 
 
         var createService = function(serviceObject) {
@@ -185,7 +179,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
     }])
 
-    .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed','$timeout', 'Streamliner', function ($scope, $stateParams, $http, loadBalancerMetricsFeed, $timeout, $Streamliner) {
+    .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed','$timeout', 'Polling', function ($scope, $stateParams, $http, loadBalancerMetricsFeed, $timeout, $polling) {
 
             $scope.metricsFE = "";
             $scope.metricsBE = "";
@@ -221,32 +215,29 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             };
 
             // initialise the controller with all basic info
-            $http.get('http://localhost:9000/services/' + $stateParams.serviceId).
-                success(function(data) {
-                    $scope.vrn = data.vrn;
-                    $scope.containers = data.containers;
-                    $scope.port = data.port;
-                    $scope.mode = data.mode;
-                    $scope.serviceType = data.serviceType;
-                    $scope.environment = data.environment;
-                    $scope.version = data.version;
-                    loadBalancerMetricsFeed.register(metricsFilterFE);
-                    loadBalancerMetricsFeed.register(metricsFilterBE);
-                }
-            );
+            $polling.startPolling('servicesDetail', 'http://localhost:9000/services/' + $stateParams.serviceId, $scope, function (data) {
+              $scope.vrn = data.vrn;
+              $scope.containers = data.containers;
+              $scope.port = data.port;
+              $scope.mode = data.mode;
+              $scope.serviceType = data.serviceType;
+              $scope.environment = data.environment;
+              $scope.version = data.version;
+              loadBalancerMetricsFeed.register(metricsFilterFE);
+              loadBalancerMetricsFeed.register(metricsFilterBE);
+            });
     }])
 
         // Backends AKA Containers
 
 
-    .controller('ContainersCtrl',[ '$scope', '$http', function ($scope, $http) {
-        $http.get('http://localhost:9000/containers').
-            success(function(data) {
-                $scope.containers = data;
-            });
+    .controller('ContainersCtrl',[ '$scope', '$http', 'Polling', function ($scope, $http, $polling) {
+      $polling.startPolling('containers', 'http://localhost:9000/containers', $scope, function (data) {
+        $scope.containers = data;
+      });
     }])
 
-    .controller('ContainerDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed', 'Streamliner', function ($scope, $stateParams, $http, $loadBalancerMetricsFeed, $Streamliner) {
+    .controller('ContainerDetailCtrl',[ '$scope', '$stateParams','$http','loadBalancerMetricsFeed', function ($scope, $stateParams, $http, $loadBalancerMetricsFeed) {
 
         // local constants and functions
         var WEIGHT_MAX = 256;
@@ -459,12 +450,10 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     })
 
 
-    .controller('ImagesCtrl', ['$scope','$http', '$modal', function ($scope, $http, $modal, $Streamliner) {
-
-        $http.get('http://localhost:9000/images').
-            success(function(data) {
-                $scope.images = data;
-            });
+    .controller('ImagesCtrl', ['$scope','$http', '$modal', 'Polling', function ($scope, $http, $modal, $polling) {
+        $polling.startPolling('images', 'http://localhost:9000/images', $scope, function (data) {
+          $scope.images = data;
+        });
 
         var createImage = function(img) {
 
@@ -535,20 +524,16 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
     }])
 
-    .controller('ImagesDetailCtrl',[ '$scope', '$stateParams','$http', '$modal', function ($scope, $stateParams, $http, $modal) {
+    .controller('ImagesDetailCtrl',[ '$scope', '$stateParams','$http', '$modal', 'Polling', function ($scope, $stateParams, $http, $modal, $polling) {
 //       get details for this image
-        $http.get('http://localhost:9000/images/' + $stateParams.imageId).
-            success(function(data) {
-                $scope.image = data;
-            });
+        $polling.startPolling('imagesDetail', 'http://localhost:9000/images/' + $stateParams.imageId, $scope, function (data) {
+          $scope.image = data;
+        });
 
         // also grab all containers that are based on this image
-
-        $http.get('http://localhost:9000/containers?image=' + $stateParams.imageId).
-            success(function(data) {
-                $scope.containers = data;
-            });
-
+        $polling.startPolling('imagesDetailContainers', 'http://localhost:9000/containers?image=' + $stateParams.imageId, $scope, function (data) {
+          $scope.containers = data;
+        });
     }])
 
 
@@ -855,7 +840,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     $scope.notBlackListed = function(value) {
       var blacklist = ['bad@domain.com','verybad@domain.com'];
       return blacklist.indexOf(value) === -1;
-    }
+    };
 
     $scope.val = 15;
     var updateModel = function(val){
@@ -873,7 +858,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
       {text:'Third',  value:'Three'}
     ];
 
-    $scope.list_of_string = ['tag1', 'tag2']
+    $scope.list_of_string = ['tag1', 'tag2'];
     $scope.select2Options = {
         'multiple': true,
         'simple_tags': true,
@@ -928,10 +913,10 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
       // Zip the generated y values with the x values
       var res = [];
       for (var i = 0; i < data.length; ++i) {
-        res.push([i, data[i]])
+        res.push([i, data[i]]);
       }
       return res;
-    }
+    };
 
     $scope.d4 = $scope.getRandomData();
   }])
