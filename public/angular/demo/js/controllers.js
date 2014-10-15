@@ -182,7 +182,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $http.post('http://localhost:9000/services', serviceObject).
                 success(function(data){
                     console.log(data);
-                    $Streamliner.singleJob(data.jobId);
+                    //  Removed single job callback due to new streamline optimizations
+                    //  $Streamliner.singleJob(data.jobId);
                 });
         };
 
@@ -233,7 +234,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $scope.deleteService = function(){
                 $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
                     .success(function(data, status, headers, config) {
-                        $Streamliner.singleJob(data.jobId);
+                        //  Removed single job callback due to new streamline optimizations
+                        //  $Streamliner.singleJob(data.jobId);
                     })
                     .error(function(data, status, headers, config) {
                         // @todo: implement?
@@ -324,7 +326,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $http.post('http://localhost:9000/services/' + serviceId + '/containers/' + containerVrn + '/weight/' + weight).
             success(function(data) {
                 console.log('updated weight OK:' + $scope.weight);
-                $Streamliner.singleJob(data.jobId);
+                //  Removed single job callback due to new streamline optimizations
+                //  $Streamliner.singleJob(data.jobId);
             });
         };
 
@@ -332,7 +335,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
            $http.post('http://localhost:9000/services/' + serviceId + '/containers/' + containerVrn+ '/amount/' + amount).
                success(function(data) {
                    console.log(data);
-                   $Streamliner.singleJob(data.jobId);
+                   //  Removed single job callback due to new streamline optimizations
+                   //  $Streamliner.singleJob(data.jobId);
                });
         };
 
@@ -375,7 +379,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $http.delete('http://localhost:9000/containers/' + $scope.id).
                 success(function(data) {
                     console.log(data);
-                    $Streamliner.singleJob(data.jobId);
+                    //  Removed single job callback due to new streamline optimizations
+                    //  $Streamliner.singleJob(data.jobId);
                 });
         };
 
@@ -523,7 +528,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $http.post('http://localhost:9000/images/' + id + '/deploy?service=' + vrn).
                 success(function(data){
                     console.log(data);
-                    $Streamliner.singleJob(data.jobId);
+                    //  Removed single job callback due to new streamline optimizations
+                    //  $Streamliner.singleJob(data.jobId);
                 });
         };
 

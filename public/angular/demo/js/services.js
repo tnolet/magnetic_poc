@@ -39,7 +39,7 @@ angular.module('app.services', [])
     /* private */
     var jobs = {};
     var timers = {};
-    var INTERVAL = 500;
+    var INTERVAL = 1250;
 
     var isNewJob = function (job) {
       return !jobs || typeof jobs[job.id] === 'undefined' || !angular.equals(jobs[job.id], job);
@@ -127,12 +127,12 @@ angular.module('app.services', [])
 
     return {
       singleJob: function (jobId) {
-          // var job = jobs[jobId] || {
-          //   events: []
-          // };
-          //
-          // timers[jobId] = window.setInterval(requestJobStatus.bind(jobs, jobId), INTERVAL);
-          // jobs[jobId] = job;
+          var job = jobs[jobId] || {
+            events: []
+          };
+
+          timers[jobId] = window.setInterval(requestJobStatus.bind(jobs, jobId), INTERVAL);
+          jobs[jobId] = job;
       },
       allJobs: function (callback) {
         timers['*'] = window.setInterval(requestJobs.bind(jobs, callback), INTERVAL);
