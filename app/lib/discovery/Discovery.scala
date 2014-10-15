@@ -4,8 +4,10 @@ package lib.discovery
 import java.net.InetSocketAddress
 
 import com.typesafe.config.ConfigFactory
+import org.apache.zookeeper.KeeperException
 import play.api.Logger
 import com.loopfor.zookeeper._
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import play.api.libs.json.{JsValue, Json}
 
@@ -26,13 +28,13 @@ class Discovery {
 
   val config = Configuration {
 
-    Seq[InetSocketAddress](("10.151.59.229", 2181),("10.101.29.217", 2181),("10.195.59.140",2181)) } withTimeout{ 60 seconds } withWatcher {(event, session) =>
+    Seq[InetSocketAddress](("10.151.59.229", 2181),("10.101.29.217", 2181),("10.195.59.140",2181)) } withTimeout{ 60.seconds } withWatcher {(event, session) =>
 
     Logger.info("Zookeeper event: " + event.toString)
 
   }
 
-  val client = SynchronousZookeeper(config)
+  val client = AsynchronousZookeeper(config)
 
   /**
    * Registers a service in Zookeeper
@@ -58,13 +60,22 @@ class Discovery {
 
     Logger.info(s"Creating zkNode: $path")
 
+    var futureZkResponse : Future[String] = null
+
     try {
-      client.create(path,bytes,List(acl),Persistent)
+      futureZkResponse = client.create(path,bytes,List(acl),Persistent)
 
     } catch {
 
       case cle: ConnectionLossException => Logger.error("Lost connection to Zookeeper")
     }
+
+    futureZkResponse.map( resp => {
+
+      case s: String => Logger.info(s"Zookeeper response:" + s)
+
+     }
+    )
 
   }
 
@@ -77,9 +88,9 @@ class Discovery {
     val path = s"/$zkRoot/$vrn"
 
     // if the node, for some reason, is not there,there is no reason to delete it
-    val directoryStatus : Option[Status]= client.exists(path)
+    val directoryStatus : Future[Option[Status]] = client.exists(path)
 
-    directoryStatus match {
+    directoryStatus.map {
 
       case Some(stat: Status) =>
 
@@ -88,8 +99,9 @@ class Discovery {
         try {
           client.delete(path,None)
 
+
         } catch {
-          case cle: ConnectionLossException => Logger.error("Lost connection to Zookeeper")
+          case cle: KeeperException.ConnectionLossException => Logger.error("Lost connection to Zookeeper")
 
         }
 
