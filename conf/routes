@@ -42,7 +42,7 @@ GET           /environments/:id                                            contr
 
 #Jobs
 
-GET           /jobs                                                        controllers.JobsController.list
+GET           /jobs                                                        controllers.JobsController.list(filter: Option[Int])
 
 GET           /jobs/:id                                                    controllers.JobsController.find_by_id(id: Long)
 

@@ -2,6 +2,7 @@ package models
 
 import java.sql.Timestamp
 
+import play.api.Logger
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
@@ -36,7 +37,26 @@ object Jobs {
 
   val jobs = TableQuery[Jobs]
 
-  def all(implicit s: Session): List[Job] = jobs.list
+  def all(filter: Option[Int])(implicit s: Session): List[Job] = {
+
+     filter match {
+
+      case Some(f: Int) =>
+        Logger.info(s"getting $f jobs: ")
+        jobs.take(f).sortBy(_.created_at.desc).list
+
+      case None =>
+
+        jobs.sortBy(_.created_at.desc).list
+
+    }
+
+  }
+
+
+
+
+
 
   /**
    * Insert a new Job

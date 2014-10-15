@@ -15,9 +15,12 @@ object JobsController extends Controller {
 
   import models.JobJson.jobWrites
 
-  def list = DBAction { implicit rs =>
-    val job = Jobs.all
-    Ok(Json.toJson(job))
+  def list(filter: Option[Int]) = DBAction { implicit rs =>
+
+        val job = Jobs.all(filter)
+        Ok(Json.toJson(job))
+
+
   }
 
   def find_by_id(id: Long) = DBAction { implicit rs =>

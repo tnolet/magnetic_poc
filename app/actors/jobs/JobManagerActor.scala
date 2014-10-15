@@ -29,7 +29,7 @@ class JobManagerActor extends Actor with ActorLogging {
       //log.debug("Job Manager is checking for new jobs")
       DB.withTransaction { implicit session: Session =>
         Jobs
-          .all
+          .all(None)
           .filter(_.status == "NEW")
           .foreach(job => {
           startJobExecutor(job)
