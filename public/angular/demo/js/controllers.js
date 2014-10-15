@@ -115,33 +115,11 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     })
 
     .controller('StreamlineCtrl', ['$scope', '$http', 'Streamliner', function ($scope, $http, $Streamliner) {
-        function parseToArrayAndOrder(items) {
-          var keys = Object.keys(items).sort(function (a, b) {
-            //Needs reverse ordering: biggest key comes first
-            return b - a;
-          });
-          var finalArray = [];
-
-          angular.forEach(keys, function (key) {
-            finalArray.push(items[key]);
-          });
-
-          return finalArray;
-        }
-
-        $scope.streamline = $scope.streamline || [];
-
-        var streamlineItems = {};
-
-        $Streamliner.allJobs(function (job) {
-          streamlineItems[job.id] = {
-            type: 'job',
-            id: job.id,
-            timestamp: job.updated_at,
-            queue: job.queue,
-            status: job.status
-          };
-          $scope.streamline = parseToArrayAndOrder(streamlineItems);
+        $Streamliner.allJobs(function (jobs) {
+          //callback is only called if anything has changed in the jobs array
+          //this means the backend is responsiple for guarding the limits of the
+          //messages - it can never give back more then 10 messages.
+          $scope.streamline = jobs;
         });
 
         // OLD-FASHIONED STREAMLINE FILLING - CAN BE INITIATED FROM ANYWHERE
@@ -315,6 +293,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         var metricsFilter = function(metricData){
             var filterMetricData = metricData.filter(function (obj) {
+              if (!$scope.instanceVrns()) {
+                return;
+              }
               return $scope.instanceVrns().indexOf(obj.svname) > -1;
             });
             console.log(filterMetricData);
@@ -401,6 +382,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
 
         $scope.instanceVrns = function() {
+            if (!$scope.instances) {
+              return;
+            }
             var vrns = [];
             $scope.instances.forEach(function(instance){
                     vrns.push(instance.vrn);

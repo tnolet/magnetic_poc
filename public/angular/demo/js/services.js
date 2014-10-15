@@ -16,22 +16,21 @@ angular.module('app.services', [])
  */
 
 .factory('loadBalancerMetricsFeed', function () {
+    console.log("Registered service loadBalancerMetricsFeed");
 
-        console.log("Registered service loadBalancerMetricsFeed");
+    var source = new EventSource('/feeds/metrics/lb');
 
-        var source = new EventSource('/feeds/metrics/lb');
+    var registerCallback = function (callback) {
+        source.addEventListener('magneticio_message', function (msg) {
+          callback(JSON.parse(msg.data));
+        });
+    };
 
-        var registerCallback = function(callback){
-            source.addEventListener('message',function(msg){
-              callback(JSON.parse(msg.data));
-            });
-        };
-
-        return {
-            register: function(callback) {
-                registerCallback(callback);
-            }
-        };
+    return {
+        register: function(callback) {
+            registerCallback(callback);
+        }
+    };
 
 })
 
@@ -62,9 +61,9 @@ angular.module('app.services', [])
 
       $http.get('/jobs?filter=10')
         .success(function (data, status, headers, config) {
-          console.log(data);
-          if (data.length) {
-            angular.forEach(data, handleJob.bind(this, callback));
+          if (!angular.equals(data, jobs)) {
+            callback(data);
+            jobs = data;
           }
         })
         .error(function(data, status, headers, config) {
