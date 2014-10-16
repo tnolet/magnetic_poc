@@ -3,7 +3,8 @@ package models.loadbalancer
 import play.api.libs.json.Json
 
 case class Configuration ( Frontends: List[Frontend],
-                           backends: List[Backend])
+                           backends: List[Backend],
+                           services: Option[List[Service]] = None)
 
 object Configuration {
 
@@ -17,7 +18,6 @@ object Configuration {
    * @return a new [[Configuration]] object
    */
   def addBackend(conf: Configuration, backend: Backend): Configuration = {
-
     conf.copy(backends = conf.backends.::(backend))
   }
   /**
@@ -27,7 +27,6 @@ object Configuration {
    * @return a new [[Configuration]] object
    */
   def removeBackend(conf: Configuration, vrn: String): Configuration = {
-
     conf.copy(backends = conf.backends.filterNot( be => be.name == vrn))
   }
 
@@ -38,7 +37,6 @@ object Configuration {
    * @return a new [[Configuration]] object
    */
   def addFrontend(conf: Configuration, frontend: Frontend): Configuration = {
-
     conf.copy(Frontends = conf.Frontends.::(frontend))
   }
 
@@ -49,7 +47,6 @@ object Configuration {
    * @return a new [[Configuration]] object
    */
   def removeFrontend(conf: Configuration, vrn: String): Configuration = {
-
     conf.copy(Frontends = conf.Frontends.filterNot( fe => fe.name == vrn))
   }
 
@@ -93,6 +90,27 @@ object Configuration {
     )
   }
     conf.copy(backends = newBackends)
+  }
+
+  /**
+   * Add a service to an existing configuration
+   * @param conf represents a configuration object
+   * @param service represent a [[Service]] object
+   * @return a new [[Configuration]] object
+   */
+  def addService(conf: Configuration, service: Service): Configuration = {
+    val _services = conf.services.getOrElse(List())
+    conf.copy(services = Some(_services.::(service)))
+  }
+  /**
+   * Remove a service from an existing configuration by vrn
+   * @param conf represents a configuration object
+   * @param vrn represents the vrn associated with the service
+   * @return a new [[Configuration]] object
+   */
+  def removeService(conf: Configuration, vrn: String): Configuration = {
+    val _services = conf.services.getOrElse(List())
+    conf.copy(services = Some(_services.filterNot( srv => srv.name == vrn)))
   }
 
 

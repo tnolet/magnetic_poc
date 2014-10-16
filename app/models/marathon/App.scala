@@ -55,7 +55,7 @@ case class MarathonApp(
                            args: Option[List[String]] = None,
                            container: Container,
                            cpus: Double = 1,
-                           mem: Double = 1024,
+                           mem: Double = 512,
                            disk: Double = 0,
                            env: Option[List[Map[String,String]]] = None,
                            constraints: List[Constraint] = List(),

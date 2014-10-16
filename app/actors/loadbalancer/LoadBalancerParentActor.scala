@@ -11,9 +11,13 @@ class LoadBalancerParentActor extends Actor with ActorLogging {
   //  Create a load balancer manager
   private val lbManager = context.actorOf(Props[LoadBalancerManagerActor], "lbManager")
 
+  //  Create a local proxy manager
+  private val lpManager = context.actorOf(Props[LocalProxyManagerActor], "lpManager")
+
 
   def receive = {
     case message: LbMessage => lbManager forward message
+    case message: LpMessage => lpManager forward message
   }
 
 }

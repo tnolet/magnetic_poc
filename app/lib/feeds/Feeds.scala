@@ -22,6 +22,10 @@ class Feeds {
 
   }
 
+  def createConsumer = {
+
+  }
+
   def startFeeds = {
 
     feedsParent ! StartFeeds(zkConnect = zkConnect)

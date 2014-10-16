@@ -32,7 +32,6 @@ class Jobs(tag: Tag) extends Table[Job](tag, "JOB") {
 
 }
 
-
 object Jobs {
 
   val jobs = TableQuery[Jobs]
@@ -42,11 +41,9 @@ object Jobs {
      filter match {
 
       case Some(f: Int) =>
-        Logger.info(s"getting $f jobs: ")
         jobs.sortBy(_.created_at.desc).take(f).list
 
       case None =>
-
         jobs.sortBy(_.created_at.desc).list
 
     }

@@ -7,7 +7,7 @@
         }
     },
     "id": "local-proxy",
-    "args": ["--mode=localproxy","--zooConString=10.151.59.229:2181,10.101.29.217:2181,10.195.59.140:2181", "--kafkaSwitch=on","--kafkaHost=10.151.59.229"],
+    "args": ["--mode=localproxy","--zooConString=10.151.59.229:2181,10.101.29.217:2181,10.195.59.140:2181"],
     "cpus": "0.2",
     "mem": "512",
     "ports": [

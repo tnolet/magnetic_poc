@@ -1,9 +1,8 @@
 package actors.deployment
 
 import actors.jobs.{UpdateJob, addJobEvent}
-import actors.loadbalancer.{RemoveFrontendBackend, LbFail, LbSuccess, AddFrontendBackend}
+import actors.loadbalancer._
 import akka.actor.{ActorRef, Actor, LoggingFSM}
-import lib.discovery.MagneticServiceInstance
 import lib.job.UnDeploymentJobBuilder
 import models.Jobs
 import models.docker.DockerContainers
@@ -194,6 +193,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
         sendStateUpdate(state)
 
+        // update the central load balancer
         log.debug("Requesting update of load balancer")
         lbManager ! AddFrontendBackend(vrn = vrn, port = port, mode = mode)
 
@@ -213,11 +213,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
           sendStateUpdate(state)
 
-          //create entry in service register
-          val instance = MagneticServiceInstance(serviceType = servType , host= "localhost", port = port, vrn = vrn)
-          val sd = new lib.discovery.Discovery
-
-          sd.registerService(instance)
+          lbManager ! PushServicesToLocalProxies
 
           jobExecutor ! UpdateJob(Jobs.status("finished"))
 
@@ -238,9 +234,7 @@ class ServiceDeploymentActor extends Actor with LoggingFSM[DeployState,Data] {
 
           log.info("Removing service from Zookeeper")
 
-          val sd = new lib.discovery.Discovery
-          sd.unRegisterService(vrn = vrn )
-
+          lbManager ! RemoveServiceFromLocalProxies(vrn)
 
           log.debug("Removing service from load balancer")
 

@@ -11,6 +11,7 @@ import lib.loadbalancer.LoadBalancer
 
 import models.docker.{DockerImages, DockerImage}
 import models.service.{ServiceType, ServiceTypes}
+import org.apache.curator.x.discovery.ServiceDiscovery
 import play.api._
 import play.api.libs.concurrent.Akka
 import models._
@@ -99,7 +100,6 @@ object Global extends GlobalSettings {
 
     //Start specific feeds
     feeds.startFeeds
-
   }
 }
 

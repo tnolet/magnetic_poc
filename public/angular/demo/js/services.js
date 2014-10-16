@@ -21,7 +21,7 @@ angular.module('app.services', [])
     var source = new EventSource('/feeds/metrics/lb');
 
     var registerCallback = function (callback) {
-        source.addEventListener('magneticio_message', function (msg) {
+        source.addEventListener('message', function (msg) {
           callback(JSON.parse(msg.data));
         });
     };

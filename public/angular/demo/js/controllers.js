@@ -289,7 +289,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
               }
               return $scope.instanceVrns().indexOf(obj.svname) > -1;
             });
-            console.log(filterMetricData);
             aggregateMetrics(filterMetricData);
         };
 

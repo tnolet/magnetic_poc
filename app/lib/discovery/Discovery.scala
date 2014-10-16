@@ -7,10 +7,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.zookeeper.KeeperException
 import play.api.Logger
 import com.loopfor.zookeeper._
-import scala.concurrent.Future
 import scala.concurrent.duration._
-import play.api.libs.json.{JsValue, Json}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * The Zookeeper class takes care of communicating with Zookeeper for service discovery
@@ -25,7 +22,6 @@ class Discovery {
 
   val zkConnect = conf.getString("discovery.zookeeper.connect")
   val zkRoot = conf.getString("discovery.zookeeper.root")
-  val serviceEndPoint = conf.getString("loadbalancer.host")
 
   val config = Configuration {
 
@@ -35,48 +31,47 @@ class Discovery {
 
   }
 
-  val client = AsynchronousZookeeper(config)
+  val client = SynchronousZookeeper(this.config)
+
 
   /**
-   * Registers a service in Zookeeper
-   * @param srv an instance of [[MagneticServiceInstance]]
+   * Update a node in Zookeeper
+   * @param payload a payload to set in the node
+   * @param path the path to the node
    */
-  def registerService(srv: MagneticServiceInstance) = {
+  def setNode(payload: String, path: String)  = {
 
-    implicit val instanceWrites = Json.writes[MagneticServiceInstance]
-
-    val zkMessage : JsValue = Json.obj(
-      "name" -> srv.vrn,
-      "bindPort" -> srv.port,
-      "endPoint" -> this.serviceEndPoint,
-      "mode" -> "tcp"
-  )
-
-    val data = Json.stringify(Json.toJson(zkMessage))
-    val bytes = data.map(_.toByte).toArray
-
+    val bytes = payload.map(_.toByte).toArray
     val acl = new ACL(Id.Anyone, ACL.All)
-    val path = s"/$zkRoot/${srv.vrn}"
+    val totalPath = s"/$zkRoot/$path"
+
+    val exists = this.client.exists(totalPath)
+
+    // check if the node exists. If not create it, otherwise update it
+    exists match {
+
+      case None =>
+
+        Logger.info(s"Creating zkNode: $totalPath")
+        try {
+          val ZkResponse = this.client.create(totalPath, bytes, List(acl), Persistent)
+          Logger.info("Zookeeper node created: " + ZkResponse)
+        } catch {
+          case e: Exception => Logger.error("Zookeeper error: " + e.toString)
+        }
+
+      case Some(status: Status) =>
+
+        Logger.info(s"Updating zkNode: $totalPath")
+        try {
+          val ZkStatus: Status = client.set(totalPath, bytes, None)
+          Logger.info("Zookeeper node updated: " + ZkStatus.path)
+        } catch {
+          case cle: ConnectionLossException => Logger.error("Lost connection to Zookeeper")
+        }
 
 
-    Logger.info(s"Creating zkNode: $path")
-
-    var futureZkResponse : Future[String] = null
-
-    try {
-      futureZkResponse = client.create(path,bytes,List(acl),Persistent)
-
-    } catch {
-
-      case cle: ConnectionLossException => Logger.error("Lost connection to Zookeeper")
     }
-
-    futureZkResponse.map {
-
-      case s: String => Logger.info(s"Zookeeper response:" + s)
-
-     }
-
   }
 
   /**
@@ -88,16 +83,16 @@ class Discovery {
     val path = s"/$zkRoot/$vrn"
 
     // if the node, for some reason, is not there,there is no reason to delete it
-    val directoryStatus : Future[Option[Status]] = client.exists(path)
+    val directoryStatus : Option[Status] = client.exists(path)
 
     directoryStatus.map {
 
-      case Some(stat: Status) =>
+      case stat: Status =>
 
         Logger.info(s"Deleting zkNode: $path")
 
         try {
-          client.delete(path,None)
+          this.client.delete(path,None)
 
 
         } catch {
@@ -105,7 +100,7 @@ class Discovery {
 
         }
 
-      case None =>
+      case _ =>
         Logger.info(s"No zkNode $path found for deletion")
 
     }
