@@ -206,13 +206,13 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
                 $http.get('/feeds/metrics/lb', { params: params }).
                     success(function(data) {
-                    var values = data.queries[0].results[0].values
+                    var values = data.queries[0].results[0].values;
 
                     var rows = [];
                     for ( var i = 0; i < values.length; i++ ) {
                         rows[i] = {c: [{ v: new Date(values[i][0])},{ v: values[i][1]}]}
                     }
-                        $scope.graph.data.rows = rows
+                        $scope.chart.data.rows = rows
                 })
 
             };
@@ -231,7 +231,10 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         chart1.options = {
             backgroundColor: "#F0F3F4",
-            chartArea: { backgroundColor: "#F0F3F4" },
+            chartArea: {
+                backgroundColor: "#F0F3F4",
+                width: "90%"
+                },
             width: "100%",
             height: 200,
             colors: ["#23b7e5"],
@@ -240,16 +243,20 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             fill: 20,
             displayExactValues: true,
             vAxis: {
-                 gridlines: { count: 6 },
                  viewWindow: { min: 0 },
                  baselineColor: '#58666e',
-                 textStyle: { color: "#58666e", fontName: "Source Sans Pro"}
+                 textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
+                    gridlines : {count:6, color:'#B9B9B9'},
+                minorGridLines : { count:5}
 
             },
             hAxis: {
                 format: "hh:mm:ss",
                 baselineColor: '#58666e',
                 textStyle: { color: "#58666e", fontName: "Source Sans Pro"}
+            },
+            animation: {
+                duration: 20
             }
         };
 
@@ -266,7 +273,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
               $scope.serviceType = data.serviceType;
               $scope.environment = data.environment;
               $scope.version = data.version;
-              $scope.metrics = graphData("loadbalancer","scur",data.vrn,"frontend","100","minutes")
+             graphData("loadbalancer","scur",data.vrn,"frontend","10","minutes")
             });
     }])
 

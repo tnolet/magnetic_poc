@@ -27,7 +27,7 @@ class FeedsParentActor extends Actor with ActorLogging {
 
       val lbMetricsFeedCommitConfig = CommitConfig(
         commitInterval = Some(10 seconds),
-        commitAfterMsgCount = Some(10),
+        commitAfterMsgCount = Some(60),
         commitTimeout = 5 seconds
       )
 

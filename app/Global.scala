@@ -5,6 +5,7 @@ import actors.loadbalancer.LoadBalancerParentActor
 import akka.actor.Props
 import controllers.FeedsController
 import lib.feeds.Feeds
+import lib.kairosdb.KairosDB
 import lib.marathon.Marathon
 import lib.mesos.Mesos
 import lib.loadbalancer.LoadBalancer
@@ -77,6 +78,19 @@ object Global extends GlobalSettings {
       case Failure(exception) => Logger.info(s"Could not connect to the load balancer on ${LoadBalancer.uri}")
     })
 
+    //Check KairosDB health
+    val healthyKairosDB = KairosDB.Health
+
+    healthyKairosDB.onComplete({
+      case Success(returnCode) =>
+        if(returnCode < 399)
+        { Logger.info(s"Successfully connected to the Kairos DB on ${KairosDB.uri}")}
+        else
+        { Logger.error("KairosDB is running, but is not healthy")}
+      case Failure(exception) => Logger.info(s"Could not connect to the KairosDB on ${KairosDB.uri}")
+
+    })
+
     /**********************************************
       *
       *  Start up Akka Systems
@@ -94,12 +108,16 @@ object Global extends GlobalSettings {
     // Start up the Load Balancer actor system
     val lbSystem = Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
 
-    // Start the feeds system
-   val feeds = new Feeds
-   feeds.startFeedsParent()
 
-    //Start specific feeds
-    feeds.startFeeds
+    // Feeds are now handled in a separate service
+    // todo: clean up all feed handling actors and libs
+
+    // Start the feeds system
+//   val feeds = new Feeds
+//   feeds.startFeedsParent()
+//
+//    //Start specific feeds
+//    feeds.startFeeds
   }
 }
 

@@ -1,0 +1,9 @@
+{
+    "name": "tim.test",
+    "timestamp": 1413567971000,
+    "value": 18,
+    "tags": {
+        "host": "loadbalancer"
+
+    }
+}

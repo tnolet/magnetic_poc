@@ -1,0 +1,18 @@
+{
+    "cache_time": 10,
+    "start_relative": {
+        "value": 10,
+        "unit": "hours"
+    },
+    "metrics": [
+        {
+            "tags": {
+                "source": "loadbalancer",
+                "metric": "scur",
+                "proxy": "vrn-development-service-7af37608",
+                "proxyType": "frontend"
+            },
+            "name": "vrn-development-service-7af37608.frontend.scur"
+        }
+    ]
+}

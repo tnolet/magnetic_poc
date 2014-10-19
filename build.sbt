@@ -27,7 +27,8 @@ libraryDependencies ++= {
     "com.sclasen" %% "akka-kafka" % "0.0.7",
     "org.slf4j" % "log4j-over-slf4j" % "1.6.6",
     "org.apache.curator" % "curator-x-discovery" % curatorV,
-    "com.loopfor.zookeeper" %% "zookeeper-client" % "1.2.1"
+    "com.loopfor.zookeeper" %% "zookeeper-client" % "1.2.1",
+    "org.kairosdb" % "client" % "2.0"
   )
 }
 

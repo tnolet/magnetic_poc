@@ -2,7 +2,7 @@
     "container": {
         "type": "DOCKER",
         "docker": {
-            "image": "tnolet/haproxy-rest:0.2.1"
+            "image": "tnolet/haproxy-rest:0.4.3"
 
         }
     },

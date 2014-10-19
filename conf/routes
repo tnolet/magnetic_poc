@@ -78,7 +78,7 @@ DELETE        /services/:id                                                contr
 
 # SSE-Feeds
 
-GET           /feeds/metrics/lb                                            controllers.FeedsController.lbFeed(metricType: Option[String])
+GET           /feeds/metrics/lb                                            controllers.FeedsController.lbFeed(metric: String, proxy: String, proxyType: String, relativeTime: Int, timeUnit: String)
 
 # Load balancer
 
