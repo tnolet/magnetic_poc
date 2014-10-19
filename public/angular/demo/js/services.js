@@ -15,25 +15,31 @@ angular.module('app.services', [])
  *
  */
 
-.factory('loadBalancerMetricsFeed', function () {
-    console.log("Registered service loadBalancerMetricsFeed");
+//.factory('loadBalancerMetricsFeed', function () {
+//    console.log("Registered service loadBalancerMetricsFeed");
+//
+//    var source = new EventSource('/feeds/metrics/lb');
+//
+//    var registerCallback = function (callback) {
+//        source.addEventListener('message', function (msg) {
+//          callback(JSON.parse(msg.data));
+//        });
+//    };
+//
+//    return {
+//        register: function(callback) {
+//            registerCallback(callback);
+//        }
+//    };
+//
+//})
 
-    var source = new EventSource('/feeds/metrics/lb');
 
-    var registerCallback = function (callback) {
-        source.addEventListener('message', function (msg) {
-          callback(JSON.parse(msg.data));
-        });
-    };
-
-    return {
-        register: function(callback) {
-            registerCallback(callback);
-        }
-    };
-
+.factory('myCache', function($cacheFactory) {
+    return $cacheFactory('myData');
 })
-.service('Polling', ['$rootScope', '$http', function ($rootScope, $http) {
+
+.service('Polling', ['$rootScope', '$http', function ($rootScope, $http, myCache) {
   /**
   * Roughly based on https://www.altamiracorp.com/blog/employee-posts/simple-polling-service-in-angularjs
   */
@@ -46,7 +52,7 @@ angular.module('app.services', [])
       return;
     }
     var poller = function () {
-      $http.get(url).then(function (data) {
+      $http.get(url, {cache: myCache}).then(function (data) {
         success(data.data);
       }, function () {
         that.destroyPoller(name);

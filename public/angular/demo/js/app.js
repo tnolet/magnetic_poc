@@ -16,7 +16,8 @@ var app = angular.module('app', [
         'app.controllers',
         'app.services',
         'app.directives',
-        'app.filters'
+        'app.filters',
+        'googlechart'
 ]);
 
 app.config(['$stateProvider','$urlRouterProvider',
