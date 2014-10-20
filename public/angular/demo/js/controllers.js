@@ -82,12 +82,22 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
 //    START: Magnetic Demo Controllers
 
-    .controller('SystemMetricsCtrl',['$scope','$http', 'Polling', function($scope, $http, $polling){
-        $polling.startPolling('systemMetrics','http://localhost:9000/system/mesos/metrics',$scope, function(data) {
-            $scope.cpuUsedPercentage = Math.floor(data['master/cpus_percent'] * 100)
-            $scope.memUsedPercentage = Math.floor(data['master/mem_percent'] * 100)
-            $scope.diskUsedPercentage = Math.floor(data['master/disk_percent'] * 100)
-        })
+    .controller('SystemMetricsCtrl',['$scope','$http', '$interval', function($scope, $http, $interval){
+
+        var getMesosMetrics = function(){
+
+            $http.get('http://localhost:9000/system/mesos/metrics').
+                success(function (data) {
+                    $scope.cpuUsedPercentage = Math.floor(data['master/cpus_percent'] * 100);
+                    $scope.memUsedPercentage = Math.floor(data['master/mem_percent'] * 100);
+                    $scope.diskUsedPercentage = Math.floor(data['master/disk_percent'] * 100);
+                })
+
+        };
+
+        getMesosMetrics()
+
+        $interval(function() { getMesosMetrics() },2000)
     }])
 
     // Environments
@@ -161,7 +171,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         var createService = function(serviceObject) {
             $http.post('http://localhost:9000/services', serviceObject).
                 success(function(data){
-                    console.log(data);
                     //  Removed single job callback due to new streamline optimizations
                     //  $Streamliner.singleJob(data.jobId);
                 });

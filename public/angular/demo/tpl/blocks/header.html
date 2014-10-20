@@ -7,6 +7,14 @@
 </div>
 <div class="collapse navbar-collapse box-shadow bg-white-only">
 
+    <!-- buttons -->
+    <div class="nav navbar-nav m-l-sm hidden-xs">
+        <a href class="btn no-shadow navbar-btn" ng-click="app.settings.asideFolded = !app.settings.asideFolded">
+            <i class="fa {{app.settings.asideFolded ? 'fa-indent' : 'fa-dedent'}} fa-fw"></i>
+        </a>
+    </div>
+    <!-- / buttons -->
+
 
     <!-- nabar right -->
     <ul class="nav navbar-nav navbar-right">
