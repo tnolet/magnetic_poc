@@ -2,6 +2,7 @@ package lib.kairosdb
 
 import com.typesafe.config.ConfigFactory
 import models.kairosdb.DataPoint
+import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.{WSResponse, WS}
 import scala.concurrent.Future
@@ -54,7 +55,55 @@ object KairosDB {
     }
   }
 
-  def getMetrics(metric: String, proxy: String, proxyType: String, relativeTime: Int, timeUnit: String) : Future[WSResponse] = {
+  /**
+   *
+   * Gets a series of metrics from KairosDB
+   *
+   * @param metric the metric name, i.e "scur", "rate_max"
+   * @param proxy the name of the proxy, normally a vrn
+   * @param proxyType the type of the proxy, possible values are: "backend", "frontend" , "server"
+   * @param relativeTime the relative time since when we want the metric. Related to time unit. Default: 10
+   * @param timeUnit the time unit associated with the relative time, i.e. "hours". Default: "minutes"
+   * @return
+   */
+  def getMetrics(metric: String, proxy: String, proxyType: String, relativeTime: Int = 10, timeUnit: String = "minutes") : Future[WSResponse] = {
+
+    val json = Json.toJson(Query(metric, proxy, proxyType, relativeTime, timeUnit))
+
+    WS.url(s"$kdApi/datapoints/query").post(json).map {
+
+      case response =>
+        response
+    }
+
+  }
+
+  /**
+   *
+   * get a small set of metrics and just returns the last point. This comes in handy if we just want the last value
+   * of a specific metric and don't need the full series of metrics spanning a amount of time.
+   * @param metric
+   * @param proxy
+   * @param proxyType
+   */
+  def getDataPoint(metric: String, proxy: String, proxyType: String) = {
+
+    val json = Json.toJson(Query(metric, proxy, proxyType, 1, "minutes"))
+
+    WS.url(s"$kdApi/datapoints/query").post(json).map {
+
+      case response =>
+        if (response.status < 399 ){
+          val values = Json.parse(response.body) \\ "values"
+          Logger.info(values(0) .toString())
+
+        }
+    }
+
+
+  }
+
+  private def Query(metric: String, proxy: String, proxyType: String, relativeTime: Int, timeUnit: String) : JsValue ={
 
     val tags : JsValue = Json.obj(
       "source" -> "loadbalancer",
@@ -73,7 +122,6 @@ object KairosDB {
     )
 
     val query : JsValue = Json.obj(
-//      "cache_time" -> 10  ,
       "start_relative" -> Json.obj(
         "value" -> relativeTime,
         "unit" -> timeUnit
@@ -81,13 +129,7 @@ object KairosDB {
       "metrics" -> Json.arr(_metric)
     )
 
-    val json = Json.toJson(query)
-
-    WS.url(s"$kdApi/datapoints/query").post(json).map {
-
-      case response =>
-        response
-    }
+    query
 
   }
 

@@ -3,8 +3,6 @@ import actors.deployment.DeploymentParentActor
 import actors.jobs.{CheckJobs, JobManagerActor}
 import actors.loadbalancer.LoadBalancerParentActor
 import akka.actor.Props
-import controllers.FeedsController
-import lib.feeds.Feeds
 import lib.kairosdb.KairosDB
 import lib.marathon.Marathon
 import lib.mesos.Mesos
@@ -12,7 +10,6 @@ import lib.loadbalancer.LoadBalancer
 
 import models.docker.{DockerImages, DockerImage}
 import models.service.{ServiceType, ServiceTypes}
-import org.apache.curator.x.discovery.ServiceDiscovery
 import play.api._
 import play.api.libs.concurrent.Akka
 import models._
@@ -109,15 +106,6 @@ object Global extends GlobalSettings {
     val lbSystem = Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
 
 
-    // Feeds are now handled in a separate service
-    // todo: clean up all feed handling actors and libs
-
-    // Start the feeds system
-//   val feeds = new Feeds
-//   feeds.startFeedsParent()
-//
-//    //Start specific feeds
-//    feeds.startFeeds
   }
 }
 

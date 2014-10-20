@@ -182,7 +182,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','$timeout', 'Polling', function ($scope, $stateParams, $http, $timeout, $polling) {
 
 
-            $scope.deleteService = function(){
+        $scope.metrics_frontend_scur = 0
+
+        $scope.deleteService = function(){
                 $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
                     .success(function(data, status, headers, config) {
                         //  Removed single job callback due to new streamline optimizations
@@ -212,6 +214,11 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     for ( var i = 0; i < values.length; i++ ) {
                         rows[i] = {c: [{ v: new Date(values[i][0])},{ v: values[i][1]}]}
                     }
+
+                        // add the last value to the scope ass the current value
+                        $scope.metrics_frontend_scur = values[values.length - 1][1];
+
+                        // add the list of values ot the chart
                         $scope.chart.data.rows = rows
                 })
 
@@ -256,7 +263,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 textStyle: { color: "#58666e", fontName: "Source Sans Pro"}
             },
             animation: {
-                duration: 20
+                duration: 1000,
+                easing: 'in'
             }
         };
 

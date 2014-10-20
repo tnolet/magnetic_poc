@@ -76,9 +76,12 @@ POST          /services                                                    contr
 
 DELETE        /services/:id                                                controllers.ServiceController.delete(id: Long)
 
-# SSE-Feeds
+# Feeds
 
 GET           /feeds/metrics/lb                                            controllers.FeedsController.lbFeed(metric: String, proxy: String, proxyType: String, relativeTime: Int, timeUnit: String)
+
+GET           /feeds/metrics/lb/point                                      controllers.FeedsController.lbDataPoint(metric: String, proxy: String, proxyType: String)
+
 
 # Load balancer
 

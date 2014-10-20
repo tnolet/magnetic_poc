@@ -27,6 +27,14 @@ object FeedsController extends Controller {
     }
 
   }
+// WIP
+  // todo: find nice way to report just one metric value
+  def lbDataPoint(metric: String, proxy: String, proxyType: String) = Action {
+
+    KairosDB.getDataPoint(metric, proxy, proxyType)
+    Ok
+
+  }
 
 }
 
