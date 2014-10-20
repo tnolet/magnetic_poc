@@ -39,4 +39,13 @@ object Mesos {
       case response => (response.json \ "slaves")
     }
   }
+
+  /**
+   * Returns a json object with a snapshot of the Mesos cluster metrics
+   */
+  def metrics: Future[JsValue] = {
+    WS.url(s"$mesosBaseUri/metrics/snapshot").get().map {
+      case response => response.json
+    }
+  }
 }

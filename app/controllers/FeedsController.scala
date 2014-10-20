@@ -1,18 +1,14 @@
 package controllers
 
 import lib.kairosdb.KairosDB
-import play.api.libs.concurrent.Akka
 import play.api.libs.json.Json
 import play.api.mvc.{Action, Controller}
-import play.api.Play.current
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import play.api.libs.ws.WSResponse
 
 
 object FeedsController extends Controller {
-
-  val lbMetricsFeed = Akka.system.actorSelection("akka://application/user/feedsParent/lbMetricsFeed")
 
   /**
    * lbMetricsFeed returns a set of load balancer metrics in JSON format
@@ -27,7 +23,7 @@ object FeedsController extends Controller {
     }
 
   }
-// WIP
+  // WIP
   // todo: find nice way to report just one metric value
   def lbDataPoint(metric: String, proxy: String, proxyType: String) = Action {
 

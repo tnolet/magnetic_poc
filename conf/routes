@@ -87,6 +87,12 @@ GET           /feeds/metrics/lb/point                                      contr
 
 GET           /loadbalancer/stats                                          controllers.LoadBalancer.stats
 
+# System
+
+GET           /system/mesos/slaves                                         controllers.SystemController.mesosSlaves
+
+GET           /system/mesos/metrics                                        controllers.SystemController.mesosMetrics
+
 # Catchall
 
 GET           /*path                                                       controllers.Application.catchAll(path)

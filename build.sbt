@@ -19,6 +19,7 @@ libraryDependencies ++= {
     anorm,
     cache,
     ws,
+    filters,
     "com.typesafe.play" %% "play-slick" % slickV,
     "io.spray" % "spray-can" % sprayV,
     "postgresql" % "postgresql" % "9.1-901-1.jdbc4",

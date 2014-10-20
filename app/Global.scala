@@ -11,6 +11,7 @@ import lib.loadbalancer.LoadBalancer
 import models.docker.{DockerImages, DockerImage}
 import models.service.{ServiceType, ServiceTypes}
 import play.api._
+import play.api.mvc._
 import play.api.libs.concurrent.Akka
 import models._
 import play.api.db.slick._
@@ -18,9 +19,9 @@ import play.api.Play.current
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import play.filters.gzip.GzipFilter
 
-
-object Global extends GlobalSettings {
+object Global extends WithFilters(new GzipFilter()) with GlobalSettings {
 
   override def onStart (application: Application): Unit = {
 
@@ -31,6 +32,17 @@ object Global extends GlobalSettings {
       **********************************************/
 
     InitialData.insert
+
+
+    /** **
+      *
+      * set up Gzip
+      *
+      */
+
+
+    new GzipFilter(shouldGzip = (request, response) =>
+      response.headers.get("Content-Type").exists(_.startsWith("text/html")))
 
     /**********************************************
      *
@@ -112,7 +124,7 @@ object Global extends GlobalSettings {
 object InitialData {
 
   def insert: Unit = {
-    DB.withSession{ implicit s: Session =>
+    DB.withSession{ implicit s: play.api.db.slick.Session =>
       if (DockerImages.count == 0) {
         Seq(
           DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",0,"http",""),
