@@ -98,7 +98,7 @@ object DockerContainers {
    * @param id the service's id
    */
   def findByServiceId(id: Long)(implicit s: Session) =
-    containers.filter(_.serviceId === id).list
+    containers.filter(_.serviceId === id).sortBy(_.id.asc).list
 
   /**
    * Retrieve a container from the serviceId
