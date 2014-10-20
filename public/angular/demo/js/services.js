@@ -44,7 +44,7 @@ angular.module('app.services', [])
   * Roughly based on https://www.altamiracorp.com/blog/employee-posts/simple-polling-service-in-angularjs
   */
   var pollers = {};
-  var DEFAULT_INTERVAL = 1500;
+  var DEFAULT_INTERVAL = 3000;
   var that = this;
 
   this.startPolling = function (name, url, $scope, success) {

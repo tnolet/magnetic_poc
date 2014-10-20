@@ -1,8 +1,9 @@
 /*demo css overrides*/
 
-/*.panel-default > .panel-heading {*/
-    /*background-color: #ffffff;*/
-/*}*/
+.magnetic-logo {
+    font-family: Lato;
+}
+
 
 .panel-body {
 
@@ -55,7 +56,7 @@ dd {
 .container1 > div, .container2 > div, .container3 > div {
     width: 6px;
     height: 6px;
-    background-color: #37b9c7;
+    background-color: #777;
 
     border-radius: 100%;
     position: absolute;
