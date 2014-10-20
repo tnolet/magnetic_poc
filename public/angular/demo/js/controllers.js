@@ -182,7 +182,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','$timeout', 'Polling', function ($scope, $stateParams, $http, $timeout, $polling) {
 
 
-        $scope.metrics_frontend_scur = 0
+        $scope.metrics = {}
 
         $scope.deleteService = function(){
                 $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
@@ -193,6 +193,21 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     .error(function(data, status, headers, config) {
                         // @todo: implement?
                     });
+            };
+
+            var metricSnapshot = function(vrn){
+
+                var params = {
+                    vrn: vrn
+                };
+
+                $http.get('/metrics/lb/service', { params: params }).
+                    success(function(data) {
+                        console.log(data)
+                        $scope.metrics.frontend = data[0]
+                        $scope.metrics.backend = data[1]
+                    })
+
             };
 
             var graphData = function(source, wantedMetric, proxy, proxyType, relativeTime, timeUnit){
@@ -206,7 +221,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     timeUnit: timeUnit
                 };
 
-                $http.get('/feeds/metrics/lb', { params: params }).
+                $http.get('/metrics/lb', { params: params }).
                     success(function(data) {
                     var values = data.queries[0].results[0].values;
 
@@ -274,14 +289,15 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
             // initialise the controller with all basic info
             $polling.startPolling('servicesDetail', 'http://localhost:9000/services/' + $stateParams.serviceId, $scope, function (data) {
-              $scope.vrn = data.vrn;
-              $scope.containers = data.containers;
-              $scope.port = data.port;
-              $scope.mode = data.mode;
-              $scope.serviceType = data.serviceType;
-              $scope.environment = data.environment;
-              $scope.version = data.version;
-             graphData("loadbalancer","scur",data.vrn,"frontend","10","minutes")
+                $scope.vrn = data.vrn;
+                $scope.containers = data.containers;
+                $scope.port = data.port;
+                $scope.mode = data.mode;
+                $scope.serviceType = data.serviceType;
+                $scope.environment = data.environment;
+                $scope.version = data.version;
+                graphData("loadbalancer","scur",data.vrn,"frontend","10","minutes")
+                metricSnapshot(data.vrn)
             });
     }])
 

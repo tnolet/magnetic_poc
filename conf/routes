@@ -78,10 +78,11 @@ DELETE        /services/:id                                                contr
 
 # Feeds
 
-GET           /feeds/metrics/lb                                            controllers.FeedsController.lbFeed(metric: String, proxy: String, proxyType: String, relativeTime: Int, timeUnit: String)
+GET           /metrics/lb                                                  controllers.MetricsController.lbFeed(metric: String, proxy: String, proxyType: String, relativeTime: Int, timeUnit: String)
 
-GET           /feeds/metrics/lb/point                                      controllers.FeedsController.lbDataPoint(metric: String, proxy: String, proxyType: String)
+GET           /metrics/lb/service                                          controllers.MetricsController.getServiceSnapshot(vrn: String)
 
+GET           /metrics/lb/server                                           controllers.MetricsController.getServerSnapshot(vrn: String)
 
 # Load balancer
 

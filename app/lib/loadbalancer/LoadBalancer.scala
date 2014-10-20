@@ -2,7 +2,7 @@ package lib.loadbalancer
 
 import com.typesafe.config.ConfigFactory
 import models.loadbalancer._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.libs.ws.WS
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -48,8 +48,29 @@ object LoadBalancer {
   }
 
 
- def getStats : Future[JsValue] = WS.url(s"$lbApi/stats").get().map {
-   case response => response.json
+
+ def getStats(proxyType: Option[String] = None) : Future[List[JsObject]] = {
+
+    proxyType match {
+
+      case Some(s: String) =>
+
+        WS.url(s"$lbApi/stats/$s").get().map {
+          case response =>
+            Json.parse(response.body).as[List[JsObject]]
+        }
+
+      case None =>
+
+        WS.url(s"$lbApi/stats").get().map {
+          case response =>
+            Json.parse(response.body).as[List[JsObject]]
+
+        }
+
+    }
+
+
  }
 
   /**

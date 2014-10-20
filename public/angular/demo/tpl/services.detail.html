@@ -26,7 +26,7 @@
 
      <!--frontend chart-->
 
-    <div google-chart chart="chart" class=" m-b preloader">
+    <div google-chart chart="chartFe" class=" m-b preloader">
         <div class="spinner">
             <div class="spinner-container container1">
                 <div class="circle1"></div>
@@ -58,27 +58,27 @@
         <div class="row text-center">
             <div class="col-sm-3 col-xs-6">
                 <div>Current sessions <i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
-                <div class="h2 m-b-sm">{{metrics_frontend_scur}}
-                    <small class="text-muted m-l-xs">{{metricsFE.smax}}
+                <div class="h2 m-b-sm">{{metrics.frontend.scur}}
+                    <small class="text-muted m-l-xs">{{metrics.frontend.smax}}
                         <small class="text-muted">max</small>
                     </small>
                 </div>
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>Req/Sec <i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
-                <div class="h2 m-b-sm">{{metricsFE.req_rate}}
-                    <small class="text-muted m-l-xs">{{metricsFE.req_rate_max}}
+                <div class="h2 m-b-sm">{{metrics.frontend.req_rate}}
+                    <small class="text-muted m-l-xs">{{metrics.frontend.req_rate_max}}
                         <small class="text-muted"> max</small>
                     </small>
                 </div>
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>5xx errors <i class="fa fa-fw fa-caret-down text-warning text-sm"></i></div>
-                <div class="h2 m-b-sm" ng-bind="metricsFE.hrsp_5xx">0</div>
+                <div class="h2 m-b-sm" ng-bind="metrics.frontend.hrsp_5xx">0</div>
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>Connection Errors <i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
-                <div class="h2 m-b-sm" ng-bind="metricsBE.econ">0</div>
+                <div class="h2 m-b-sm" ng-bind="metrics.backend.econ">0</div>
             </div>
 
         </div>
@@ -96,7 +96,28 @@
 
     <!--backend chart -->
 
-
+    <div google-chart chart="chartBe" class=" m-b preloader">
+        <div class="spinner">
+            <div class="spinner-container container1">
+                <div class="circle1"></div>
+                <div class="circle2"></div>
+                <div class="circle3"></div>
+                <div class="circle4"></div>
+            </div>
+            <div class="spinner-container container2">
+                <div class="circle1"></div>
+                <div class="circle2"></div>
+                <div class="circle3"></div>
+                <div class="circle4"></div>
+            </div>
+            <div class="spinner-container container3">
+                <div class="circle1"></div>
+                <div class="circle2"></div>
+                <div class="circle3"></div>
+                <div class="circle4"></div>
+            </div>
+        </div>
+    </div>
 
     <!--/ backend chart-->
 
@@ -104,13 +125,25 @@
 
     <div class="wrapper bg-white">
         <div class="row text-center">
-            <div class="col-sm-3 col-xs-6 col-sm-offset-3">
-                <div style="z-index: 2">Response Time <i class="fa fa-fw fa-caret-down text-warning text-sm"></i></div>
-                <div class="h2 m-b-sm">{{metricsBE.rtime}}</div>
+            <div class="col-sm-3 col-xs-6">
+                <div>Response Time <i class="fa fa-fw fa-caret-down text-warning text-sm"></i></div>
+                <div class="h2 m-b-sm">{{metrics.backend.rtime}}</div>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+                <div>Queued Requests<i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
+                <div class="h2 m-b-sm">{{metrics.backend.qcur}}
+                    <small class="text-muted m-l-xs">{{metrics.backend.qmax}}
+                        <small class="text-muted">max</small>
+                    </small>
+                </div>
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>Status<i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
-                <div class="h2 m-b-sm" ng-bind="metricsBE.status"></div>
+                <div class="h2 m-b-sm" ng-bind="metrics.backend.status"></div>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+                <div>Time since last session<i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
+                <div class="h2 m-b-sm" ng-bind="metrics.backend.lastsess"></div>
             </div>
 
         </div>
@@ -122,7 +155,7 @@
     <!--backends list-->
 
     <div class="padder">
-        <div ng-include src="'demo/tpl/backends.list.html'"</div>
+        <div ng-include src="'demo/tpl/backends.list.html'"></div>
     </div>
 
     <!--/ backends list-->
