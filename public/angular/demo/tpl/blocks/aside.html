@@ -5,9 +5,24 @@
     <nav ui-nav class="navi" ng-include="'demo/tpl/blocks/nav.html'"></nav>
     <!-- nav -->
 
-    <!-- aside footer -->
-    <div class="wrapper m-t">
-    </div>
-    <!-- / aside footer -->
+      <!-- aside footer -->
+      <div class="wrapper m-t" ng-controller="SystemMetricsCtrl">
+          <div class="text-center-folded">
+              <span class="pull-right pull-none-folded">{{cpuUsedPercentage}}%</span>
+              <span class="hidden-folded">Cpu</span>
+          </div>
+          <progressbar value="cpuUsedPercentage" class="progress-xs m-t-sm dk" type="info"></progressbar>
+          <div class="text-center-folded">
+              <span class="pull-right pull-none-folded">{{memUsedPercentage}}%</span>
+              <span class="hidden-folded">Memory</span>
+          </div>
+          <progressbar value="memUsedPercentage" class="progress-xs m-t-sm dk" type="primary"></progressbar>
+          <div class="text-center-folded">
+              <span class="pull-right pull-none-folded">{{diskUsedPercentage}}%</span>
+              <span class="hidden-folded">Disk</span>
+          </div>
+          <progressbar value="diskUsedPercentage" class="progress-xs m-t-sm dk" type="success"></progressbar>
+      </div>
+      <!-- / aside footer -->
   </div>
 </div>

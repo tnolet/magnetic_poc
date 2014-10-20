@@ -82,6 +82,14 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
 //    START: Magnetic Demo Controllers
 
+    .controller('SystemMetricsCtrl',['$scope','$http', 'Polling', function($scope, $http, $polling){
+        $polling.startPolling('systemMetrics','http://localhost:9000/system/mesos/metrics',$scope, function(data) {
+            $scope.cpuUsedPercentage = Math.floor(data['master/cpus_percent'] * 100)
+            $scope.memUsedPercentage = Math.floor(data['master/mem_percent'] * 100)
+            $scope.diskUsedPercentage = Math.floor(data['master/disk_percent'] * 100)
+        })
+    }])
+
     // Environments
 
   .controller('EnvironmentsCtrl', ['$scope', '$http', 'Polling', function ($scope, $http, $polling) {
@@ -182,7 +190,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','$timeout', 'Polling', function ($scope, $stateParams, $http, $timeout, $polling) {
 
 
-        $scope.metrics = {}
+        $scope.metrics = {};
 
         $scope.deleteService = function(){
                 $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
@@ -210,7 +218,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
             };
 
-            var graphData = function(source, wantedMetric, proxy, proxyType, relativeTime, timeUnit){
+            // create and update Frontend charts
+
+            var graphDataFe = function(source, wantedMetric, proxy, proxyType, relativeTime, timeUnit){
 
                 var params = {
                     source: source,
@@ -234,24 +244,22 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                         $scope.metrics_frontend_scur = values[values.length - 1][1];
 
                         // add the list of values ot the chart
-                        $scope.chart.data.rows = rows
+                        $scope.chartFe.data.rows = rows
                 })
 
             };
 
 
-        var chart1 = {};
-        chart1.type = "AreaChart";
+        var chartFe = {};
+        chartFe.type = "AreaChart";
 
-        var rows = [];
-
-        chart1.data = {"cols": [
+        chartFe.data = {"cols": [
             {id: "time", label: "time", type: "datetime"},
             {id: "sessions", label: "Sessions", type: "number"}
 
-        ], "rows": rows };
+        ], "rows": [] };
 
-        chart1.options = {
+        chartFe.options = {
             backgroundColor: "#F0F3F4",
             chartArea: {
                 backgroundColor: "#F0F3F4",
@@ -268,8 +276,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                  viewWindow: { min: 0 },
                  baselineColor: '#58666e',
                  textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
-                    gridlines : {count:6, color:'#B9B9B9'},
-                minorGridLines : { count:5}
+                    gridlines : {count: -1, color:'#B9B9B9'},
+                minorGridLines : { count:5 }
 
             },
             hAxis: {
@@ -283,9 +291,90 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             }
         };
 
-        chart1.formatters = {};
+        chartFe.formatters = {};
 
-        $scope.chart = chart1;
+        $scope.chartFe = chartFe;
+
+        // create and update Backend charts
+
+        var graphDataBe = function(source, wantedMetric, proxy, proxyType, relativeTime, timeUnit){
+
+            var params = {
+                source: source,
+                metric: wantedMetric,
+                proxyType: proxyType,
+                proxy: proxy,
+                relativeTime: relativeTime,
+                timeUnit: timeUnit
+            };
+
+            $http.get('/metrics/lb', { params: params }).
+                success(function(data) {
+                    var values = data.queries[0].results[0].values;
+
+                    var rows = [];
+                    for ( var i = 0; i < values.length; i++ ) {
+                        rows[i] = {c: [{ v: new Date(values[i][0])},{ v: values[i][1]}]}
+                    }
+
+                    // add the last value to the scope ass the current value
+                    $scope.metrics_frontend_scur = values[values.length - 1][1];
+
+                    // add the list of values ot the chart
+                    $scope.chartBe.data.rows = rows
+                })
+
+        };
+
+
+        var chartBe = {};
+        chartBe.type = "AreaChart";
+
+        chartBe.data = {"cols": [
+            {id: "time", label: "time", type: "datetime"},
+            {id: "sessions", label: "Sessions", type: "number"}
+
+        ], "rows": [] };
+
+        chartBe.options = {
+            backgroundColor: "#F0F3F4",
+            chartArea: {
+                backgroundColor: "#F0F3F4",
+                width: "90%"
+            },
+            width: "100%",
+            height: 200,
+            colors: ["#23b7e5"],
+            legend: { position: "none" },
+            isStacked: true,
+            fill: 20,
+            displayExactValues: true,
+            vAxis: {
+                viewWindow: { min: 0 },
+                baselineColor: '#58666e',
+                textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
+                gridlines : {count: -1, color:'#B9B9B9'},
+                minorGridLines : { count: 5 }
+
+            },
+            hAxis: {
+                format: "hh:mm:ss",
+                baselineColor: '#58666e',
+                textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
+                minorGridLines : { count: 5 }
+
+            },
+            animation: {
+                duration: 1000,
+                easing: 'in'
+            }
+        };
+
+        chartBe.formatters = {};
+
+        $scope.chartBe = chartBe;
+
+
 
             // initialise the controller with all basic info
             $polling.startPolling('servicesDetail', 'http://localhost:9000/services/' + $stateParams.serviceId, $scope, function (data) {
@@ -296,7 +385,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 $scope.serviceType = data.serviceType;
                 $scope.environment = data.environment;
                 $scope.version = data.version;
-                graphData("loadbalancer","scur",data.vrn,"frontend","10","minutes")
+                graphDataFe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
+                graphDataBe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
                 metricSnapshot(data.vrn)
             });
     }])
