@@ -1,3 +1,4 @@
+/* global angular, $, window, screenfull, console */
 'use strict';
 
     /* directives */
@@ -16,7 +17,7 @@ angular.module('app.directives', ['ui.load'])
               el.append(clonedElement);
             });
           });
-        }
+        };
       }
     };
   }])
@@ -32,28 +33,39 @@ angular.module('app.directives', ['ui.load'])
             width = _window.width()
             ;
 
-        !prev.length && (parent = _el.parent());
+        if (!prev.length) {
+          parent = _el.parent();
+        }
 
         function sm(){
           $timeout(function () {
             var method = attr.uiShift;
             var target = attr.target;
-            _el.hasClass('in') || _el[method](target).addClass('in');
+            if (!_el.hasClass('in')) {
+              _el[method](target).addClass('in');
+            }
           });
         }
 
         function md(){
-          parent && parent['prepend'](el);
-          !parent && _el['insertAfter'](prev);
+          if (parent) {
+            parent.prepend(el);
+          } else {
+            _el.insertAfter(prev);
+          }
           _el.removeClass('in');
         }
 
-        (width < 768 && sm()) || md();
+        if (!(width < 768 && sm())) {
+          md();
+        }
 
         _window.resize(function() {
           if(width !== _window.width()){
             $timeout(function(){
-              (_window.width() < 768 && sm()) || md();
+              if (!(_window.width() < 768 && sm())) {
+                md();
+              }
               width = _window.width();
             });
           }
@@ -68,11 +80,13 @@ angular.module('app.directives', ['ui.load'])
         el.on('click', function(e) {
           e.preventDefault();
           var classes = attr.uiToggleClass.split(','),
-              targets = (attr.target && attr.target.split(',')) || Array(el),
+              targets = (attr.target && attr.target.split(',')) || new Array(el),
               key = 0;
           angular.forEach(classes, function( _class ) {
             var target = targets[(targets.length && key)];
-            ( _class.indexOf( '*' ) !== -1 ) && magic(_class, target);
+            if (( _class.indexOf( '*' ) !== -1 )) {
+              magic(_class, target);
+            }
             $( target ).toggleClass(_class);
             key ++;
           });
@@ -106,26 +120,38 @@ angular.module('app.directives', ['ui.load'])
         backdrop = '.dropdown-backdrop';
         // unfolded
         el.on('click', 'a', function(e) {
-          next && next.trigger('mouseleave.nav');
+          if (next) {
+            next.trigger('mouseleave.nav');
+          }
           var _this = $(this);
           _this.parent().siblings( ".active" ).toggleClass('active');
-          _this.next().is('ul') &&  _this.parent().toggleClass('active') &&  e.preventDefault();
+          if (_this.next().is('ul') && _this.parent().toggleClass('active')) {
+            e.preventDefault();
+          }
           // mobile
-          _this.next().is('ul') || ( ( _window.width() < _mb ) && $('.app-aside').removeClass('show off-screen') );
+          if (!_this.next().is('ul')) {
+            if (( _window.width() < _mb )) {
+              $('.app-aside').removeClass('show off-screen');
+            }
+          }
         });
 
         // folded & fixed
         el.on('mouseenter', 'a', function(e){
-          next && next.trigger('mouseleave.nav');
+          if (next) {
+            next.trigger('mouseleave.nav');
+          }
           $('> .nav', wrap).remove();
           if ( !$('.app-aside-fixed.app-aside-folded').length || ( _window.width() < _mb ) || $('.app-aside-dock').length) return;
-          var _this = $(e.target)
-          , top
-          , w_h = $(window).height()
-          , offset = 50
-          , min = 150;
+          var _this = $(e.target),
+              top,
+              w_h = $(window).height(),
+              offset = 50,
+              min = 150;
 
-          !_this.is('a') && (_this = _this.closest('a'));
+          if (!_this.is('a')) {
+            _this = _this.closest('a');
+          }
           if( _this.next().is('ul') ){
              next = _this.next();
           }else{
@@ -150,14 +176,20 @@ angular.module('app.directives', ['ui.load'])
             _this.parent().removeClass('active');
           });
 
-          $('.smart').length && $('<div class="dropdown-backdrop"/>').insertAfter('.app-aside').on('click', function(next){
-            next && next.trigger('mouseleave.nav');
-          });
+          if ($('.smart').length) {
+            $('<div class="dropdown-backdrop"/>').insertAfter('.app-aside').on('click', function(next) {
+              if (next) {
+                next.trigger('mouseleave.nav');
+              }
+            });
+          }
 
         });
 
         wrap.on('mouseleave', function(e){
-          next && next.trigger('mouseleave.nav');
+          if (next) {
+            next.trigger('mouseleave.nav');
+          }
           $('> .nav', wrap).remove();
         });
       }
@@ -181,12 +213,14 @@ angular.module('app.directives', ['ui.load'])
       link: function(scope, el, attr) {
         el.addClass('hide');
         uiLoad.load('js/libs/screenfull.min.js').then(function(){
-          if (screenfull.enabled) {
+          if (screenfull && screenfull.enabled) {
             el.removeClass('hide');
           }
           el.on('click', function(){
             var target;
-            attr.target && ( target = $(attr.target)[0] );
+            if (attr.target) {
+              target = $(attr.target)[0];
+            }
             el.toggleClass('active');
             screenfull.toggle(target);
           });
@@ -240,6 +274,51 @@ angular.module('app.directives', ['ui.load'])
       }
     };
   })
+  /* Modals */
+  .directive("openDeployModal", ['$modal', '$http', 'Polling', function ($modal, $http, $polling) {
+      return {
+        restrict: "A",
+        link: function (scope, el, attrs) {
+          el.on('click', function (e) {
+            e.preventDefault();
+
+            //Hack, but necessary to prevent wrong scope object reference
+            $polling.destroyAllPollers();
+
+            var deployModalData = JSON.parse(attrs.openDeployModal);
+            var modalInstance;
+
+            if (!deployModalData.service) {
+              $http.get('http://localhost:9000/services').success(function (data) {
+                scope.modalServices = data;
+              });
+            }
+
+            if (!deployModalData.image) {
+              $http.get('http://localhost:9000/images').success(function (data) {
+                scope.modalImages = data;
+              });
+            }
+
+            scope.modalData = deployModalData;
+            scope.formData = angular.copy(scope.modalData);
+
+            //Hide or show the modal
+            modalInstance = $modal.open({
+                templateUrl: 'demo/tpl/modals/deployImageModal.html',
+                controller: 'deployImageModalCtrl',
+                size: '',
+                scope: scope
+            }).result.then(function (formData) {
+              $http.post('http://localhost:9000/images/' + formData.image + '/deploy?service=' + formData.service).
+                success(function (data) {
+                  console.log(data);
+                });
+            });
+          });
+        }
+      };
+    }])
     /* graphs */
 
     .directive('sparklinesChart', function () {
@@ -268,7 +347,6 @@ angular.module('app.directives', ['ui.load'])
                     }
                     myvalues.push(parseInt(newVal));
 
-                    console.log(myvalues);
 
                     var graph = element.find('.spark-lines');
 
