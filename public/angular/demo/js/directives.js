@@ -283,7 +283,7 @@ angular.module('app.directives', ['ui.load'])
             e.preventDefault();
 
             //Hack, but necessary to prevent wrong scope object reference
-            $polling.destroyAllPollers();
+            //$polling.destroyAllPollers();
 
             var deployModalData = JSON.parse(attrs.openDeployModal);
             var modalInstance;

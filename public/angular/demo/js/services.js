@@ -181,7 +181,7 @@ angular.module('app.services', [])
       },
       allJobs: function (callback) {
         requestJobs(callback);
-        
+
         timers['*'] = window.setInterval(requestJobs.bind(jobs, callback), INTERVAL);
       }
     };
