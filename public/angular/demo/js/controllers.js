@@ -17,7 +17,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
       // config
       $scope.app = {
-        name: 'Angulr',
+        name: 'Anguleaferaerr',
         version: '1.3.0',
         // for chart colors
         color: {
@@ -49,8 +49,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
       } else {
         $localStorage.settings = $scope.app.settings;
       }
-      $scope.$watch('app.settings', function(){
-        if( $scope.app.settings.asideDock  &&  $scope.app.settings.asideFixed ){
+
+      $scope.$watch('app.settings', function() {
+        if ($scope.app.settings.asideDock && $scope.app.settings.asideFixed) {
           // aside dock and fixed must set the header fixed.
           $scope.app.settings.headerFixed = true;
         }
@@ -101,7 +102,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         getMesosMetrics();
 
-        $interval(function() { getMesosMetrics() },2000)
+        $interval(function() { getMesosMetrics() }, 2000);
     }])
 
     // Environments
@@ -327,15 +328,24 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
                     var rows = [];
                     for ( var i = 0; i < values.length; i++ ) {
-                        rows[i] = {c: [{ v: new Date(values[i][0])},{ v: values[i][1]}]}
+                      rows[i] = {
+                        c: [
+                          {
+                            v: new Date(values[i][0])
+                          },
+                          {
+                            v: values[i][1]
+                          }
+                        ]
+                      };
                     }
 
                     // add the last value to the scope ass the current value
                     $scope.metrics_frontend_scur = values[values.length - 1][1];
 
                     // add the list of values ot the chart
-                    $scope.chartBe.data.rows = rows
-                })
+                    $scope.chartBe.data.rows = rows;
+                });
 
         };
 
@@ -400,7 +410,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 $scope.version = data.version;
                 graphDataFe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
                 graphDataBe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
-                metricSnapshot(data.vrn)
+                metricSnapshot(data.vrn);
             });
     }])
 
@@ -491,24 +501,22 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         // scoped functions
 
         // add to the weight of the container
-        $scope.addWeight = function(){
+        $scope.addWeight = function () {
+          // keep the weight under WEIGHT_MAX
+          if ($scope.weight < WEIGHT_MAX) {
+            $scope.weight += WEIGHT_STEP;
+          }
 
-            // keep the weight under WEIGHT_MAX
-            if ($scope.weight < WEIGHT_MAX) {
-                $scope.weight += WEIGHT_STEP;
-            }
+          if ($scope.weight >= WEIGHT_MAX - WEIGHT_STEP) {
+            $scope.weight = WEIGHT_MAX;
+          }
 
-            if( $scope.weight >= WEIGHT_MAX - WEIGHT_STEP) {
-                $scope.weight = WEIGHT_MAX;
-            }
-
-            // update the weight
-            updateWeightOnServer($stateParams.serviceId, $scope.vrn, $scope.weight);
-
+          // update the weight
+          updateWeightOnServer($stateParams.serviceId, $scope.vrn, $scope.weight);
         };
 
         // subtract from the weight of the container
-        $scope.subtractWeight = function(){
+        $scope.subtractWeight = function () {
 
             if( $scope.weight <= WEIGHT_MIN + WEIGHT_STEP) {
                 $scope.weight = WEIGHT_MIN;

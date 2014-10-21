@@ -9,15 +9,55 @@
   <!-- / menu -->
 
   <!-- content -->
-  <div class="app-content">
+  <div class="app-content app-content-full">
     <div ui-butterbar></div>
     <a href class="off-screen-toggle hide" ui-toggle-class="off-screen" data-target=".app-aside" ></a>
-    <div class="app-content-body fade-in-up" ui-view></div>
+    <div class="hbox hbox-auto-xs bg-light " ng-init="
+      app.settings.asideFolded = true;
+      app.settings.asideFixed = true;
+      app.settings.asideDock = false;
+      app.settings.container = false;
+      app.hideAside = false
+      ">
+
+      <!-- column -->
+      <div class="col">
+        <div class="vbox">
+          <div class="row-row">
+            <div class="cell">
+              <div class="cell-inner">
+                <div class="wrapper-md">
+                  <div class="app-content-body fade-in-up" ui-view></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /column -->
+
+      <!-- column -->
+      <div class="col w-md b-l bg-white">
+        <div class="vbox">
+          <div class="row-row">
+            <div class="cell">
+              <div class="cell-inner">
+                <div class="wrapper-md">
+                  <div class="app-aside-right bg-white">
+                    <div ng-include src="'demo/tpl/streamliner.html'"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /column -->
+    </div>
+    <!-- /hbox layout -->
   </div>
   <!-- /content -->
 
   <!-- right col -->
-  <div class="app-aside-right hidden-xs bg-white dker b-l">
-    <div ng-include src="'demo/tpl/streamliner.html'"></div>
-  </div>
+
   <!-- / right col -->
