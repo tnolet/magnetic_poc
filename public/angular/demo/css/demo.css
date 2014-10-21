@@ -37,13 +37,16 @@ dd {
     visibility: hidden;
 }
 
-.app-content {
-  margin-right: 200px;
+.app-aside-right {
+  top: auto;
+  bottom: auto;
+  left: auto;
+  right: auto;
 }
 
-.app-aside-right {
-  float: right;
-  width: 200px;
+.vbox .row-row .cell {
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .spinner {
@@ -141,6 +144,35 @@ dd {
 .container3 .circle4 {
     -webkit-animation-delay: -0.1s;
     animation-delay: -0.1s;
+}
+
+.app-content-full {
+  bottom: 0;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .hbox .col.w-md {
+    width: 180px;
+  }
+}
+
+@media (max-width: 769px) {
+  .hbox .col {
+    display: block;
+  }
+
+  .vbox .row-row .cell {
+    overflow-y: hidden;
+  }
+
+  .vbox .row-row .cell .cell-inner {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    top: auto;
+    right: auto;
+  }
+
 }
 
 @-webkit-keyframes bouncedelay {

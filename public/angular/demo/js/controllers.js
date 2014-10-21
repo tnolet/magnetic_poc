@@ -17,7 +17,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
       // config
       $scope.app = {
-        name: 'Angulr',
+        name: 'Anguleaferaerr',
         version: '1.3.0',
         // for chart colors
         color: {
@@ -49,8 +49,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
       } else {
         $localStorage.settings = $scope.app.settings;
       }
-      $scope.$watch('app.settings', function(){
-        if( $scope.app.settings.asideDock  &&  $scope.app.settings.asideFixed ){
+
+      $scope.$watch('app.settings', function() {
+        if ($scope.app.settings.asideDock && $scope.app.settings.asideFixed) {
           // aside dock and fixed must set the header fixed.
           $scope.app.settings.headerFixed = true;
         }
@@ -84,7 +85,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
     .controller('SystemMetricsCtrl',['$scope','$http', '$interval', function($scope, $http, $interval){
 
-        var getMesosMetrics = function(){
+        var getMesosMetrics = function () {
 
             $http.get('http://localhost:9000/system/mesos/metrics').
                 success(function (data) {
@@ -101,7 +102,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         getMesosMetrics();
 
-        $interval(function() { getMesosMetrics() },2000)
+        $interval(function() { getMesosMetrics(); }, 2000);
     }])
 
     // Environments
@@ -201,67 +202,65 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     }])
 
     .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','$timeout', 'Polling', function ($scope, $stateParams, $http, $timeout, $polling) {
-
-
         $scope.metrics = {};
 
-        $scope.deleteService = function(){
-                $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
-                    .success(function(data, status, headers, config) {
-                        //  Removed single job callback due to new streamline optimizations
-                        //  $Streamliner.singleJob(data.jobId);
-                    })
-                    .error(function(data, status, headers, config) {
-                        // @todo: implement?
-                    });
-            };
+        $scope.deleteService = function () {
+          $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
+            .success(function(data, status, headers, config) {
+                //  Removed single job callback due to new streamline optimizations
+                //  $Streamliner.singleJob(data.jobId);
+            })
+            .error(function(data, status, headers, config) {
+                // @todo: implement?
+            });
+        };
 
-            var metricSnapshot = function(vrn){
+        var metricSnapshot = function(vrn){
+          var params = {
+              vrn: vrn
+          };
 
-                var params = {
-                    vrn: vrn
+          $http.get('/metrics/lb/service', { params: params }).
+            success(function(data) {
+              console.log(data);
+              $scope.metrics.frontend = data[0];
+              $scope.metrics.backend = data[1];
+            });
+        };
+
+        // create and update Frontend charts
+        var graphDataFe = function (source, wantedMetric, proxy, proxyType, relativeTime, timeUnit) {
+          var params = {
+              source: source,
+              metric: wantedMetric,
+              proxyType: proxyType,
+              proxy: proxy,
+              relativeTime: relativeTime,
+              timeUnit: timeUnit
+          };
+
+          $http.get('/metrics/lb', { params: params }).
+            success(function(data) {
+            var values = data.queries[0].results[0].values;
+
+            var rows = [];
+            for ( var i = 0; i < values.length; i++ ) {
+                rows[i] = {
+                  c: [{
+                    v: new Date(values[i][0])
+                  }, {
+                    v: values[i][1]
+                  }]
                 };
+            }
 
-                $http.get('/metrics/lb/service', { params: params }).
-                    success(function(data) {
-                        console.log(data)
-                        $scope.metrics.frontend = data[0]
-                        $scope.metrics.backend = data[1]
-                    })
+            // add the last value to the scope ass the current value
+            $scope.metrics_frontend_scur = values[values.length - 1][1];
 
-            };
-
-            // create and update Frontend charts
-
-            var graphDataFe = function(source, wantedMetric, proxy, proxyType, relativeTime, timeUnit){
-
-                var params = {
-                    source: source,
-                    metric: wantedMetric,
-                    proxyType: proxyType,
-                    proxy: proxy,
-                    relativeTime: relativeTime,
-                    timeUnit: timeUnit
-                };
-
-                $http.get('/metrics/lb', { params: params }).
-                    success(function(data) {
-                    var values = data.queries[0].results[0].values;
-
-                    var rows = [];
-                    for ( var i = 0; i < values.length; i++ ) {
-                        rows[i] = {c: [{ v: new Date(values[i][0])},{ v: values[i][1]}]}
-                    }
-
-                        // add the last value to the scope ass the current value
-                        $scope.metrics_frontend_scur = values[values.length - 1][1];
-
-                        // add the list of values ot the chart
-                        $scope.chartFe.data.rows = rows
-                })
-
-            };
-
+            // add the list of values ot the chart
+            $scope.chartFe.data.rows = rows;
+          });
+        };
 
         var chartFe = {};
         chartFe.type = "AreaChart";
@@ -327,15 +326,24 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
                     var rows = [];
                     for ( var i = 0; i < values.length; i++ ) {
-                        rows[i] = {c: [{ v: new Date(values[i][0])},{ v: values[i][1]}]}
+                      rows[i] = {
+                        c: [
+                          {
+                            v: new Date(values[i][0])
+                          },
+                          {
+                            v: values[i][1]
+                          }
+                        ]
+                      };
                     }
 
                     // add the last value to the scope ass the current value
                     $scope.metrics_frontend_scur = values[values.length - 1][1];
 
                     // add the list of values ot the chart
-                    $scope.chartBe.data.rows = rows
-                })
+                    $scope.chartBe.data.rows = rows;
+                });
 
         };
 
@@ -349,59 +357,55 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         ], "rows": [] };
 
-        chartBe.options = {
-            backgroundColor: "#F0F3F4",
-            chartArea: {
-                backgroundColor: "#F0F3F4",
-                width: "90%"
-            },
-            width: "100%",
-            height: 200,
-            colors: ["#23b7e5"],
-            legend: { position: "none" },
-            isStacked: true,
-            fill: 20,
-            displayExactValues: true,
-            vAxis: {
-                viewWindow: { min: 0 },
-                baselineColor: '#58666e',
-                textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
-                gridlines : {count: -1, color:'#B9B9B9'},
-                minorGridLines : { count: 5 }
+      chartBe.options = {
+        backgroundColor: "#F0F3F4",
+        chartArea: {
+          backgroundColor: "#F0F3F4",
+          width: "90%"
+        },
+        width: "100%",
+        height: 200,
+        colors: ["#23b7e5"],
+        legend: { position: "none" },
+        isStacked: true,
+        fill: 20,
+        displayExactValues: true,
+        vAxis: {
+          viewWindow: { min: 0 },
+          baselineColor: '#58666e',
+          textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
+          gridlines : {count: -1, color:'#B9B9B9'},
+          minorGridLines : { count: 5 }
+        },
+        hAxis: {
+          format: "hh:mm:ss",
+          baselineColor: '#58666e',
+          textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
+          minorGridLines : { count: 5 }
+        },
+        animation: {
+          duration: 1000,
+          easing: 'in'
+        }
+      };
 
-            },
-            hAxis: {
-                format: "hh:mm:ss",
-                baselineColor: '#58666e',
-                textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
-                minorGridLines : { count: 5 }
+      chartBe.formatters = {};
 
-            },
-            animation: {
-                duration: 1000,
-                easing: 'in'
-            }
-        };
+      $scope.chartBe = chartBe;
 
-        chartBe.formatters = {};
-
-        $scope.chartBe = chartBe;
-
-
-
-            // initialise the controller with all basic info
-            $polling.startPolling('servicesDetail', 'http://localhost:9000/services/' + $stateParams.serviceId, $scope, function (data) {
-                $scope.vrn = data.vrn;
-                $scope.containers = data.containers;
-                $scope.port = data.port;
-                $scope.mode = data.mode;
-                $scope.serviceType = data.serviceType;
-                $scope.environment = data.environment;
-                $scope.version = data.version;
-                graphDataFe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
-                graphDataBe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
-                metricSnapshot(data.vrn)
-            });
+      // initialise the controller with all basic info
+      $polling.startPolling('servicesDetail', 'http://localhost:9000/services/' + $stateParams.serviceId, $scope, function (data) {
+        $scope.vrn = data.vrn;
+        $scope.containers = data.containers;
+        $scope.port = data.port;
+        $scope.mode = data.mode;
+        $scope.serviceType = data.serviceType;
+        $scope.environment = data.environment;
+        $scope.version = data.version;
+        graphDataFe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
+        graphDataBe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
+        metricSnapshot(data.vrn);
+      });
     }])
 
         // Backends AKA Containers
@@ -491,24 +495,22 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         // scoped functions
 
         // add to the weight of the container
-        $scope.addWeight = function(){
+        $scope.addWeight = function () {
+          // keep the weight under WEIGHT_MAX
+          if ($scope.weight < WEIGHT_MAX) {
+            $scope.weight += WEIGHT_STEP;
+          }
 
-            // keep the weight under WEIGHT_MAX
-            if ($scope.weight < WEIGHT_MAX) {
-                $scope.weight += WEIGHT_STEP;
-            }
+          if ($scope.weight >= WEIGHT_MAX - WEIGHT_STEP) {
+            $scope.weight = WEIGHT_MAX;
+          }
 
-            if( $scope.weight >= WEIGHT_MAX - WEIGHT_STEP) {
-                $scope.weight = WEIGHT_MAX;
-            }
-
-            // update the weight
-            updateWeightOnServer($stateParams.serviceId, $scope.vrn, $scope.weight);
-
+          // update the weight
+          updateWeightOnServer($stateParams.serviceId, $scope.vrn, $scope.weight);
         };
 
         // subtract from the weight of the container
-        $scope.subtractWeight = function(){
+        $scope.subtractWeight = function () {
 
             if( $scope.weight <= WEIGHT_MIN + WEIGHT_STEP) {
                 $scope.weight = WEIGHT_MIN;
@@ -579,60 +581,47 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     // Container Instances
 
     .controller('InstancesDetailCtrl', ['$scope', '$http' ,function ($scope, $http) {
-
-
         var metricSnapshot = function(vrn){
+          var params = {
+              vrn: vrn
+          };
 
-            var params = {
-                vrn: vrn
-            };
-
-            $http.get('/metrics/lb/server', { params: params }).
-                success(function(data) {
-                    console.log(data)
-                    $scope.metrics = data[0]
-                })
-
+          $http.get('/metrics/lb/server', { params: params }).
+            success(function(data) {
+              console.log(data);
+              $scope.metrics = data[0];
+            });
         };
-
 
         // initialise the controller with all basic info
         $scope.init = function (instance) {
-
-            $scope.vrn = instance.vrn;
-            $scope.host = instance.host;
-            $scope.ports = instance.ports;
-            metricSnapshot(instance.vrn)
-
+          $scope.vrn = instance.vrn;
+          $scope.host = instance.host;
+          $scope.ports = instance.ports;
+          metricSnapshot(instance.vrn);
         };
     }])
 
     // Images
-
     .controller('deployImageModalCtrl', function ($scope, $modalInstance) {
+      $scope.ok = function (formData) {
+        $modalInstance.close(formData);
+      };
 
-        $scope.ok = function (serviceVrn) {
-
-            $modalInstance.close(serviceVrn);
-        };
-
-        $scope.cancel = function () {
-            $modalInstance.dismiss('cancel');
-        };
+      $scope.cancel = function () {
+        $modalInstance.dismiss('cancel');
+      };
     })
 
     .controller('createImageModalCtrl', function ($scope, $modalInstance) {
+      $scope.ok = function (formData) {
+        $modalInstance.close(formData);
+      };
 
-        $scope.ok = function (formData) {
-
-            $modalInstance.close(formData);
-        };
-
-        $scope.cancel = function () {
-            $modalInstance.dismiss('cancel');
-        };
+      $scope.cancel = function () {
+        $modalInstance.dismiss('cancel');
+      };
     })
-
 
     .controller('ImagesCtrl', ['$scope','$http', '$modal', 'Polling', function ($scope, $http, $modal, $polling) {
         $polling.startPolling('images', 'http://localhost:9000/images', $scope, function (data) {
@@ -681,28 +670,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         // deploys an image to a specific service
         // parameter: id     id of the image
         // parameter: vrn   vrn of the service
-        var deployImageToService = function(id,vrn) {
-            $http.post('http://localhost:9000/images/' + id + '/deploy?service=' + vrn).
-                success(function(data){
-                    console.log(data);
-                    //  Removed single job callback due to new streamline optimizations
-                    //  $Streamliner.singleJob(data.jobId);
-                });
-        };
-
-        // launches the modal for deploying an image
-        $scope.openDeployModal = function() {
-            var modalInstance = $modal.open({
-                templateUrl: 'demo/tpl/modals/deployImageModal.html',
-                controller: 'deployImageModalCtrl',
-                size: ''
-            });
-
-            modalInstance.result.then(function (serviceVrn) {
-                deployImageToService($scope.image.id, serviceVrn);
-            });
-        };
-
         $scope.init = function(image) {
             $scope.image = image;
         };

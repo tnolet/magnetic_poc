@@ -1,29 +1,48 @@
 <form class="form form-horizontal">
+  <div class="modal-header">
+      <h4 class="modal-title">Deploy image on service</h4>
+  </div>
 
-<div class="modal-header">
-    <h4 class="modal-title">Select service to deploy to</h4>
-</div>
+  <div class="modal-body">
+    <div ng-if="!modalData.image">
+      <h5>Image</h5>
 
-<div class="modal-body" ng-controller="ServicesCtrl">
-        <div ng-repeat="service in services" class="radio">
-            <label class="i-checks">
-                <input type="radio" ng-model="$parent.$parent.formData" name="services" value="{{service.vrn}}" ng-required="!formData">
-                <i></i>
-                {{service.serviceType}} {{service.version}} ({{service.environment}})
-            </label>
-        </div>
+      <div ng-repeat="modalImage in modalImages" class="radio">
+        <label class="i-checks">
+          <input type="radio" ng-model="formData.image" name="image" value="{{modalImage.id}}">
+          <i></i>
+          {{modalImage.name}} ({{modalImage.version}})
+        </label>
+      </div>
+
+      <div class="line line-dashed b-b line-lg pull-in"></div>
+    </div>
+
+    <div ng-if="!modalData.service">
+      <h5>Service:</h5>
+
+      <div ng-repeat="modalService in modalServices" class="radio">
+        <label class="i-checks">
+          <input type="radio" ng-model="formData.service" name="service" value="{{modalService.vrn}}">
+          <i></i>
+          {{modalService.serviceType}} {{modalService.version}} ({{modalService.environment}})
+        </label>
+      </div>
+
+      <div class="line line-dashed b-b line-lg pull-in"></div>
+    </div>
+
+    <h5>Marathon settings</h5>
+
     <div class="line line-dashed b-b line-lg pull-in"></div>
 
-        <h5>Marathon settings</h5>
-        <div class="line line-dashed b-b line-lg pull-in"></div>
-        <label class="control-label">
-            <textarea type="text" class="form-control" ng-model="$parent.$parent.formData" name="marathon-data" value="" cols="91" rows="15"><pre></pre></code></textarea>
-        </label>
+    <label class="control-label">
+      <textarea type="text" class="form-control" ng-model="formData.marathon" name="marathon-data" value="" cols="91" rows="15"><pre></pre></code></textarea>
+    </label>
+  </div>
 
-
-    </div>
-<div class="modal-footer">
-    <button class="btn btn-default" ng-click="cancel()">Cancel</button>
-    <button class="btn btn-info" ng-disabled="!formData" ng-click="ok(formData)">Deploy!</button>
-</div>
+  <div class="modal-footer">
+      <button class="btn btn-default" ng-click="cancel()">Cancel</button>
+      <button class="btn btn-info" ng-click="ok(formData)">Deploy!</button>
+  </div>
 </form>

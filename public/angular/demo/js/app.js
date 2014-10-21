@@ -1,23 +1,24 @@
+/* global angular */
 'use strict';
 
 
 // Declare app level module which depends on filters, and services
 var app = angular.module('app', [
-        'ngAnimate',
-        'ngCookies',
-        'ngStorage',
-        'ui.router',
-        'ui.bootstrap',
-        'ui.load',
-        'ui.jq',
-        'ui.validate',
-        'oc.lazyLoad',
-        'pascalprecht.translate',
-        'app.controllers',
-        'app.services',
-        'app.directives',
-        'app.filters',
-        'googlechart'
+  'ngAnimate',
+  'ngCookies',
+  'ngStorage',
+  'ui.router',
+  'ui.bootstrap',
+  'ui.load',
+  'ui.jq',
+  'ui.validate',
+  'oc.lazyLoad',
+  'pascalprecht.translate',
+  'app.controllers',
+  'app.services',
+  'app.directives',
+  'app.filters',
+  'googlechart'
 ]);
 
 app.config(['$stateProvider','$urlRouterProvider',
@@ -33,11 +34,10 @@ app.config(['$stateProvider','$urlRouterProvider',
                 url: '/app',
                 templateUrl: 'demo/tpl/app.html',
                 resolve: {
-                    deps: ['uiLoad',
-                        function( uiLoad ){
-                            return uiLoad.load( [
-                                'js/libs/moment.min.js'] );
-                        }]
+                  deps: ['uiLoad',
+                    function (uiLoad) {
+                      return uiLoad.load(['js/libs/moment.min.js']);
+                    }]
                 }
             })
             //images
