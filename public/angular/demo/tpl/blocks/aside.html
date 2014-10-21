@@ -6,7 +6,17 @@
     <!-- nav -->
 
       <!-- aside footer -->
-      <div class="wrapper m-t" ng-controller="SystemMetricsCtrl">
+      <div class="padder" ng-controller="SystemMetricsCtrl">
+
+
+          <div  class="m-b">
+              <i class="fa fa-calculator icon text-primary m-r-xs"></i>
+              <span class="m-r-sm">{{cpuTotal}}</span>
+              <i class="fa fa-camera icon text-primary m-r-xs"></i>
+              <span class="m-r-xs">{{memTotal}}GB</span>
+          </div>
+
+
           <div class="text-center-folded">
               <span class="pull-right pull-none-folded">{{cpuUsedPercentage}}%</span>
               <span class="hidden-folded">Cpu</span>

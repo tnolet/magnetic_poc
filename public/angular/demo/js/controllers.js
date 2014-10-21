@@ -91,7 +91,11 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     $scope.cpuUsedPercentage = Math.floor(data['master/cpus_percent'] * 100);
                     $scope.memUsedPercentage = Math.floor(data['master/mem_percent'] * 100);
                     $scope.diskUsedPercentage = Math.floor(data['master/disk_percent'] * 100);
+
                 })
+
+            $scope.cpuTotal = 18;
+            $scope.memTotal = 53.4;
 
         };
 
