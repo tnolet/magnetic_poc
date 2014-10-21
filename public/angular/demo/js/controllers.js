@@ -92,14 +92,14 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     $scope.memUsedPercentage = Math.floor(data['master/mem_percent'] * 100);
                     $scope.diskUsedPercentage = Math.floor(data['master/disk_percent'] * 100);
 
-                })
+                });
 
             $scope.cpuTotal = 18;
             $scope.memTotal = 53.4;
 
         };
 
-        getMesosMetrics()
+        getMesosMetrics();
 
         $interval(function() { getMesosMetrics() },2000)
     }])
@@ -578,13 +578,23 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
     // Container Instances
 
-    .controller('InstancesDetailCtrl', ['$scope' ,function ($scope) {
-        var metricsFilter = function(metricData){
-            var filterMetricData = metricData.filter(function (obj) {
-              return obj.svname === $scope.vrn;
-            });
-            $scope.$apply($scope.metrics = filterMetricData[0]);
+    .controller('InstancesDetailCtrl', ['$scope', '$http' ,function ($scope, $http) {
+
+
+        var metricSnapshot = function(vrn){
+
+            var params = {
+                vrn: vrn
+            };
+
+            $http.get('/metrics/lb/server', { params: params }).
+                success(function(data) {
+                    console.log(data)
+                    $scope.metrics = data[0]
+                })
+
         };
+
 
         // initialise the controller with all basic info
         $scope.init = function (instance) {
@@ -592,6 +602,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $scope.vrn = instance.vrn;
             $scope.host = instance.host;
             $scope.ports = instance.ports;
+            metricSnapshot(instance.vrn)
 
         };
     }])
