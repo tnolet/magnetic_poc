@@ -2,6 +2,7 @@
 import actors.deployment.DeploymentParentActor
 import actors.jobs.{CheckJobs, JobManagerActor}
 import actors.loadbalancer.LoadBalancerParentActor
+import actors.sla.SlaParentActor
 import akka.actor.Props
 import lib.kairosdb.KairosDB
 import lib.marathon.Marathon
@@ -117,6 +118,8 @@ object Global extends WithFilters(new GzipFilter()) with GlobalSettings {
     // Start up the Load Balancer actor system
     val lbSystem = Akka.system.actorOf(Props[LoadBalancerParentActor], name = "lbManager")
 
+    // Start up the SLA management actor system
+    val slaSystem = Akka.system.actorOf(Props[SlaParentActor], name = "slaManager")
 
   }
 }
