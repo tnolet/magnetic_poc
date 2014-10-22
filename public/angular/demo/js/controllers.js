@@ -403,7 +403,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         $scope.environment = data.environment;
         $scope.version = data.version;
         graphDataFe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
-        graphDataBe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
+        graphDataBe("loadbalancer","rtime",data.vrn,"backend","10","minutes");
         metricSnapshot(data.vrn);
       });
     }])

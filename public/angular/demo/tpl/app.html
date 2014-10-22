@@ -13,7 +13,7 @@
     <div ui-butterbar></div>
     <a href class="off-screen-toggle hide" ui-toggle-class="off-screen" data-target=".app-aside" ></a>
     <div class="hbox hbox-auto-xs bg-light " ng-init="
-      app.settings.asideFolded = true;
+      app.settings.asideFolded = false;
       app.settings.asideFixed = true;
       app.settings.asideDock = false;
       app.settings.container = false;
@@ -26,9 +26,7 @@
           <div class="row-row">
             <div class="cell">
               <div class="cell-inner">
-                <div class="wrapper-md">
                   <div class="app-content-body fade-in-up" ui-view></div>
-                </div>
               </div>
             </div>
           </div>
@@ -42,11 +40,9 @@
           <div class="row-row">
             <div class="cell">
               <div class="cell-inner">
-                <div class="wrapper-md">
                   <div class="app-aside-right bg-white">
                     <div ng-include src="'demo/tpl/streamliner.html'"></div>
                   </div>
-                </div>
               </div>
             </div>
           </div>
