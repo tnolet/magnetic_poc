@@ -272,9 +272,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         ], "rows": [] };
 
         chartFe.options = {
-            backgroundColor: "#F0F3F4",
+            backgroundColor: "#F6F8F8",
             chartArea: {
-                backgroundColor: "#F0F3F4",
+                backgroundColor: "#F6F8F8",
                 width: "90%"
                 },
             width: "100%",
@@ -353,14 +353,14 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         chartBe.data = {"cols": [
             {id: "time", label: "time", type: "datetime"},
-            {id: "sessions", label: "Sessions", type: "number"}
+            {id: "sessions", label: "Response Time", type: "number"}
 
         ], "rows": [] };
 
       chartBe.options = {
-        backgroundColor: "#F0F3F4",
+        backgroundColor: "#F6F8F8",
         chartArea: {
-          backgroundColor: "#F0F3F4",
+          backgroundColor: "#F6F8F8",
           width: "90%"
         },
         width: "100%",

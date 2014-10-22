@@ -21,7 +21,7 @@ object ScoreBoard {
 
   def getScoreBoard: Future[Option[Map[String,Long]]] =
 
-  WS.url(s"$api/").get().map {
+  WS.url(s"$api/scoreboard").get().map {
 
       case response =>
         response.json
