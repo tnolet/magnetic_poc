@@ -89,8 +89,8 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
 
   when(Checking) {
 
-    // when we receive an Ok event, we just move to the OkWait state. We also lower the back off stage with 1
-    // because an Ok score lowers the escalation stage
+    // when we receive an Ok event, we lower the back off stage with 1, because an Ok score lowers the escalation stage
+    // Then we move to the OkWait
     case Event(Ok,d: SlaData) =>
 
       var newStage : Int = 0

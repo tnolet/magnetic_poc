@@ -49,7 +49,8 @@
             <div class="col-sm-3 col-xs-6">
                 <div>Current sessions <i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
                 <div class="h2 m-b-sm">{{metrics.frontend.scur}}
-                    <small class="text-muted m-l-xs">{{metrics.frontend.smax}}
+
+                <small class="text-muted lower-metric m-l-xs">{{metrics.frontend.smax}}
                         <small class="text-muted">max</small>
                     </small>
                 </div>
@@ -57,7 +58,7 @@
             <div class="col-sm-3 col-xs-6">
                 <div>Req/Sec <i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
                 <div class="h2 m-b-sm">{{metrics.frontend.req_rate}}
-                    <small class="text-muted m-l-xs">{{metrics.frontend.req_rate_max}}
+                    <small class="text-muted lower-metric m-l-xs">{{metrics.frontend.req_rate_max}}
                         <small class="text-muted"> max</small>
                     </small>
                 </div>
@@ -97,13 +98,14 @@
     <div class="wrapper">
         <div class="row text-center">
             <div class="col-sm-3 col-xs-6">
-                <div>Response Time <i class="fa fa-fw fa-caret-down text-warning text-sm"></i></div>
-                <div class="h2 m-b-sm">{{metrics.backend.rtime}}</div>
+                    <div>Response Time <i class="fa fa-fw fa-caret-down text-warning text-sm"></i></div>
+                    <div class="h2 m-b-sm">{{metrics.backend.rtime}}</div>
+
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>Queued Requests<i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
                 <div class="h2 m-b-sm">{{metrics.backend.qcur}}
-                    <small class="text-muted m-l-xs">{{metrics.backend.qmax}}
+                    <small class="text-muted m-l-xs lower-metric">{{metrics.backend.qmax}}
                         <small class="text-muted">max</small>
                     </small>
                 </div>
@@ -114,7 +116,7 @@
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>Time since last session<i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
-                <div class="h2 m-b-sm" ng-bind="metrics.backend.lastsess | secondsSince"></div>
+                <div class="h2 m-b-sm" ng-bind="metrics.backend.lastsess"></div>
             </div>
 
         </div>
