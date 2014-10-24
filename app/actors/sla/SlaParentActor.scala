@@ -24,7 +24,6 @@ class SlaParentActor extends Actor with ActorLogging {
 
   def receive = {
 
-
     // All SLA's are check for their State. Any state except for the DESTROYED state should result in a running SLA.
     // This ensures that SLA's survive the restart of the application.
 
@@ -39,7 +38,7 @@ class SlaParentActor extends Actor with ActorLogging {
 
               log.info(s"Destroying Sla checker for ${sla.vrn}")
 
-              context.child(s"slaChecker-${sla.vrn}").map {
+              context.child(s"slaChecker-${sla.vrn}.${sla.metricType}").map {
 
                 case actor =>
                   actor ! PoisonPill
@@ -50,13 +49,13 @@ class SlaParentActor extends Actor with ActorLogging {
 
               implicit val timeout = akka.util.Timeout(5 seconds) // Timeout for the resolveOne call
 
-              context.actorSelection(s"slaChecker-${sla.vrn}").resolveOne().onComplete{
+              context.actorSelection(s"slaChecker-${sla.vrn}.${sla.metricType}").resolveOne().onComplete{
                 case actor : Try[ActorRef] =>
                   if (actor.isFailure) {
 
                     log.info(s"Starting Sla checker for ${sla.vrn}")
 
-                    val slaChecker = context.actorOf(Props(classOf[SlaCheckerActor], sla), s"slaChecker-${sla.vrn}")
+                    val slaChecker = context.actorOf(Props(classOf[SlaCheckerActor], sla), s"slaChecker-${sla.vrn}.${sla.metricType}")
                     slaChecker ! Start
                     DB.withSession { implicit session: Session =>
                       Slas.update_state(sla.id.get, SlaState.ACTIVE)

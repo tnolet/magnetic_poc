@@ -1,9 +1,12 @@
 package actors.sla
 
 import akka.actor._
+import models.docker.{ContainerInstances, DockerContainers, DockerContainer}
+import models.service.Services
 import models.{SlaState, Sla}
 import play.api.db.slick._
 import scala.concurrent.duration._
+import lib.job.{ScaleJobBuilder, Horizontal}
 
 /**
  * The SlaCheckerActor checks the rules of a Sla against the score board
@@ -48,6 +51,7 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
   import play.api.Play.current
 
   val scoreBoard = context.actorSelection("../scoreBoard")
+  val deployer = context.actorSelection("/user/deployer")
 
   // store the sla and some other stuff as local variables
   private val sla = _sla
@@ -213,7 +217,8 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
         case s: SlaData =>
 
           // ask the score board for the score of the metric we are interested in
-          scoreBoard ! GetScore(metric = sla.vrn)
+          log.info(s"Getting score for: ${sla.vrn}.${sla.metricType}" )
+          scoreBoard ! GetScore(metric = s"${sla.vrn}.${sla.metricType}")
 
       }
 
@@ -247,6 +252,7 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
 
           log.info(s"${sla.vrn}: Escalation triggered. Should issue some command now")
           sendStateUpdate(SlaState.ESCALATED)
+          createScalingJob(sla.vrn)
           self ! IssuedCommand
       }
 
@@ -323,6 +329,31 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
 
   }
 
+  /**
+   * Gets the container and current amount of instances and submits a scaling job. Notice the +1!
+   * @param vrn
+   * @return the id of the scaling Job
+   */
+  def createScalingJob(vrn: String) : Option[Long]  = {
+
+    DB.withSession { implicit session: Session =>
+
+
+        Services.findByVrn(vrn).map { srv =>
+
+          val container = DockerContainers.findByServiceId(srv.id.get).toList.head
+          val currentInstanceAmount = ContainerInstances.findByContainerId(container.id.get).length
+
+          // create a scaleJob
+          val builder = new lib.job.ScaleJobBuilder
+          val scaleType = Horizontal(vrn, container, currentInstanceAmount + 1)
+
+          builder.setScaleType(scaleType)
+          val jobId = builder.build
+          jobId
+          }
+      }
+    }
 }
 
 

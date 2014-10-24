@@ -89,7 +89,6 @@ object DockerContainers {
     DockerImages.findById(id).map( image =>
 
       containers.filter(_.imageRepo === image.repo ).list
-
     )
 
 
@@ -101,8 +100,8 @@ object DockerContainers {
     containers.filter(_.serviceId === id).sortBy(_.id.asc).list
 
   /**
-   * Retrieve a container from the serviceId
-   * @param vrn the service's vrn
+   * Retrieve a container from the container vrn
+   * @param vrn the container's vrn
    */
   def findByVrn(vrn: String)(implicit s: Session) =
     containers.filter(_.vrn === vrn).firstOption

@@ -13,13 +13,13 @@ import lib.util.date.TimeStamp
 
 /**
  * The Sla describes the performance criteria a service should stick to
- * @param metricType The type of metric to check for. Currently only Haproxy metrics like "qcur" or "rtime"
+ * @param metricType The type of metric to check for. Currently only Haproxy metrics like "backend.rtime" or "frontend.scur"
  * @param lowThreshold The lower threshold. Values below this should deescalate
  * @param highThreshold The high threshold. Values above this should trigger escalation
  * @param backOffTime The time in seconds to back off when escalating or deescalating.
  * @param backOffStages The amount of times we can back off the [[backOffTime]]. Together this prohibits flapping
  * @param maxEscalations The hard upper limit  of escalations that can be triggered.
- * @param vrn the unique id of the object the SLA belongs to
+ * @param vrn the unique id of the object the SLA belongs to, i.e. "vrn-development-service-e47bdfe2""
  */
 case class Sla(id: Option[Long],
                state: String,
@@ -67,7 +67,7 @@ class Slas(tag: Tag) extends Table[Sla](tag, "SLAS") {
   def created_at = column[java.sql.Timestamp]("created_at")
   def updated_at = column[java.sql.Timestamp]("updated_at")
 
-  def service = foreignKey("SERVICE_SLA_FK", serviceId, Services.services)(_.id)
+  def service = foreignKey("SERVICE_SLA_FK", serviceId, Services.services)(_.id,onDelete=ForeignKeyAction.Cascade)
 
   def * = (id.?, state, metricType, lowThreshold, highThreshold, backoffTime, backoffStages, maxEscalations, vrn, serviceId, created_at, updated_at)  <> (Sla.tupled, Sla.unapply _)
 

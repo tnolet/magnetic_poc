@@ -17,7 +17,7 @@ alter table "DOCKER_CONTAINER" add constraint "SERVICE_FK" foreign key("serviceI
 alter table "JOB_EVENTS" add constraint "JOB_FK" foreign key("jobId") references "JOB"("id") on update NO ACTION on delete NO ACTION;
 alter table "SERVICES" add constraint "ENV_FK" foreign key("environmentId") references "ENVIRONMENT"("id") on update NO ACTION on delete NO ACTION;
 alter table "SERVICES" add constraint "SERVICE_TYPE_FK" foreign key("serviceTypeId") references "SERVICE_TYPES"("id") on update NO ACTION on delete NO ACTION;
-alter table "SLAS" add constraint "SERVICE_SLA_FK" foreign key("serviceId") references "SERVICES"("id") on update NO ACTION on delete NO ACTION;
+alter table "SLAS" add constraint "SERVICE_SLA_FK" foreign key("serviceId") references "SERVICES"("id") on update NO ACTION on delete CASCADE;
 
 # --- !Downs
 

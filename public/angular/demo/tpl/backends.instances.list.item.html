@@ -1,21 +1,11 @@
-<div class="list-group-item-heading">
-  <span class="col w-auto m-r pull-left">
-      <span class="hidden-xs">
-          <i class="fa fa-cube m-r inline"></i>
-      </span>
-      <span class="m-r text-muted">{{host}}:{{ports}}</span>
-  </span>
-  <!--<div class="col hidden-xs pull-right">-->
-      <!--<span class="m-l text-muted">{{vrn}}</span>-->
-  <!--</div>-->
-</div>
-<div class="list-group-item-meta">
-  <span class="col w-auto m-r">
-      <i class="fa fa-clock-o icon m-r"></i>
-      <span class="m-r-xs text-muted m-r" ng-bind="metrics.rtime">0</span>
-  </span>
-  <div class="col w-auto">
-      <i class="fa fa-users icon m-r"></i>
-      <span class="m-r-xs text-muted" ng-bind="metrics.scur">0</span>
-  </div>
+<div class="list-group-item wrapper">
+    <div><i class="fa fa-cube m-r-sm"></i>
+        <span class="text-muted m-r m-r-n-sm">{{host}}:{{ports}}</span>
+        <div class="pull-right ">
+            <i class="fa fa-users icon m-r"></i>
+            <span class="m-r-xs text-muted" ng-bind="metrics.scur">0</span>
+            <i class="fa fa-clock-o icon m-r"></i>
+            <span class="m-r-xs text-muted m-r" ng-bind="metrics.rtime">0</span>
+        </div>
+    </div>
 </div>

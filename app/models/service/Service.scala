@@ -100,6 +100,14 @@ object Services {
     })
   }
 
+  def findDetailsByVrn(vrn: String)(implicit s: Session) : Option[ServiceResult] = {
+
+    services.filter(_.vrn === vrn).firstOption.map( srv =>
+      findDetailsById(srv.id.get).get
+
+    )
+  }
+
   /**
    * Retrieve services based the service type it is associated with
    * @param id unique id for the [[ServiceType]]

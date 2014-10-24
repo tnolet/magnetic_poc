@@ -1,7 +1,7 @@
-<div class="wrapper ng-cloak"  ng-class="{'alert-success': slas[0].state == 'ACTIVE', 'alert-warning': slas[0].state == 'ESCALATED', 'alert-danger ': slas[0].state == 'FAILED'}"   ng-show="slas.length" ng-cloak>
+<div class="wrapper ng-cloak sla-item"  ng-class="{'alert-success': slas[0].state == 'ACTIVE', 'alert-warning': slas[0].state == 'ESCALATED', 'alert-danger ': slas[0].state == 'FAILED'}"   ng-show="slas.length" ng-cloak>
     <div><i class="fa fa-file-text-o m-r"></i>
         <span class="font-bold">SLA State: </span><span>{{slas[0].state}}</span>
-        <div class="pull-right">
+        <div class="pull-right hidden-xs hidden-md hidden-sm">
             <span class="m-r">Metric: {{slas[0].metricType}}</span>
             <span class="m-r">Low: {{slas[0].lowThreshold}}</span>
             <span class="m-r">High: {{slas[0].highThreshold}}</span>

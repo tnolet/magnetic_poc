@@ -6,7 +6,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import play.api.libs.json._
 
-
 object LoadBalancer extends Controller {
 
   def stats = Action.async {

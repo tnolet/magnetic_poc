@@ -201,8 +201,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     })
 
     .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','$timeout','$modal', 'Polling', function ($scope, $stateParams, $http, $timeout, $modal, $polling) {
-        $scope.metrics = {};
 
+        $scope.metrics = {};
 
 
         $scope.deleteService = function () {
@@ -420,7 +420,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
                 var slaObject = formData;
                 slaObject.state = "NEW";
-                slaObject.vrn = $scope.vrn + '.' + formData.metricType;
+                slaObject.vrn = $scope.vrn
                 slaObject.serviceId = parseInt($stateParams.serviceId);
 
                 createSla(slaObject);
@@ -455,60 +455,13 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
       });
     }])
 
+
     .controller('ContainerDetailCtrl',[ '$scope', '$stateParams','$http',function ($scope, $stateParams, $http) {
 
         // local constants and functions
         var WEIGHT_MAX = 256;
         var WEIGHT_MIN = 0;
         var WEIGHT_STEP = 5;
-
-        // this metrics filer is a workaround until we have aggregated metrics on the backend app
-        // For now, we need to aggregate all the metrics from individual instances/servers belonging to this container
-
-        // aggregate and calculate the most necessary metrics
-        var aggregateMetrics = function(metricData){
-
-            var data = metricData;
-            var result = {};
-
-            // list which metrics you want aggregated and if you want to average or total them
-            var wantedMetrics=[{ "name" : "scur", "mode" : "tot" },{ "name" : "rtime", "mode" : "avg"}];
-
-            wantedMetrics.forEach(function(m){
-
-                var holder = [];
-                var sum = 0;
-                data.forEach(function(d){
-                    holder.push(d[m.name]);
-                });
-
-                for(var i = 0; i < holder.length; i++){
-                    sum += parseInt(holder[i], 10);
-                }
-
-                if (m.mode == "avg") {
-                    var avg = sum/holder.length;
-                    result[m.name] = avg;
-                } else {
-                    result[m.name] = sum;
-                }
-
-                $scope.metrics = result;
-
-            });
-
-        };
-
-
-        var metricsFilter = function(metricData){
-            var filterMetricData = metricData.filter(function (obj) {
-              if (!$scope.instanceVrns()) {
-                return;
-              }
-              return $scope.instanceVrns().indexOf(obj.svname) > -1;
-            });
-            aggregateMetrics(filterMetricData);
-        };
 
         var updateWeightOnServer = function(serviceId,containerVrn, weight) {
 
@@ -599,6 +552,21 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             return vrns;
         };
 
+        var metricSnapshot = function(vrn){
+            var params = {
+                vrn: vrn
+            };
+
+            $http.get('/metrics/lb/server', { params: params }).
+                success(function(data) {
+                    $scope.metrics[vrn] = data[0];
+                });
+        };
+
+        $scope.getMetricsOfInstance = function(vrn) {
+            return $scope.metrics[vrn]
+        };
+
         // initialise the controller with all basic info
         $scope.init = function(container)
         {
@@ -610,6 +578,9 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             $scope.weight = container.masterWeight;
             $scope.status = container.status;
             $scope.instances = container.instances;
+            $scope.instances.forEach(function(instance){
+                metricSnapshot(instance.vrn)
+            });
             $scope.instanceAmount = container.instanceAmount;
             $scope.created_at = container.created_at;
 
@@ -619,24 +590,14 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     // Container Instances
 
     .controller('InstancesDetailCtrl', ['$scope', '$http' ,function ($scope, $http) {
-        var metricSnapshot = function(vrn){
-          var params = {
-              vrn: vrn
-          };
 
-          $http.get('/metrics/lb/server', { params: params }).
-            success(function(data) {
-              console.log(data);
-              $scope.metrics = data[0];
-            });
-        };
 
-        // initialise the controller with all basic info
-        $scope.init = function (instance) {
+        // initialise the controller with all basic info + metrics
+        $scope.init = function (instance, metrics) {
           $scope.vrn = instance.vrn;
           $scope.host = instance.host;
           $scope.ports = instance.ports;
-          metricSnapshot(instance.vrn);
+            $scope.metrics = metrics
         };
     }])
 

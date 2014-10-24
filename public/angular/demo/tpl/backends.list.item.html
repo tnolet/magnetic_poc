@@ -54,13 +54,11 @@
 
      <!--instances-->
 
-    <div class="list-group list-group-lg">
-        <a class="list-group-item btn-default hover-anchor hbox"
-           ng-repeat="instance in instances"
-            ng-include src="'demo/tpl/backends.instances.list.item.html'"
-            ng-controller="InstancesDetailCtrl"
-            ng-init="init(instance)">
-        </a>
+    <div class="list-group" ng-repeat="instance in instances">
+        <div ng-include src="'demo/tpl/backends.instances.list.item.html'"
+        ng-controller="InstancesDetailCtrl"
+        ng-init="init(instance, $parent.getMetricsOfInstance(instance.vrn))">
+        ></div>
     </div>
 
     <!--/ instances-->
