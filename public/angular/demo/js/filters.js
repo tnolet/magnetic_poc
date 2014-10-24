@@ -26,4 +26,10 @@ angular.module('app.filters', [])
         return function(containers){
             return containers.filter(function(cnt){ return cnt.status != 'DESTROYED' })
         }
-    });
+    })
+
+.filter('destroyedSlas',function(){
+    return function(slas){
+        return slas.filter(function(cnt){ return cnt.state != 'DESTROYED' })
+    }
+});

@@ -7,31 +7,17 @@
         <span class="font-thin h4 v-middle">Services / {{serviceType}} {{version}}</span>
         <div class="m-r-sm pull-right hidden-xs">
             <button data-open-deploy-modal='{"service": "{{vrn}}" }' class="btn btn-sm btn-default btn-addon"><i class="fa fa-cube"></i>Deploy image</button>
-            <button ng-click="openCreateSlaModal()" ng-disabled="slas"  class="btn btn-sm btn-default btn-addon"><i class="fa fa-file-text-o"></i>Create SLA</button>
+            <button ng-click="openCreateSlaModal()" ng-disabled="slas.length"  class="btn btn-sm btn-default btn-addon"><i class="fa fa-file-text-o"></i>Create SLA</button>
             <button ng-click="deleteService()" class="btn btn-default btn-addon btn-sm"><i class="fa fa-trash-o"></i>Delete service</button>
-
         </div>
     </div>
 
     <!-- / header-->
 
     <!--sla-->
-
-    <div class="wrapper alert-info" ng-show="slas">
-        <div><i class="fa fa-file-text-o m-r"></i>
-            <span class="">SLA State: {{slas[0].state}}</span>
-            <div class="pull-right">
-                <span class="m-r">Metric: {{slas[0].metricType}}</span>
-                <span class="m-r">Low: {{slas[0].lowThreshold}}</span>
-                <span class="m-r">High: {{slas[0].highThreshold}}</span>
-                <span class="m-r">Back Off: {{slas[0].backOffStages}} x {{slas[0].backOffTime}} seconds</span>
-                <span class="m-r">Max escalations: {{slas[0].maxEscalations}}</span>
-                <button ng-click="deleteSla(slas[0].id)" class="btn btn-icon btn-sm">
-                    <i class="fa fa-trash"></i>
-                </button>
-            </div>
+        <div ng-repeat="sla in slas | destroyedSlas">
+            <div ng-include src="'demo/tpl/sla/sla.list.item.html'"></div>
         </div>
-    </div>
 
     <!--/sla-->
 
@@ -128,7 +114,7 @@
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>Time since last session<i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
-                <div class="h2 m-b-sm" ng-bind="metrics.backend.lastsess"></div>
+                <div class="h2 m-b-sm" ng-bind="metrics.backend.lastsess | secondsSince"></div>
             </div>
 
         </div>

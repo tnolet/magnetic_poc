@@ -142,28 +142,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
           $scope.streamline = jobs;
         });
 
-        // OLD-FASHIONED STREAMLINE FILLING - CAN BE INITIATED FROM ANYWHERE
-        // $scope.$on('jobs.update', function(event, data) {
-        //     if (!data.id) {
-        //       return;
-        //     }
-        //
-        //     addToStreamline($scope.streamline, {
-        //       type: 'job',
-        //       queue: data.queue,
-        //       status: data.status
-        //     });
-        // });
-
-        // $scope.$on('jobevent.update', function(event, data) {
-        //     angular.forEach(data, function (value) {
-        //       addToStreamline($scope.streamline, {
-        //         type: 'event',
-        //         timestamp: moment(value.timestamp).format('ddd, D MMM HH:mm:ss'),
-        //         data: value.status
-        //       });
-        //     });
-        // });
     }])
 
     .controller('ServicesCtrl',[ '$scope', '$http', '$modal', 'Polling', function ($scope, $http, $modal, $polling) {
@@ -202,6 +180,17 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     }])
 
     .controller('createSlaModalCtrl', function ($scope, $modalInstance) {
+        // set some defaults
+        $scope.formData = {
+            "metricType" : "backend.rtime",
+            "state" : "NEW",
+            "lowThreshold" : 30,
+            "highThreshold" : 100,
+            "backOffTime" : 10,
+            "backOffStages" : 3,
+            "maxEscalations": 3
+        };
+
         $scope.ok = function (formData) {
             $modalInstance.close(formData);
         };
@@ -215,10 +204,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         $scope.metrics = {};
 
 
-        $scope.deleteSla = function(slaId) {
-            $http.delete('/slas/' + slaId)
-                .success( console.log('Successfully Deleted Sla ' + slaId))
-        };
 
         $scope.deleteService = function () {
           $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
@@ -354,8 +339,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                       };
                     }
 
-                    // add the last value to the scope ass the current value
-                    $scope.metrics_frontend_scur = values[values.length - 1][1];
 
                     // add the list of values ot the chart
                     $scope.chartBe.data.rows = rows;
@@ -370,7 +353,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         chartBe.data = {"cols": [
             {id: "time", label: "time", type: "datetime"},
             {id: "sessions", label: "Response Time", type: "number"}
-
         ], "rows": [] };
 
       chartBe.options = {
@@ -379,13 +361,14 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
           backgroundColor: "#F6F8F8",
           width: "90%"
         },
+        curveType: 'function',
         width: "100%",
         height: 200,
         colors: ["#23b7e5"],
         legend: { position: "none" },
         isStacked: true,
         fill: 20,
-        displayExactValues: true,
+        displayExactValues: false,
         vAxis: {
           viewWindow: { min: 0 },
           baselineColor: '#58666e',
@@ -410,7 +393,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
       $scope.chartBe = chartBe;
 
 
-
         var createSla = function(sla) {
 
             $http.post('/slas', sla).
@@ -418,6 +400,13 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                     console.log(data);
                 });
         };
+
+        $scope.deleteSla = function(slaId) {
+            $scope.slas=[];
+            $http.delete('/slas/' + slaId)
+                .success( console.log('Successfully Deleted Sla ' + slaId))
+        };
+
 
         // launches the modal for creating a new image
         $scope.openCreateSlaModal = function () {
@@ -439,6 +428,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
             });
 
         };
+
 
       // initialise the controller with all basic info
       $polling.startPolling('servicesDetail', 'http://localhost:9000/services/' + $stateParams.serviceId, $scope, function (data) {
