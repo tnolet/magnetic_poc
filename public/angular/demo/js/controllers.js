@@ -201,8 +201,24 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
     }])
 
-    .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','$timeout', 'Polling', function ($scope, $stateParams, $http, $timeout, $polling) {
+    .controller('createSlaModalCtrl', function ($scope, $modalInstance) {
+        $scope.ok = function (formData) {
+            $modalInstance.close(formData);
+        };
+
+        $scope.cancel = function () {
+            $modalInstance.dismiss('cancel');
+        };
+    })
+
+    .controller('ServicesDetailCtrl',[ '$scope', '$stateParams','$http','$timeout','$modal', 'Polling', function ($scope, $stateParams, $http, $timeout, $modal, $polling) {
         $scope.metrics = {};
+
+
+        $scope.deleteSla = function(slaId) {
+            $http.delete('/slas/' + slaId)
+                .success( console.log('Successfully Deleted Sla ' + slaId))
+        };
 
         $scope.deleteService = function () {
           $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
@@ -288,12 +304,12 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                  viewWindow: { min: 0 },
                  baselineColor: '#58666e',
                  textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
-                    gridlines : {count: -1, color:'#B9B9B9'},
-                minorGridLines : { count:5 }
+                 gridlines : {count: -1, color:'#B9B9B9'},
+                 minorGridLines : { count: 5 }
 
             },
             hAxis: {
-                format: "hh:mm:ss",
+                format: "HH:mm:ss",
                 baselineColor: '#58666e',
                 textStyle: { color: "#58666e", fontName: "Source Sans Pro"}
             },
@@ -378,7 +394,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
           minorGridLines : { count: 5 }
         },
         hAxis: {
-          format: "hh:mm:ss",
+          format: "HH:mm:ss",
           baselineColor: '#58666e',
           textStyle: { color: "#58666e", fontName: "Source Sans Pro"},
           minorGridLines : { count: 5 }
@@ -393,6 +409,37 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
       $scope.chartBe = chartBe;
 
+
+
+        var createSla = function(sla) {
+
+            $http.post('/slas', sla).
+                success(function(data){
+                    console.log(data);
+                });
+        };
+
+        // launches the modal for creating a new image
+        $scope.openCreateSlaModal = function () {
+
+            var modalInstance = $modal.open({
+                templateUrl: 'demo/tpl/modals/createSlaModal.html',
+                controller: 'createSlaModalCtrl'
+            });
+
+            modalInstance.result.then(function(formData) {
+
+                var slaObject = formData;
+                slaObject.state = "NEW";
+                slaObject.vrn = $scope.vrn + '.' + formData.metricType;
+                slaObject.serviceId = parseInt($stateParams.serviceId);
+
+                createSla(slaObject);
+                console.log('Modal dismissed with: ' + JSON.stringify(formData));
+            });
+
+        };
+
       // initialise the controller with all basic info
       $polling.startPolling('servicesDetail', 'http://localhost:9000/services/' + $stateParams.serviceId, $scope, function (data) {
         $scope.vrn = data.vrn;
@@ -402,6 +449,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         $scope.serviceType = data.serviceType;
         $scope.environment = data.environment;
         $scope.version = data.version;
+        $scope.slas = data.slas;
         graphDataFe("loadbalancer","scur",data.vrn,"frontend","10","minutes");
         graphDataBe("loadbalancer","rtime",data.vrn,"backend","10","minutes");
         metricSnapshot(data.vrn);

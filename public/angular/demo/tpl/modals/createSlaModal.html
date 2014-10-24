@@ -1,0 +1,42 @@
+<form class="form">
+
+    <div class="modal-header">
+        <h4 class="modal-title">Create new SLA</h4>
+        <small class="text-muted">vrn-development-service-e47bdfe2</small>
+    </div>
+
+    <div class="modal-body">
+        <div class="form-group">
+            <label class="control-label">METRIC TYPE</label>
+            <select class="form-control" ng-model="formData.metricType" >
+                <option value="">Please choose</option>
+                <option value="backend.rtime">Backend response time</option>
+                <option value="frontend.scur">User sessions</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="control-label">UPPER THRESHOLD</label>
+            <input type="number" class="form-control" placeholder=100 ng-model="formData.highThreshold">
+        </div>
+        <div class="form-group">
+            <label class="control-label">LOWER THRESHOLD</label>
+            <input type="number" class="form-control" placeholder=30 ng-model="formData.lowThreshold">
+        </div>
+        <div class="form-group">
+            <label class="control-label">BACK OFF TIME</label>
+            <input type="number" class="form-control" placeholder=30 ng-model="formData.backOffTime">
+        </div>
+        <div class="form-group">
+            <label class="control-label">BACK OFF STAGES</label>
+            <input type="number" class="form-control" placeholder=3 ng-model="formData.backOffStages">
+        </div>
+        <div class="form-group">
+            <label class="control-label">MAX. ESCALATIONS</label>
+            <input type="number" class="form-control" placeholder=3 ng-model="formData.maxEscalations">
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-default" ng-click="cancel()">Cancel</button>
+        <button class="btn btn-info"  ng-click="ok(formData)">Create!</button>
+    </div>
+</form>

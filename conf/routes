@@ -76,6 +76,18 @@ POST          /services                                                    contr
 
 DELETE        /services/:id                                                controllers.ServiceController.delete(id: Long)
 
+# SLAs
+
+GET           /slas                                                        controllers.SlaController.list
+
+GET           /slas/:id                                                    controllers.SlaController.find_by_id(id: Long)
+
+POST          /slas                                                        controllers.SlaController.create
+
+DELETE        /slas/:id                                                    controllers.SlaController.delete(id: Long)
+
+
+
 # Feeds
 
 GET           /metrics/lb                                                  controllers.MetricsController.lbFeed(metric: String, proxy: String, proxyType: String, relativeTime: Int, timeUnit: String)

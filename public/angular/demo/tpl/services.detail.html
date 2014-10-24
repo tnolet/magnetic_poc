@@ -5,18 +5,41 @@
     <div class="wrapper bg-light lter b-b">
         <a ui-sref="app.services.list" class="btn btn-sm btn-default w-xxs m-r-sm"><i class="fa fa-long-arrow-left"></i></a>
         <span class="font-thin h4 v-middle">Services / {{serviceType}} {{version}}</span>
-        <div class="btn-group m-r-sm pull-right hidden-xs">
-            <button data-open-deploy-modal='{"service": "{{vrn}}" }' class="btn btn-sm btn-default w-xxs w-auto-xs" tooltip-placement="bottom" tooltip="Deploy image"><i class="fa fa-cube"></i></button>
-            <button class="btn btn-sm btn-default w-xxs w-auto-xs" tooltip-placement="bottom" tooltip="Manage SLA"><i class="fa fa-file-text-o"></i></button>
-            <button ng-click="deleteService()" class="btn btn-sm btn-default w-xxs w-auto-xs" tooltip-placement="bottom" tooltip="Delete service"><i class="fa fa-trash-o"></i></button>
+        <div class="m-r-sm pull-right hidden-xs">
+            <button data-open-deploy-modal='{"service": "{{vrn}}" }' class="btn btn-sm btn-default btn-addon"><i class="fa fa-cube"></i>Deploy image</button>
+            <button ng-click="openCreateSlaModal()" ng-disabled="slas"  class="btn btn-sm btn-default btn-addon"><i class="fa fa-file-text-o"></i>Create SLA</button>
+            <button ng-click="deleteService()" class="btn btn-default btn-addon btn-sm"><i class="fa fa-trash-o"></i>Delete service</button>
+
         </div>
     </div>
 
     <!-- / header-->
 
+    <!--sla-->
+
+    <div class="wrapper alert-info" ng-show="slas">
+        <div><i class="fa fa-file-text-o m-r"></i>
+            <span class="">SLA State: {{slas[0].state}}</span>
+            <div class="pull-right">
+                <span class="m-r">Metric: {{slas[0].metricType}}</span>
+                <span class="m-r">Low: {{slas[0].lowThreshold}}</span>
+                <span class="m-r">High: {{slas[0].highThreshold}}</span>
+                <span class="m-r">Back Off: {{slas[0].backOffStages}} x {{slas[0].backOffTime}} seconds</span>
+                <span class="m-r">Max escalations: {{slas[0].maxEscalations}}</span>
+                <button ng-click="deleteSla(slas[0].id)" class="btn btn-icon btn-sm">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!--/sla-->
+
+
     <!--frontends header-->
 
     <div class="wrapper">
+        <span class="text-muted pull-right">{{vrn}}</span>
         <span class="h4 m-r-xs block">Frontend</span>
         <span class="text-muted">port: {{port}}</span>
         <small class="text-muted">({{mode}})</small>
@@ -69,7 +92,7 @@
 
     <!--backends header-->
 
-    <div class="wrapper">
+    <div class="padder m-b">
         <span class="h4">Backend</span>
     </div>
 

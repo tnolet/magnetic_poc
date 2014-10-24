@@ -1,0 +1,11 @@
+{
+    "metricType" : "rtime",
+    "state" : "NEW",
+    "lowThreshold" : 30,
+    "highThreshold" : 100,
+    "backOffTime" : 10,
+    "backOffStages" : 3,
+    "maxEscalations": 3,
+    "vrn" : "vrn-development-service-e47bdfe2.backend.rtime",
+    "serviceId" : 3
+}

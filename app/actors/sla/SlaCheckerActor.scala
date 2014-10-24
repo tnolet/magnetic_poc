@@ -1,15 +1,12 @@
 package actors.sla
 
 import akka.actor._
-import models.Sla
-import play.api.Logger
+import models.{SlaState, Sla}
+import play.api.db.slick._
 import scala.concurrent.duration._
 
 /**
  * The SlaCheckerActor checks the rules of a Sla against the score board
- *
- *   val sla1 = Sla(Some(1),"rtime",30,100,5,3,3,"vrn-development-service-7797c15d.backend.rtime",1)
-     val sla2 = Sla(Some(1),"scur",0,5,5,3,3,"vrn-development-service-7797c15d.backend.qcur",1)
  */
 
 trait SlaMessage
@@ -25,20 +22,20 @@ case object Invalid extends SlaMessage
 
 
 // possible states
-trait SlaState
+trait SlaFSMState
 
-case object Idle extends SlaState
-case object GettingScore extends SlaState
-case object Checking extends SlaState
-case object OkWait extends SlaState
-case object NotOkWait extends SlaState
-case object InvalidMeasurement extends SlaState
-case object Escalating extends SlaState
-case object DeEscalating extends SlaState
-case object CommandWait extends SlaState
-case object CommandDone extends SlaState
-case object Evaluating extends SlaState
-case object Failed extends SlaState
+case object Idle extends SlaFSMState
+case object GettingScore extends SlaFSMState
+case object Checking extends SlaFSMState
+case object OkWait extends SlaFSMState
+case object NotOkWait extends SlaFSMState
+case object InvalidMeasurement extends SlaFSMState
+case object Escalating extends SlaFSMState
+case object DeEscalating extends SlaFSMState
+case object CommandWait extends SlaFSMState
+case object CommandDone extends SlaFSMState
+case object Evaluating extends SlaFSMState
+case object Failed extends SlaFSMState
 
 trait Data
 case object Uninitialized extends Data
@@ -46,7 +43,9 @@ case class SlaData(stage: Int = 0, score: Long = -1, escalations : Int = 0) exte
 
 
 
-class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaState, Data] {
+class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Data] {
+
+  import play.api.Play.current
 
   val scoreBoard = context.actorSelection("../scoreBoard")
 
@@ -232,16 +231,13 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaState, Data] 
           val message = checkScore(s.score, sla, s)
 
           self ! message
-
       }
 
     case Checking -> NotOkWait =>
 
       nextStateData match {
         case s: SlaData =>
-
-        log.info(s"${sla.vrn}: Back off staged triggered. Now at stage ${s.stage} of ${sla.backOffStages} ")
-
+          log.info(s"${sla.vrn}: Back off staged triggered. Now at stage ${s.stage} of ${sla.backOffStages} ")
       }
 
     case Checking -> Escalating =>
@@ -250,8 +246,8 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaState, Data] 
         case s: SlaData =>
 
           log.info(s"${sla.vrn}: Escalation triggered. Should issue some command now")
+          sendStateUpdate(SlaState.ESCALATED)
           self ! IssuedCommand
-
       }
 
     case Escalating -> CommandWait =>
@@ -261,7 +257,6 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaState, Data] 
 
           log.info(s"${sla.vrn}: Command triggered. Should check for successful completion of some command now")
           self ! FinishedCommand
-
       }
 
     case CommandDone -> Evaluating =>
@@ -271,7 +266,6 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaState, Data] 
 
           log.info(s"${sla.vrn}: Evaluating the effects of the escalation command for $evaluationInterval seconds")
           self ! FinishedCommand
-
       }
 
     case _ -> Failed =>
@@ -282,14 +276,9 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaState, Data] 
           if (s.escalations >= sla.maxEscalations) {
 
             log.info(s"${sla.vrn}: SLA failed: Escalation needed, but reached maximum number of ${sla.maxEscalations}. Retrying in $retryFailedInterval seconds.")
-
+            sendStateUpdate(SlaState.FAILED)
           }
-
-
       }
-
-
-
   }
 
   initialize()
@@ -305,24 +294,33 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaState, Data] 
     score match {
 
       case -1 =>
-        Logger.info(s"${sla.vrn}: Found invalid score of $score, moving on... =>  Stage: ${s.stage} Esc: ${s.escalations}")
+        log.info(s"${sla.vrn}: Found invalid score of $score, moving on... =>  Stage: ${s.stage} Esc: ${s.escalations}")
         Invalid
       case  x : Long if x > sla.highThreshold =>
-        Logger.info(s"${sla.vrn}: Score  $score is higher than SLA high threshold ${sla.highThreshold} => Stage: ${s.stage} Esc: ${s.escalations}")
+        log.info(s"${sla.vrn}: Score  $score is higher than SLA high threshold ${sla.highThreshold} => Stage: ${s.stage} Esc: ${s.escalations}")
         NotOk
 
       case  x : Long if x <= sla.lowThreshold =>
-        Logger.info(s"${sla.vrn}: Score  $score is lower than or equal to SLA low threshold ${sla.lowThreshold} => Stage: ${s.stage} Esc: ${s.escalations}")
+        log.info(s"${sla.vrn}: Score  $score is lower than or equal to SLA low threshold ${sla.lowThreshold} => Stage: ${s.stage} Esc: ${s.escalations}")
         Ok
 
       case x : Long if x > sla.lowThreshold && x < sla.highThreshold =>
-        Logger.info(s"${sla.vrn}: Score  $score is within a safe margin of the SLA threshold => Stage: ${s.stage} Esc: ${s.escalations}")
+        log.info(s"${sla.vrn}: Score  $score is within a safe margin of the SLA threshold => Stage: ${s.stage} Esc: ${s.escalations}")
         Ok
 
       case _ =>
-        Logger.info(s"${sla.vrn}: Cannot read score, moving on... => Stage: ${s.stage} Esc: ${s.escalations}")
+        log.info(s"${sla.vrn}: Cannot read score, moving on... => Stage: ${s.stage} Esc: ${s.escalations}")
         Invalid
     }
+  }
+
+  def sendStateUpdate(state: SlaState.State) : Unit = {
+
+    // Update the container
+    DB.withSession { implicit session: Session =>
+      models.Slas.update_state_by_vrn(sla.vrn,state)
+    }
+
   }
 
 }

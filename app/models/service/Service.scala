@@ -1,6 +1,6 @@
 package models.service
 
-import models.Environments
+import models.{Slas, Environments, Sla}
 import models.docker.{ContainerInstances, DockerContainers, DockerContainerResult, DockerContainer}
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
@@ -27,7 +27,8 @@ case class ServiceResult(id: Option[Long],
                          version: String,
                          vrn: String,
                          serviceTypeId: Long,
-                         containers: List[DockerContainerResult]
+                         containers: List[DockerContainerResult],
+                         slas : List [Sla]
                           )
 
 class Services(tag: Tag) extends Table[Service](tag, "SERVICES") {
@@ -87,13 +88,14 @@ object Services {
       val env = Environments.findById(srv.environmentId).get
       val srvType  = ServiceTypes.findById(srv.serviceTypeId).get
       val containers : List[DockerContainer] =  DockerContainers.findByServiceId(srv.id.get)
+      val slas : List[Sla] = Slas.findByServiceId(srv.id.get)
 
       val containersResult : List[DockerContainerResult] = containers.map (cnt => {
         val instances =  ContainerInstances.findByContainerId(cnt.id.get)
         DockerContainerResult.createResult(cnt, instances)
       })
 
-       ServiceResult(srv.id,srv.port, srv.mode,srv.state,srvType.name, env.name, srvType.version, srv.vrn,srv.serviceTypeId,containersResult)
+       ServiceResult(srv.id,srv.port, srv.mode,srv.state,srvType.name, env.name, srvType.version, srv.vrn,srv.serviceTypeId,containersResult, slas)
 
     })
   }
@@ -222,6 +224,9 @@ object ServiceJson {
     )(ServiceCreate)
 
   import models.docker.DockerContainerJson.containerResultWrites
+  import models.SlaJson.SlaWrites
+
+
 
   implicit val ServiceResultWrites = Json.writes[ServiceResult]
 

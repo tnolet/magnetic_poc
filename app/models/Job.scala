@@ -6,7 +6,7 @@ import play.api.Logger
 import play.api.db.slick.Config.driver.simple._
 import play.api.libs.json._
 import scala.slick.lifted.Tag
-import lib.util.date.TimeStamp
+  import lib.util.date.TimeStamp
 import play.api.libs.functional.syntax._
 
 
@@ -49,11 +49,6 @@ object Jobs {
     }
 
   }
-
-
-
-
-
 
   /**
    * Insert a new Job

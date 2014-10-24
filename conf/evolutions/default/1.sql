@@ -11,19 +11,23 @@ create table "JOB" ("id" BIGSERIAL NOT NULL PRIMARY KEY,"status" VARCHAR(254) NO
 create table "JOB_EVENTS" ("id" BIGSERIAL NOT NULL PRIMARY KEY,"status" VARCHAR(254) NOT NULL,"payload" VARCHAR(254) NOT NULL,"jobId" BIGINT NOT NULL,"timestamp" TIMESTAMP NOT NULL);
 create table "SERVICES" ("id" BIGSERIAL NOT NULL PRIMARY KEY,"port" INTEGER NOT NULL,"mode" VARCHAR(254) NOT NULL,"state" VARCHAR(254) NOT NULL,"vrn" VARCHAR(254) NOT NULL,"environmentId" BIGINT NOT NULL,"serviceTypeId" BIGINT NOT NULL);
 create table "SERVICE_TYPES" ("id" BIGSERIAL NOT NULL PRIMARY KEY,"name" VARCHAR(254) NOT NULL,"version" VARCHAR(254) NOT NULL,"mode" VARCHAR(254) NOT NULL,"basePort" INTEGER NOT NULL,"systemService" BOOLEAN NOT NULL);
+create table "SLAS" ("id" BIGSERIAL NOT NULL PRIMARY KEY,"state" VARCHAR(254) NOT NULL,"metricType" VARCHAR(254) NOT NULL,"lowThreshold" BIGINT NOT NULL,"highThreshold" BIGINT NOT NULL,"backoffTime" INTEGER NOT NULL,"backoffStages" INTEGER NOT NULL,"maxEscalations" INTEGER NOT NULL,"vrn" VARCHAR(254) NOT NULL,"serviceId" BIGINT NOT NULL,"created_at" TIMESTAMP NOT NULL,"updated_at" TIMESTAMP NOT NULL);
 alter table "CONTAINER_INSTANCE" add constraint "CONTAINER_FK" foreign key("containerId") references "DOCKER_CONTAINER"("id") on update NO ACTION on delete CASCADE;
 alter table "DOCKER_CONTAINER" add constraint "SERVICE_FK" foreign key("serviceId") references "SERVICES"("id") on update NO ACTION on delete CASCADE;
 alter table "JOB_EVENTS" add constraint "JOB_FK" foreign key("jobId") references "JOB"("id") on update NO ACTION on delete NO ACTION;
 alter table "SERVICES" add constraint "ENV_FK" foreign key("environmentId") references "ENVIRONMENT"("id") on update NO ACTION on delete NO ACTION;
 alter table "SERVICES" add constraint "SERVICE_TYPE_FK" foreign key("serviceTypeId") references "SERVICE_TYPES"("id") on update NO ACTION on delete NO ACTION;
+alter table "SLAS" add constraint "SERVICE_SLA_FK" foreign key("serviceId") references "SERVICES"("id") on update NO ACTION on delete NO ACTION;
 
 # --- !Downs
 
+alter table "SLAS" drop constraint "SERVICE_SLA_FK";
 alter table "SERVICES" drop constraint "ENV_FK";
 alter table "SERVICES" drop constraint "SERVICE_TYPE_FK";
 alter table "JOB_EVENTS" drop constraint "JOB_FK";
 alter table "DOCKER_CONTAINER" drop constraint "SERVICE_FK";
 alter table "CONTAINER_INSTANCE" drop constraint "CONTAINER_FK";
+drop table "SLAS";
 drop table "SERVICE_TYPES";
 drop table "SERVICES";
 drop table "JOB_EVENTS";
