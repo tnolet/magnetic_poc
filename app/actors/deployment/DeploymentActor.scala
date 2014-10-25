@@ -384,12 +384,22 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
  *
  */
 
+      // We unexpose all server instances in the loadbalancer belonging to container/backend.
+      // We can't just delete a full backend, because there might be servers belonging to different containers.
     case Idle -> WaitingUnExpose =>
       nextStateData match {
         case ContainerState(state) =>
           sendStateUpdate(state)
 
-          lbManager ! RemoveBackendServer(vrn)
+          getContainerInstances(vrn).map {
+
+            case list : List[String] =>
+
+              log.info(s"Got list of instance to delete: $list ")
+              lbManager ! RemoveBackendServer(list)
+
+          }
+
 
       }
 
@@ -479,6 +489,16 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
       DockerContainers.createInstanceByVrn(vrn, instance)
 
+    }
+  }
+
+  def getContainerInstances(vrn: String) : Option[List[String]] = {
+    DB.withSession { implicit session: Session =>
+      DockerContainers.findInstancesByVrn(vrn).map {
+
+        case list: List[ContainerInstance] =>
+          for (inst <- list) yield inst.vrn
+      }
     }
   }
 

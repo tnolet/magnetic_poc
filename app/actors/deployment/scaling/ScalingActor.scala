@@ -266,7 +266,7 @@ class ScalingActor extends Actor with LoggingFSM[ScaleState, Data] {
                       // add the container as a server to the load balancer
 
                       log.debug(s"Removing server ${ins.vrn} because of scaling action")
-                      lbManager ! RemoveBackendServer(ins.vrn)
+                      lbManager ! RemoveBackendServer(List(ins.vrn))
 
                       removeContainerInstance(ins.vrn)
 

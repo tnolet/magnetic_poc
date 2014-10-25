@@ -1,5 +1,6 @@
 package models.loadbalancer
 
+import play.api.Logger
 import play.api.libs.json.Json
 
 case class Configuration ( Frontends: List[Frontend],
@@ -81,11 +82,12 @@ object Configuration {
    */
   def removeServerFromBackend(conf: Configuration, serverVrn: String) :  Configuration = {
 
+    Logger.info(s"Filtering out: $serverVrn" )
     // Pump all he backends in to a new List, while filtering out the unwanted server
   val newBackends : List[Backend] = for ( backend <- conf.backends ) yield {
     Backend(backend.name,
             backend.mode,
-            backend.servers.filter(srv => srv.name != serverVrn),
+            backend.servers.filterNot( srv => srv.name == serverVrn),
             backend.options
     )
   }

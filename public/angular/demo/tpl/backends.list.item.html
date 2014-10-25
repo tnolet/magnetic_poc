@@ -57,6 +57,9 @@
     <div class="list-group" ng-repeat="instance in instances">
         <div ng-include src="'demo/tpl/backends.instances.list.item.html'"
         ng-controller="InstancesDetailCtrl"
+        tooltip-placement="bottom"
+        tooltip="{{instance.vrn}}"
+        tooltip-popup-delay="1000"
         ng-init="init(instance, $parent.getMetricsOfInstance(instance.vrn))">
         ></div>
     </div>

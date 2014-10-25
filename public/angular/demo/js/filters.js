@@ -24,7 +24,13 @@ angular.module('app.filters', [])
 
     .filter('deletedContainers',function(){
         return function(containers){
-            return containers.filter(function(cnt){ return cnt.status != 'DESTROYED' })
+            return containers.filter(function(cnt){ return cnt.status != 'DESTROYED'})
+        }
+    })
+
+    .filter('timedOutContainers',function(){
+        return function(containers){
+            return containers.filter(function(cnt){ return cnt.status != 'TIMED_OUT'})
         }
     })
 

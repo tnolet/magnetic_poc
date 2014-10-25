@@ -2,7 +2,7 @@
     <span class="h4">Containers</span>
 </div>
 <div class="row">
-    <div ng-repeat="container in containers | deletedContainers" class="col-md-12 col-lg-6 col-xs-12 clearfix">
+    <div ng-repeat="container in containers | deletedContainers | timedOutContainers" class="col-md-12 col-lg-6 col-xs-12 clearfix">
         <div ng-include src="'demo/tpl/backends.list.item.html'">
         </div>
     </div>

@@ -16,7 +16,7 @@ case class AddBackend(vrn: String) extends LbMessage
 
 
 case class AddBackendServer( host: String, port: Int, vrn: String, backend: String, weight: Int = 0) extends LbMessage
-case class RemoveBackendServer( vrn: String) extends LbMessage
+case class RemoveBackendServer( vrns: List[String]) extends LbMessage
 
 case class AddFrontendBackend(vrn: String, port: Int, mode: String) extends LbMessage
 case class RemoveFrontendBackend( vrn: String) extends LbMessage
@@ -65,7 +65,7 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
         }
       }
 
-    case RemoveBackendServer(vrn) =>
+    case RemoveBackendServer(vrns) =>
 
       originalSender = sender()
 
@@ -73,7 +73,15 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
         case Some(config: Configuration) => {
 
           log.debug("Current load balancer configuration is: " + config.toString)
-          val newConf = Configuration.removeServerFromBackend(config, vrn)
+
+          var newConf : Configuration = config
+
+          vrns.foreach { vrn =>
+
+            newConf = Configuration.removeServerFromBackend(newConf, vrn)
+
+          }
+
           log.debug("New load balancer configuration is:" + newConf.toString)
 
           val result = LoadBalancer.setConfig(newConf)
