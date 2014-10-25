@@ -17,7 +17,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
       // config
       $scope.app = {
-        name: 'Anguleaferaerr',
+        name: 'magnetic.io',
         version: '1.3.0',
         // for chart colors
         color: {
@@ -630,8 +630,6 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         var createImage = function(img) {
 
             var imageObj = img;
-            imageObj.mode = "http";
-            imageObj.port = 80;
 
             $http.post('http://localhost:9000/images', imageObj).
                 success(function(data){
@@ -654,6 +652,8 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
                 imageObject.repo = formData.repo;
                 imageObject.version = formData.version;
                 imageObject.arguments = formData.args;
+                imageObject.port = formData.port;
+                imageObject.mode = formData.mode;
                 imageObject.id = 0; // some arbitrary id that will be discarded
 
                 createImage(imageObject);

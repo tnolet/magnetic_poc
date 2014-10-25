@@ -55,19 +55,20 @@ object Marathon {
 
 
     /**
-     * Container with HTTP based coms are started as non-bridged Docker container.
-     * For this we use the [[models.marathon.MarathonApp.simpleAppBuilder]]
+     * For now, we always build apps with bridged networking. Later we could start using non-bridge for
+     * performance reasons: For this we would use the [[models.marathon.MarathonApp.simpleAppBuilder]]
      */
 
     val app = image.mode match {
 
       case "http" =>
 
-        Json.toJson(MarathonApp.simpleAppBuilder(
+        Json.toJson(MarathonApp.bridgedAppBuilder(
           vrn,
           image.repo,
           image.version,
           image.arguments,
+          image.port,
           instanceAmount)
         )
 

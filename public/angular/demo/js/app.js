@@ -25,7 +25,7 @@ app.config(['$stateProvider','$urlRouterProvider',
     function($stateProvider, $urlRouterProvider) {
 
         // when unmatched
-        $urlRouterProvider.otherwise("/app/environments/list");
+        $urlRouterProvider.otherwise("/access/signin");
 
         // states
         $stateProvider
@@ -95,6 +95,14 @@ app.config(['$stateProvider','$urlRouterProvider',
             .state('app.containers.detail', {
                 url: '/{containerId:[0-9]*}',
                 templateUrl: 'demo/tpl/container.detail.html'
+            })
+            .state('access', {
+                url: '/access',
+                template: '<div ui-view class="fade-in-right-big smooth"></div>'
+            })
+            .state('access.signin', {
+                url: '/signin',
+                templateUrl: 'demo/tpl/page_signin.html'
             });
     }])
 
