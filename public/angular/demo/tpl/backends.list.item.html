@@ -30,23 +30,14 @@
 
     <div class="wrapper row row-sm text-center">
       <div class="hbox text-center">
-          <div class="col">
-
-          </div>
-          <div class="col">
-              <div class="hbox text-center">
-                  <div class="col">
-                      <button ng-click="subtractWeight()" class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-arrow-down"></i></button>
+                  <div class="col-md-4 col-xs-4">
+                      <button ng-click="subtractWeight()" class="btn btn-default btn-rounded btn-sm pull-right"><i class="fa fa-arrow-down"></i></button>
                   </div>
-                  <div class="col"><span class="m-l-sm m-r-sm h4 v-middle" ng-bind="weight">0</span>
+                  <div class="col-md-4 col-xs-4"><span class="m-l-sm m-r-sm h4 v-middle" ng-bind="weight">0</span>
                   </div>
-                  <div class="col">
-                      <button ng-click="addWeight()" class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-arrow-up"></i></button>
+                  <div class="col-md-4 col-xs-4">
+                      <button ng-click="addWeight()" class="btn btn-default btn-rounded btn-sm pull-left"><i class="fa fa-arrow-up"></i></button>
                   </div>
-              </div>
-          </div>
-
-          <div class="col"></div>
       </div>
     </div>
 

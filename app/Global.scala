@@ -133,14 +133,11 @@ object InitialData {
     DB.withSession{ implicit s: play.api.db.slick.Session =>
       if (DockerImages.count == 0) {
         Seq(
-          DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",0,"http",""),
-          DockerImage(Option(2L), "mesos_test", "tnolet/mesos-tester","2.0",0,"http",""),
-          DockerImage(Option(2L), "test_shop", "tnolet/test-shop","0.2",80,"tcp","./start.sh"),
-          DockerImage(Option(3L), "busybox","busybox","latest",0,"http","""/bin/sh -c \"while true; do echo Hello World; sleep 4; done\""""),
-          DockerImage(Option(4L), "hello", "tnolet/hello","latest",0,"http",""),
-          DockerImage(Option(5L), "haproxy-test", "tnolet/haproxy-rest","latest",0,"http",""),
+          DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",8080,"http",""),
+          DockerImage(Option(2L), "mesos_test", "tnolet/mesos-tester","2.0",8080,"http",""),
+          DockerImage(Option(2L), "test_shop", "tnolet/test-shop","0.11.0",80,"tcp","./start.sh"),
           DockerImage(Option(6L), "memcached", "sylvainlasnier/memcached","latest",11211,"tcp",""),
-          DockerImage(Option(7L), "mariaDB", "paintedfox/mariadb","latest",3306,"tcp","")
+          DockerImage(Option(7L), "magneticio test shop", "magneticio/test-shop","0.3",80,"http","/.start.sh")
         )
           .foreach(DockerImages.insert)
       }

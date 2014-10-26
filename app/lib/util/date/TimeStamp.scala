@@ -3,11 +3,9 @@ package lib.util.date
 import java.util.Calendar
 
 /**
- * Created by tim on 03/09/14.
+ * simple helper for creating timestamps
  */
-object TimeStamp {
+object TimeStamp  {
 
-  def now = new java.sql.Timestamp(Calendar.getInstance().getTime().getTime())
-
-
+  def now : java.sql.Timestamp = new java.sql.Timestamp(Calendar.getInstance().getTime.getTime)
 }

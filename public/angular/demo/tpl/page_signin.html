@@ -1,9 +1,11 @@
-<div class="container w-xxl w-auto-xs">
-  <a href class="navbar-brand text-2x block m-t">{{app.name}}</a>
-  <div class="m-b-lg">
+<div id="login" class="container w-xxl w-auto-xs">
+
     <div class="wrapper text-center">
-      <strong>Please sign in</strong>
+        <div class="list-group list-group-sm">
+            <img src="img/logos/magnetic_io_and_logo_black.svg" alt="magnetic.io" class="m-b" style="width:100%">
+        </div>
     </div>
+
     <form name="form panel" class="form-validation">
       <div class="list-group list-group-sm">
         <div class="list-group-item">
@@ -14,10 +16,10 @@
         </div>
       </div>
       <a ui-sref="app.environments.list"
-        class="btn btn-lg btn-primary btn-block" >Log in</a>
+        class="btn btn-lg btn-primary btn-block m-b" >Log in</a>
     </form>
-  </div>
     <p>
         <small class="text-muted">magnetic.io v{{app.version}} &copy; 2014</small>
     </p>
+
 </div>

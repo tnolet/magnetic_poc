@@ -1,6 +1,6 @@
 <form class="form form-horizontal">
   <div class="modal-header">
-      <h4 class="modal-title">Deploy image on service</h4>
+      <h4 class="modal-title">Deploy image to service</h4>
   </div>
 
   <div class="modal-body">
@@ -15,7 +15,14 @@
         </label>
       </div>
 
-      <div class="line line-dashed b-b line-lg pull-in"></div>
+
+
+        <div class="btn-group m-t" ng-init="formData.ha = false ">
+            <button class="btn btn-sm btn-default btn-addon" ng-model="formData.ha" btn-checkbox=""><i class="fa fa-cubes"></i>High Available</button>
+        </div>
+
+      <!--<div class="line line-dashed b-b line-lg pull-in"></div>-->
+
     </div>
 
     <div ng-if="!modalData.service">
@@ -39,7 +46,9 @@
     <!--<label class="control-label">-->
       <!--<textarea type="text" class="form-control" ng-model="formData.marathon" name="marathon-data" value="" cols="91" rows="15"><pre></pre></code></textarea>-->
     <!--</label>-->
-  <!--</div>-->
+  </div>
+
+
 
   <div class="modal-footer">
       <button class="btn btn-default" ng-click="cancel()">Cancel</button>

@@ -289,13 +289,13 @@ angular.module('app.directives', ['ui.load'])
             var modalInstance;
 
             if (!deployModalData.service) {
-              $http.get('http://localhost:9000/services').success(function (data) {
+              $http.get('/services').success(function (data) {
                 scope.modalServices = data;
               });
             }
 
             if (!deployModalData.image) {
-              $http.get('http://localhost:9000/images').success(function (data) {
+              $http.get('/images').success(function (data) {
                 scope.modalImages = data;
               });
             }
@@ -310,7 +310,7 @@ angular.module('app.directives', ['ui.load'])
                 size: '',
                 scope: scope
             }).result.then(function (formData) {
-              $http.post('http://localhost:9000/images/' + formData.image + '/deploy?service=' + formData.service).
+              $http.post('/images/' + formData.image + '/deploy?service=' + formData.service + '&ha=' + formData.ha).
                 success(function (data) {
                   console.log(data);
                 });

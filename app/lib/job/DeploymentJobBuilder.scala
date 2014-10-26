@@ -17,12 +17,17 @@ class DeploymentJobBuilder {
 
   private var jobId : Long = _
   private var image : DockerImage = _
+  private var ha: Boolean = _
   private var service : String = _
   private var priority = 1
 
 
   def setImage(image : DockerImage) = {
     this.image = image
+  }
+
+  def setHa(ha: Boolean) = {
+    this.ha = ha
   }
 
   def setService(service : String) = {
@@ -46,7 +51,7 @@ class DeploymentJobBuilder {
       Jobs.status("new"),                               // status
       priority,                                         // priority
       Json.stringify(payload(image,                     // payload
-                             service)
+                             service,ha)
       ),
       Jobs.queue("deployment"),                         // queue
       timestamp,                                        // created timestamp
@@ -63,14 +68,16 @@ class DeploymentJobBuilder {
    * objects in the database
    * @param image the docker image to deploy in [[models.docker.DockerImage]] format
    * @param service the service to deploy the Docker image to
+   * @param ha whether the contianer should be highly available
    * @return a string of JSON
    */
-  private def payload(image : DockerImage, service : String) : JsValue = {
+  private def payload(image : DockerImage, service : String, ha: Boolean) : JsValue = {
 
     // holder for the whole payload
     val result : JsValue = Json.obj(
     "service" -> JsString(service),
-    "image" -> Json.toJson(image)
+    "image" -> Json.toJson(image),
+    "ha" -> Json.toJson(ha)
     )
     result
   }

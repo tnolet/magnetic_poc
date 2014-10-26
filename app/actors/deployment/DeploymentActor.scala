@@ -6,6 +6,7 @@ import actors.loadbalancer.{RemoveBackendServer, AddBackendServer, LbFail, LbSuc
 import lib.util.date.TimeStamp
 import models.docker._
 import actors.jobs.{addJobEvent, UpdateJob}
+import models.loadbalancer.BackendServerCreate
 import play.api.db.slick._
 import play.api.libs.json.JsValue
 import scala.concurrent.duration._
@@ -21,7 +22,7 @@ import play.api.Play.current
 
 //events for deploying
 trait DeployEvent
-case class SubmitDeployment(vrn: String, image: DockerImage, service : String) extends DeployEvent
+case class SubmitDeployment(vrn: String, image: DockerImage, service : String, amount: Int) extends DeployEvent
 case object Stage extends DeployEvent
 case object RunWait extends DeployEvent
 case object RunStart extends DeployEvent
@@ -54,7 +55,7 @@ case object Destroyed extends DeployState
 //state data
 trait Data
 case object Uninitialized extends Data
-case class ContainerState(status: String) extends Data
+case class ContainerState(state: String) extends Data
 case class Failure(reason: String)
 
 class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
@@ -68,6 +69,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
   private var version: String = _
   private var image: DockerImage = _
   private var service: String = _
+  private var amount: Int = _
 
   val lbManager = context.actorSelection("akka://application/user/lbManager")
 
@@ -76,16 +78,17 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
   when(Idle) {
 
       // Initial message for starting a deployment
-      case Event(SubmitDeployment(_vrn, _image, _service), Uninitialized) =>
+      case Event(depl : SubmitDeployment, Uninitialized) =>
 
         // Set all variables for the container we are going to deploy
 
         originalSender = sender()
-        vrn         = _vrn
-        repo        = _image.repo
-        version     = _image.version
-        image       = _image
-        service     = _service
+        vrn         = depl.vrn
+        repo        = depl.image.repo
+        version     = depl.image.version
+        image       = depl.image
+        service     = depl.service
+        amount      = depl.amount
         eventType   = "deployment"
 
         log.info(s"Staging deployment of image $repo:$version with unique ID $vrn")
@@ -96,10 +99,10 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
 
       // Initial message for starting an undeployment
-      case Event(SubmitUnDeployment(_vrn), Uninitialized) =>
+      case Event( undepl: SubmitUnDeployment, Uninitialized) =>
 
         originalSender = sender()
-        vrn         = _vrn
+        vrn         = undepl.vrn
         eventType   = "undeployment"
 
 
@@ -161,7 +164,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
   }
 
-  // WaitingExposure is the state for waiting if the loadbalancer connects correctly
+  // WaitingExposure is the state for waiting if the load balancer connects correctly
   when(WaitingExposure) {
 
     case Event(LbSuccess, c: ContainerState) =>
@@ -278,7 +281,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
           sendStateUpdate(state)
 
-          Marathon.submitContainer(vrn, image, 1).map(
+          Marathon.submitContainer(vrn, image, amount).map(
             i => {
               if (i < 399) {
                 
@@ -286,8 +289,9 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
                 log.info(s"Staging $vrn to Marathon successful: response code: $i")
 
                 //We should now start an actor that watches the staging fase on Marathon and reports success or failure
+                //We give the watcher the VRN of the container and the amount of instances it should expect to watch
                 watcher = context.actorOf(Props[TaskWatcherActor], "watcher")
-                watcher ! Watch(vrn)
+                watcher ! Watch(vrn, amount)
 
                 //Proceed to Waiting fase and wait for the staging to finish and the deployment start running. Staging can take time
                 self ! RunWait
@@ -332,19 +336,27 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
             // the Tasks list can be unpopulated due to queuing in Mesos/Marathon
             if (tasksList.nonEmpty) {
 
-              // Get the relevant data
-              val host = (tasksList(0) \ "host").as[String]
-              val port = (tasksList(0) \ "ports")(0).as[Int]
-              val mesosId = (tasksList(0) \ "id").as[String]
+              var serverList = List[BackendServerCreate]()
 
+              // create a list of container instances to deploy as backend servers to the load balancer
+              tasksList.foreach { task =>
 
-              // Create a unique VRN for this instance
-              val vrnInstance = lib.util.vamp.Naming.createVrn("instance")
+                // Get the relevant data
+                val host = (task \ "host").as[String]
+                val port = (task \ "ports")(0).as[Int]
+                val mesosId = (task \ "id").as[String]
 
-              createContainerInstance(vrnInstance,host, port.toString, mesosId)
+                // Create a unique VRN for this instance
+                val vrnInstance = lib.util.vamp.Naming.createVrn("instance")
+
+                createContainerInstance(vrnInstance,host, port.toString, mesosId)
+
+                serverList = serverList.::(BackendServerCreate(host,port,vrnInstance,service))
+
+              }
 
               // add the container as a server to the load balancer
-              lbManager ! AddBackendServer(host,port,vrnInstance,service)
+              lbManager ! AddBackendServer(serverList)
 
             }
           }
@@ -471,7 +483,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
     // Update the container
     DB.withSession { implicit session: Session =>
-      DockerContainers.updateStatusByVrn(vrn,state)
+      DockerContainers.updateStateByVrn(vrn,state)
     }
 
   }

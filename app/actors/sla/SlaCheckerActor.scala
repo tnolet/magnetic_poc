@@ -341,7 +341,8 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
 
         Services.findByVrn(vrn).map { srv =>
 
-          val container = DockerContainers.findByServiceId(srv.id.get).toList.head
+          val container = DockerContainers.findByServiceId(srv.id.get).filter( cnt => cnt.state == "LIVE").toList.head
+          log.info(s"Scaling up container instances for container: ${container.vrn}")
           val currentInstanceAmount = ContainerInstances.findByContainerId(container.id.get).length
 
           // create a scaleJob

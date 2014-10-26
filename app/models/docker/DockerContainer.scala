@@ -18,7 +18,7 @@ import play.api.libs.functional.syntax._
 
 case class DockerContainer(id: Option[Long],
                            vrn: String,
-                           status: String,
+                           state: String,
                            imageRepo: String,
                            imageVersion: String,
                            masterWeight: Int,
@@ -43,7 +43,7 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
 
   def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   def vrn = column[String]("vrn", O.NotNull)
-  def status = column[String]("status", O.NotNull)
+  def state = column[String]("state", O.NotNull)
   def imageRepo = column[String]("imageRepo", O.NotNull)
   def imageVersion = column[String]("imageVersion", O.NotNull)
   def masterWeight = column[Int]("masterWeight", O.Default(0))
@@ -54,7 +54,7 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
 
 
   def * = {
-    (id.?, vrn, status, imageRepo, imageVersion, masterWeight, instanceAmount, serviceId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply)
+    (id.?, vrn, state, imageRepo, imageVersion, masterWeight, instanceAmount, serviceId, created_at) <>(DockerContainer.tupled, DockerContainer.unapply)
   }
 }
 
@@ -62,7 +62,7 @@ class DockerContainers(tag: Tag) extends Table[DockerContainer](tag, "DOCKER_CON
 object DockerContainerResult {
 
   def createResult(cnt: DockerContainer, instances: List[ContainerInstance]) : DockerContainerResult = {
-    DockerContainerResult(cnt.id, cnt.vrn, cnt.status, cnt.imageRepo, cnt.imageVersion, cnt.masterWeight, cnt.instanceAmount, cnt.serviceId, instances, cnt.created_at)
+    DockerContainerResult(cnt.id, cnt.vrn, cnt.state, cnt.imageRepo, cnt.imageVersion, cnt.masterWeight, cnt.instanceAmount, cnt.serviceId, instances, cnt.created_at)
   }
 
 }
@@ -151,12 +151,12 @@ object DockerContainers {
   /**
    * Update a container by vrn
    * @param vrn the container to update
-   * @param status the state of the container
+   * @param state the state of the container
    */
-  def updateStatusByVrn(vrn: String, status: String)(implicit s: Session) {
+  def updateStateByVrn(vrn: String, state: String)(implicit s: Session) {
     containers.filter(_.vrn === vrn)
-      .map(c => c.status)
-      .update(status)
+      .map(c => c.state)
+      .update(state)
   }
 
   /**
@@ -257,7 +257,7 @@ object DockerContainerJson {
   implicit val containerReads = (
     (__ \ 'id).read[Option[Long]] and
       (__ \ 'vrn).read[String] and
-      (__ \ 'status).read[String] and
+      (__ \ 'state).read[String] and
       (__ \ 'imageRepo).read[String] and
       (__ \ 'imageVersion).read[String] and
       (__ \ 'masterWeight).read[Int] and

@@ -15,6 +15,16 @@ case class BackendServer (
                            checkInterval: Option[Int]
                            )
 
+case class BackendServerCreate(
+                            host: String,
+                            port: Int,
+                            vrn: String,
+                            backend: String,
+                            weight: Option[Int] = Some(0)
+                           )
+
+
+
 object BackendServer {
 
   implicit val beServerReads = Json.reads[BackendServer]

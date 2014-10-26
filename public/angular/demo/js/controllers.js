@@ -87,7 +87,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         var getMesosMetrics = function () {
 
-            $http.get('http://localhost:9000/system/mesos/metrics').
+            $http.get('/system/mesos/metrics').
                 success(function (data) {
                     $scope.cpuUsedPercentage = Math.floor(data['master/cpus_percent'] * 100);
                     $scope.memUsedPercentage = Math.floor(data['master/mem_percent'] * 100);
@@ -108,13 +108,13 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     // Environments
 
   .controller('EnvironmentsCtrl', ['$scope', '$http', 'Polling', function ($scope, $http, $polling) {
-    $polling.startPolling('environments', 'http://localhost:9000/environments', $scope, function (data) {
+    $polling.startPolling('environments', '/environments', $scope, function (data) {
       $scope.environments = data;
     });
    }])
 
     .controller('EnvironmentsDetailCtrl', ['$scope', '$stateParams', '$http', 'Polling', function ($scope, $stateParams, $http, $polling) {
-        $polling.startPolling('environmentsDetail', 'http://localhost:9000/environments/' + $stateParams.environmentId, $scope, function (data) {
+        $polling.startPolling('environmentsDetail', '/environments/' + $stateParams.environmentId, $scope, function (data) {
           $scope.environment = data;
         });
     }])
@@ -146,13 +146,13 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
     .controller('ServicesCtrl',[ '$scope', '$http', '$modal', 'Polling', function ($scope, $http, $modal, $polling) {
 
-        $polling.startPolling('services', 'http://localhost:9000/services', $scope, function (data) {
+        $polling.startPolling('services', '/services', $scope, function (data) {
           $scope.services = data;
         });
 
 
         var createService = function(serviceObject) {
-            $http.post('http://localhost:9000/services', serviceObject).
+            $http.post('/services', serviceObject).
                 success(function(data){
                     //  Removed single job callback due to new streamline optimizations
                     //  $Streamliner.singleJob(data.jobId);
@@ -206,7 +206,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
 
         $scope.deleteService = function () {
-          $http.delete('http://localhost:9000/services/' + $stateParams.serviceId)
+          $http.delete('/services/' + $stateParams.serviceId)
             .success(function(data, status, headers, config) {
                 //  Removed single job callback due to new streamline optimizations
                 //  $Streamliner.singleJob(data.jobId);
@@ -431,7 +431,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
 
       // initialise the controller with all basic info
-      $polling.startPolling('servicesDetail', 'http://localhost:9000/services/' + $stateParams.serviceId, $scope, function (data) {
+      $polling.startPolling('servicesDetail', '/services/' + $stateParams.serviceId, $scope, function (data) {
         $scope.vrn = data.vrn;
         $scope.containers = data.containers;
         $scope.port = data.port;
@@ -450,7 +450,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
 
     .controller('ContainersCtrl',[ '$scope', '$http', 'Polling', function ($scope, $http, $polling) {
-      $polling.startPolling('containers', 'http://localhost:9000/containers', $scope, function (data) {
+      $polling.startPolling('containers', '/containers', $scope, function (data) {
         $scope.containers = data;
       });
     }])
@@ -465,7 +465,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         var updateWeightOnServer = function(serviceId,containerVrn, weight) {
 
-            $http.post('http://localhost:9000/services/' + serviceId + '/containers/' + containerVrn + '/weight/' + weight).
+            $http.post('/services/' + serviceId + '/containers/' + containerVrn + '/weight/' + weight).
             success(function(data) {
                 console.log('updated weight OK:' + $scope.weight);
                 //  Removed single job callback due to new streamline optimizations
@@ -474,7 +474,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
         };
 
         var updateContainerInstances = function(serviceId,containerVrn,amount){
-           $http.post('http://localhost:9000/services/' + serviceId + '/containers/' + containerVrn+ '/amount/' + amount).
+           $http.post('/services/' + serviceId + '/containers/' + containerVrn+ '/amount/' + amount).
                success(function(data) {
                    console.log(data);
                    //  Removed single job callback due to new streamline optimizations
@@ -516,7 +516,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
         // delete the container
         $scope.deleteContainer = function() {
-            $http.delete('http://localhost:9000/containers/' + $scope.id).
+            $http.delete('/containers/' + $scope.id).
                 success(function(data) {
                     console.log(data);
                     //  Removed single job callback due to new streamline optimizations
@@ -623,7 +623,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     })
 
     .controller('ImagesCtrl', ['$scope','$http', '$modal', 'Polling', function ($scope, $http, $modal, $polling) {
-        $polling.startPolling('images', 'http://localhost:9000/images', $scope, function (data) {
+        $polling.startPolling('images', '/images', $scope, function (data) {
           $scope.images = data;
         });
 
@@ -631,7 +631,7 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
             var imageObj = img;
 
-            $http.post('http://localhost:9000/images', imageObj).
+            $http.post('/images', imageObj).
                 success(function(data){
                     console.log(data);
                 });
@@ -676,12 +676,12 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
 
     .controller('ImagesDetailCtrl',[ '$scope', '$stateParams','$http', '$modal', 'Polling', function ($scope, $stateParams, $http, $modal, $polling) {
 //       get details for this image
-        $polling.startPolling('imagesDetail', 'http://localhost:9000/images/' + $stateParams.imageId, $scope, function (data) {
+        $polling.startPolling('imagesDetail', '/images/' + $stateParams.imageId, $scope, function (data) {
           $scope.image = data;
         });
 
         // also grab all containers that are based on this image
-        $polling.startPolling('imagesDetailContainers', 'http://localhost:9000/containers?image=' + $stateParams.imageId, $scope, function (data) {
+        $polling.startPolling('imagesDetailContainers', '/containers?image=' + $stateParams.imageId, $scope, function (data) {
           $scope.containers = data;
         });
     }])

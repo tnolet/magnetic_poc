@@ -9,8 +9,6 @@ import scala.slick.lifted.Tag
 import play.api.libs.functional.syntax._
 import lib.util.date.TimeStamp
 
-
-
 /**
  * The Sla describes the performance criteria a service should stick to
  * @param metricType The type of metric to check for. Currently only Haproxy metrics like "backend.rtime" or "frontend.scur"
@@ -102,7 +100,7 @@ object Slas {
     slas.filter(_.serviceId === id).list
 
   /**
-   * Update just the status field of an existing Sla
+   * Update just the state field of an existing Sla
    * @param id the id of the Sla to update
    */
   def update_state(id: Long, state: SlaState.State)(implicit s: Session) {
@@ -113,7 +111,7 @@ object Slas {
   }
 
   /**
-   * Update just the status field of an existing Sla
+   * Update just the state field of an existing Sla
    * @param vrn the vrn of the Sla to update
    */
   def update_state_by_vrn(vrn: String, state: SlaState.State)(implicit s: Session) {

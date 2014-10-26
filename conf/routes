@@ -14,7 +14,7 @@ GET           /images                                                      contr
 
 POST          /images                                                      controllers.ImagesController.create
 
-POST          /images/:id/deploy                                           controllers.ImagesController.deploy(id: Long, service: Option[String])
+POST          /images/:id/deploy                                           controllers.ImagesController.deploy(id: Long, service: Option[String], ha: Option[Boolean])
 
 GET           /images/:id                                                  controllers.ImagesController.find_by_id(id: Long)
 

@@ -7,6 +7,7 @@ import lib.marathon.Marathon
 import lib.util.date.TimeStamp
 import models.Jobs
 import models.docker.{DockerContainer, ContainerInstanceCreate, ContainerInstance, DockerContainers}
+import models.loadbalancer.BackendServerCreate
 import play.api.db.slick._
 import play.api.libs.json.JsObject
 import scala.concurrent.duration._
@@ -244,7 +245,7 @@ class ScalingActor extends Actor with LoggingFSM[ScaleState, Data] {
                         createContainerInstance(vrnInstance,host,port.toString,id)
 
                         // add the container as a server to the load balancer
-                        lbManager ! AddBackendServer(host,port,vrnInstance,vrnService, weight = masterWeight)
+                        lbManager ! AddBackendServer(List(BackendServerCreate(host,port,vrnInstance,vrnService, weight = Some(masterWeight))))
                       }
 
                       // collect the mesosIds
@@ -326,7 +327,7 @@ class ScalingActor extends Actor with LoggingFSM[ScaleState, Data] {
 
     // Update the container
     DB.withSession { implicit session: Session =>
-      DockerContainers.updateStatusByVrn(vrnContainer,state)
+      DockerContainers.updateStateByVrn(vrnContainer,state)
     }
 
   }

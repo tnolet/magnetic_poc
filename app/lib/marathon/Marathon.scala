@@ -129,6 +129,12 @@ object Marathon {
     }
   }
 
+  def deployments(vrn: String): Future[JsValue] = {
+    WS.url(s"$marathonApi/deployments/").get().map {
+      case response => response.json
+    }
+  }
+
   def app(vrn: String): Future[JsValue] = {
     WS.url(s"$marathonApi/apps/$vrn").get().map {
       case response => response.json

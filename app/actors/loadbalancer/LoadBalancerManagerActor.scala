@@ -15,7 +15,7 @@ case class AddFrontend(vrn: String, port: Int) extends LbMessage
 case class AddBackend(vrn: String) extends LbMessage
 
 
-case class AddBackendServer( host: String, port: Int, vrn: String, backend: String, weight: Int = 0) extends LbMessage
+case class AddBackendServer(servers: List[BackendServerCreate]) extends LbMessage
 case class RemoveBackendServer( vrns: List[String]) extends LbMessage
 
 case class AddFrontendBackend(vrn: String, port: Int, mode: String) extends LbMessage
@@ -51,8 +51,14 @@ class LoadBalancerManagerActor extends Actor with ActorLogging {
 
           log.debug("Current load balancer configuration is: " + config.toString)
 
-          val newBackendServer = BackendServer(bes.vrn, bes.host, bes.port, bes.weight, None, Some(false), None)
-          val newConf = Configuration.addServerToBackend(config, bes.backend, newBackendServer)
+          var newConf : Configuration = config
+
+          bes.servers.foreach { srv =>
+
+            val newBackendServer = BackendServer(srv.vrn, srv.host, srv.port, srv.weight.getOrElse(0), None, Some(false), None)
+            newConf = Configuration.addServerToBackend(newConf, srv.backend, newBackendServer)
+
+          }
 
           log.debug("New load balancer configuration is:" + newConf.toString)
 

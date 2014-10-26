@@ -85,6 +85,9 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
     // read the job
     deployable.read(job)
 
+    //set the amount of instances requested
+    val containerAmount : Int = if (deployable.ha) 3 else 1
+
     // Create a unique VRN for this resource
     val vrn = lib.util.vamp.Naming.createVrn("container")
 
@@ -100,20 +103,22 @@ class JobExecutorActor(job: Job) extends Actor with ActorLogging {
 
                 // Create the container
                 val cntId = DockerContainers.insert(
-                  new DockerContainer(Option(0),
-                    vrn,
-                    "INITIAL",
-                    deployable.image.repo,
-                    deployable.image.version,
-                    0,
-                    1,
-                    service.id.getOrElse(1),                            //serviceId
-                    TimeStamp.now))
+                  new DockerContainer(
+                    id = Option(0),
+                    vrn = vrn,
+                    state =  "INITIAL",
+                    imageRepo = deployable.image.repo,
+                    imageVersion = deployable.image.version,
+                    masterWeight = 0,
+                    instanceAmount = containerAmount,
+                    serviceId = service.id.getOrElse(1),
+                    created_at = TimeStamp.now))
 
                 // start the deployment
                 deployer ! SubmitDeployment(vrn,
                   deployable.image,
-                  deployable.service)
+                  deployable.service,
+                  containerAmount)
 
               case None =>
                 log.error(s"No service found with vrn ${deployable.service}")
