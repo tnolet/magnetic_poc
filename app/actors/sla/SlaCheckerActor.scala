@@ -238,7 +238,7 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
           self ! message
       }
 
-    case Checking -> NotOkWait =>
+    case Checking -> OkWait =>
 
       nextStateData match {
         case s: SlaData =>
@@ -260,8 +260,6 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
       nextStateData match {
         case s: SlaData =>
 
-          log.info(s"${sla.vrn}: Escalation triggered. Issued scaling job.")
-          sendStateUpdate(SlaState.ESCALATED, s.stage, s.escalations)
           createScalingJob(sla.vrn)
           self ! IssuedCommand
       }
@@ -271,6 +269,8 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
       nextStateData match {
         case s: SlaData =>
 
+          log.info(s"${sla.vrn}: Escalation triggered. Issued scaling job.")
+          sendStateUpdate(SlaState.ESCALATED, s.stage, s.escalations)
           log.info(s"${sla.vrn}: Command triggered. Should check for successful completion of some command now")
           self ! FinishedCommand
       }

@@ -1,16 +1,22 @@
-<div class="wrapper ng-cloak sla-item"  ng-class="{'alert-success': slas[0].state == 'ACTIVE', 'alert-warning': slas[0].state == 'ESCALATED', 'alert-danger ': slas[0].state == 'FAILED'}"   ng-show="slas.length" ng-cloak>
-    <div><i class="fa fa-file-text-o m-r"></i>
+<div class="wrapper ng-cloak sla-item"  ng-class="{
+    'alert-success': slas[0].state == 'OK',
+    'alert-info': slas[0].state == 'WARNING',
+    'alert-warning': slas[0].state == 'ESCALATED',
+    'alert-danger ': slas[0].state == 'FAILED'}" ng-show="slas.length" ng-cloak>
+    <div>
+        <i class="fa fa-file-text-o m-r"></i>
         <span class="font-bold">SLA State: </span><span>{{slas[0].state}}</span>
         <div class="pull-right hidden-xs hidden-md hidden-sm">
-            <span class="m-r">Metric: {{slas[0].metricType}}</span>
-            <span class="m-r">Low: {{slas[0].lowThreshold}}</span>
+            <span class="font-bold m-r-xs">Warning stages:</span><span class="m-r">{{slas[0].currentStage}}/{{slas[0].backOffStages}}</span>
+            <span class="font-bold m-r-xs">Escalations:</span><span class="m-r-lg">{{slas[0].escalations}}/{{slas[0].maxEscalations}}</span>
+            <i class="fa font-bold fa-thumbs-o-up m-r-xs"></i>
+            <span class="m-r">{{slas[0].lowThreshold}}</span>
+            <i class="fa fa-thumbs-o-down font-bold m-r-xs"></i>
             <span class="m-r">High: {{slas[0].highThreshold}}</span>
-            <span class="m-r">Back Off: {{slas[0].backOffStages}} x {{slas[0].backOffTime}} seconds</span>
-            <span class="m-r">Max escalations: {{slas[0].maxEscalations}}</span>
-            <button type="button" class="close" ng-click="deleteSla(slas[0].id)">
-                <span aria-hidden="true">×</span>
-                <span class="sr-only">Close</span>
-            </button>
         </div>
+        <button type="button" class="close" ng-click="deleteSla(slas[0].id)">
+            <span aria-hidden="true">×</span>
+            <span class="sr-only">Close</span>
+        </button>
     </div>
 </div>

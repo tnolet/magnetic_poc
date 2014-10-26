@@ -180,12 +180,12 @@ angular.module('app.controllers', ['pascalprecht.translate', 'ngCookies'])
     }])
 
     .controller('createSlaModalCtrl', function ($scope, $modalInstance) {
-        // set some defaults
+        // set some defaults for the SLA
         $scope.formData = {
             "metricType" : "backend.rtime",
             "state" : "NEW",
-            "lowThreshold" : 30,
-            "highThreshold" : 100,
+            "lowThreshold" : 1000,
+            "highThreshold" : 3500,
             "backOffTime" : 10,
             "backOffStages" : 3,
             "maxEscalations": 3

@@ -7,8 +7,13 @@
         <span class="font-thin h4 v-middle">Services / {{serviceType}} {{version}}</span>
         <div class="m-r-sm pull-right hidden-xs hidden-sm hidden-md">
             <button data-open-deploy-modal='{"service": "{{vrn}}" }' class="btn btn-sm btn-default btn-addon"><i class="fa fa-cube"></i>Deploy image</button>
-            <button ng-click="openCreateSlaModal()" ng-disabled="slas.length"  class="btn btn-sm btn-default btn-addon"><i class="fa fa-file-text-o"></i>Create SLA</button>
+            <button ng-click="openCreateSlaModal()" ng-disabled="slas.length" class="btn btn-sm btn-default btn-addon"><i class="fa fa-file-text-o"></i>Create SLA</button>
             <button ng-click="deleteService()" class="btn btn-default btn-addon btn-sm"><i class="fa fa-trash-o"></i>Delete service</button>
+        </div>
+        <div class="visible-md visible-sm pull-right">
+            <button data-open-deploy-modal='{"service": "{{vrn}}" }' class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-cube"></i></button>
+            <button ng-click="openCreateSlaModal()" ng-disabled="slas.length" class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-file-text-o"></i></button>
+            <button ng-click="deleteService()" class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-trash-o"></i></button>
         </div>
     </div>
 
@@ -25,6 +30,11 @@
     <!--frontends header-->
 
     <div class="wrapper">
+        <div class="visible-xs pull-right">
+            <button data-open-deploy-modal='{"service": "{{vrn}}" }' class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-cube"></i></button>
+            <button ng-click="openCreateSlaModal()" ng-disabled="slas.length" class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-file-text-o"></i></button>
+            <button ng-click="deleteService()" class="btn btn-rounded btn-sm btn-icon btn-default"><i class="fa fa-trash-o"></i></button>
+        </div>
         <span class="text-muted pull-right hidden-xs">{{vrn}}</span>
         <span class="h4 m-r-xs block">Frontend</span>
         <span class="text-muted">port: {{port}}</span>
