@@ -6,17 +6,17 @@
     <div>
         <i class="fa fa-file-text-o m-r"></i>
         <span class="font-bold">SLA State: </span><span>{{slas[0].state}}</span>
-        <div class="pull-right hidden-xs hidden-md hidden-sm">
-            <span class="font-bold m-r-xs">Warning stages:</span><span class="m-r">{{slas[0].currentStage}}/{{slas[0].backOffStages}}</span>
+        <div class="hidden-xs pull-right hidden-sm">
+            <span class="font-bold m-r-xs">Warnings:</span><span class="m-r">{{slas[0].currentStage}}/{{slas[0].backOffStages}}</span>
             <span class="font-bold m-r-xs">Escalations:</span><span class="m-r-lg">{{slas[0].escalations}}/{{slas[0].maxEscalations}}</span>
             <i class="fa font-bold fa-thumbs-o-up m-r-xs"></i>
             <span class="m-r">{{slas[0].lowThreshold}}</span>
             <i class="fa fa-thumbs-o-down font-bold m-r-xs"></i>
             <span class="m-r">High: {{slas[0].highThreshold}}</span>
+            <button type="button" class="close pull-right" ng-click="deleteSla(slas[0].id)">
+                <span aria-hidden="true">×</span>
+                <span class="sr-only">Close</span>
+            </button>
         </div>
-        <button type="button" class="close" ng-click="deleteSla(slas[0].id)">
-            <span aria-hidden="true">×</span>
-            <span class="sr-only">Close</span>
-        </button>
     </div>
 </div>
