@@ -242,7 +242,17 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
 
       nextStateData match {
         case s: SlaData =>
+          sendStateUpdate(SlaState.OK,s.stage, s.escalations)
+
+      }
+
+    case Checking -> NotOkWait =>
+
+      nextStateData match {
+        case s: SlaData =>
           log.info(s"${sla.vrn}: Back off staged triggered. Now at stage ${s.stage} of ${sla.backOffStages} ")
+          sendStateUpdate(SlaState.WARNING,s.stage, s.escalations)
+
       }
 
     case Checking -> Escalating =>
@@ -250,8 +260,8 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
       nextStateData match {
         case s: SlaData =>
 
-          log.info(s"${sla.vrn}: Escalation triggered. Should issue some command now")
-          sendStateUpdate(SlaState.ESCALATED)
+          log.info(s"${sla.vrn}: Escalation triggered. Issued scaling job.")
+          sendStateUpdate(SlaState.ESCALATED, s.stage, s.escalations)
           createScalingJob(sla.vrn)
           self ! IssuedCommand
       }
@@ -282,7 +292,7 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
           if (s.escalations >= sla.maxEscalations) {
 
             log.info(s"${sla.vrn}: SLA failed: Escalation needed, but reached maximum number of ${sla.maxEscalations}. Retrying in $retryFailedInterval seconds.")
-            sendStateUpdate(SlaState.FAILED)
+            sendStateUpdate(SlaState.FAILED, s.stage, s.escalations)
           }
       }
   }
@@ -320,11 +330,11 @@ class SlaCheckerActor(_sla: Sla) extends Actor with  LoggingFSM[SlaFSMState, Dat
     }
   }
 
-  def sendStateUpdate(state: SlaState.State) : Unit = {
+  def sendStateUpdate(state: SlaState.State, currentStage: Int, escalations: Int) : Unit = {
 
     // Update the container
     DB.withSession { implicit session: Session =>
-      models.Slas.update_state_by_vrn(sla.vrn,state)
+      models.Slas.update_state_by_vrn(sla.vrn,state, currentStage, escalations)
     }
 
   }

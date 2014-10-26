@@ -16,6 +16,7 @@ import lib.util.date.TimeStamp
  * @param highThreshold The high threshold. Values above this should trigger escalation
  * @param backOffTime The time in seconds to back off when escalating or deescalating.
  * @param backOffStages The amount of times we can back off the [[backOffTime]]. Together this prohibits flapping
+ * @param escalations The currently used amount of escalations
  * @param maxEscalations The hard upper limit  of escalations that can be triggered.
  * @param vrn the unique id of the object the SLA belongs to, i.e. "vrn-development-service-e47bdfe2""
  */
@@ -26,6 +27,8 @@ case class Sla(id: Option[Long],
                highThreshold: Long,
                backOffTime: Int,
                backOffStages: Int,
+               currentStage: Int,
+               escalations: Int = 0,
                maxEscalations: Int,
                vrn: String,
                serviceId: Long,
@@ -47,7 +50,7 @@ case class SlaCreate(
 // todo: use enums for all states
 object SlaState extends Enumeration {
   type State = Value
-  val NEW,ACTIVE,WARNING,ESCALATED,FAILED,SUSPENDED,DESTROYED = Value
+  val NEW,ACTIVE,OK,WARNING,ESCALATED,FAILED,SUSPENDED,DESTROYED = Value
 }
 
 class Slas(tag: Tag) extends Table[Sla](tag, "SLAS") {
@@ -59,6 +62,8 @@ class Slas(tag: Tag) extends Table[Sla](tag, "SLAS") {
   def highThreshold = column[Long]("highThreshold", O.NotNull)
   def backoffTime = column[Int]("backoffTime", O.NotNull)
   def backoffStages = column[Int]("backoffStages", O.NotNull)
+  def currentStage = column[Int]("currentStage", O.NotNull)
+  def escalations = column[Int]("wscalations", O.NotNull)
   def maxEscalations = column[Int]("maxEscalations", O.NotNull)
   def vrn = column[String]("vrn", O.NotNull)
   def serviceId = column[Long]("serviceId", O.NotNull)
@@ -67,7 +72,7 @@ class Slas(tag: Tag) extends Table[Sla](tag, "SLAS") {
 
   def service = foreignKey("SERVICE_SLA_FK", serviceId, Services.services)(_.id,onDelete=ForeignKeyAction.Cascade)
 
-  def * = (id.?, state, metricType, lowThreshold, highThreshold, backoffTime, backoffStages, maxEscalations, vrn, serviceId, created_at, updated_at)  <> (Sla.tupled, Sla.unapply _)
+  def * = (id.?, state, metricType, lowThreshold, highThreshold, backoffTime, backoffStages, currentStage, escalations, maxEscalations, vrn, serviceId, created_at, updated_at)  <> (Sla.tupled, Sla.unapply _)
 
 }
 
@@ -114,11 +119,11 @@ object Slas {
    * Update just the state field of an existing Sla
    * @param vrn the vrn of the Sla to update
    */
-  def update_state_by_vrn(vrn: String, state: SlaState.State)(implicit s: Session) {
+  def update_state_by_vrn(vrn: String, state: SlaState.State, currentStage: Int, escalations: Int)(implicit s: Session) {
 
     slas.filter(_.vrn === vrn)
-      .map(sla => (sla.state, sla.updated_at))
-      .update((state.toString, TimeStamp.now))
+      .map(sla => (sla.state, sla.currentStage, sla.escalations, sla.updated_at))
+      .update((state.toString,currentStage, escalations, TimeStamp.now))
   }
 
 
@@ -156,6 +161,8 @@ object SlaJson {
       (__ \ 'highThreshold).read[Long] and
       (__ \ 'backoffTime).read[Int] and
       (__ \ 'backoffStages).read[Int] and
+      (__ \ 'currentStage).read[Int] and
+      (__ \ 'escalations).read[Int] and
       (__ \ 'maxEscalations).read[Int] and
       (__ \ 'vrn).read[String] and
       (__ \ 'serviceId).read[Long] and

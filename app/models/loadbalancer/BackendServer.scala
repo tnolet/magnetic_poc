@@ -3,7 +3,7 @@ package models.loadbalancer
 import play.api.libs.json.Json
 
 /**
- * Case classes use for the loadbalancer
+ * Case classes used for the loadbalancer
  */
 case class BackendServer (
                            name: String,
