@@ -12,7 +12,7 @@ case class Constraint(attribute: String, operator: String, value: String)
 case class PortMapping(
                         containerPort: Int,
                         hostPort: Int = 0,
-                        servicePort: Int = 9001,
+//                        servicePort: Int = 0,
                         protocol: String
                         )
 
