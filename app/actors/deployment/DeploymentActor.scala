@@ -39,7 +39,6 @@ trait DeployState
 
 //states for deploying
 case object Idle extends DeployState
-case object Submitted extends DeployState
 case object Staging extends DeployState
 case object Waiting extends DeployState
 case object WaitingExposure extends DeployState
@@ -93,9 +92,9 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
         log.info(s"Staging deployment of image $repo:$version with unique ID $vrn")
 
-        val newState = new ContainerState("SUBMITTED")
+        val newState = new ContainerState("STAGING")
 
-        goto(Submitted) using newState
+        goto(Staging) using newState
 
 
       // Initial message for starting an undeployment
@@ -113,17 +112,6 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
         goto(WaitingUnExpose) using newState
   }
 
-  when(Submitted) {
-
-    case Event(Stage, c: ContainerState) =>
-
-      val newStateData = c.copy("STAGING")
-      goto(Staging) using newStateData
-
-    case Event(Fail,c: ContainerState) =>
-      goto(Failed)
-
-  }
   
   when(Staging) {
 
@@ -249,33 +237,9 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
 
   onTransition {
 
-    case Idle -> Submitted =>
-      nextStateData match {
-        case ContainerState(state) =>
 
-          sendStateUpdate(state)
-
-          // firt submit to Marathon so we can catch any early errors before scaling to > 0 instances
-          Marathon.submitContainer(vrn, image, 0).map(
-            i => {
-              if (i < 399) {
-                // Marathon reports everything is OK
-                log.info(s"Submit $vrn to Marathon successful: response code: $i")
-
-                //Proceed to Staging fase with Deploy command. Staging can take time
-                self ! Stage
-                
-              }
-              else {
-                log.error(s"Submit $vrn to Marathon has errors: response code: $i")
-                self ! Fail
-              }
-            }
-          )
-      }
-
-      // on the transition from Submitted to Staging we have to start watching Marathon for state change to running
-    case Submitted -> Staging =>
+      // on the transition from Idle to Staging we have to start watching Marathon for state change to running
+    case Idle -> Staging =>
       nextStateData match {
         case ContainerState(state) =>
 
@@ -284,7 +248,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
           Marathon.submitContainer(vrn, image, amount).map(
             i => {
               if (i < 399) {
-                
+
                 // Marathon reports everything is OK: start to stage the container
                 log.info(s"Staging $vrn to Marathon successful: response code: $i")
 
@@ -303,6 +267,7 @@ class DeploymentActor extends Actor with LoggingFSM[DeployState, Data]{
               }
             }
           )
+
       }
 
     case Waiting -> Running =>

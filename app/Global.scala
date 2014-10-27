@@ -24,6 +24,15 @@ import play.filters.gzip.GzipFilter
 
 object Global extends WithFilters(new GzipFilter()) with GlobalSettings {
 
+  /** **
+    *
+    * set up Gzip
+    *
+    */
+//
+//  new GzipFilter(shouldGzip = (request, response) =>
+//    response.headers.get("Content-Type").exists(_.startsWith("text/html")))
+
   override def onStart (application: Application): Unit = {
 
     /**********************************************
@@ -33,17 +42,6 @@ object Global extends WithFilters(new GzipFilter()) with GlobalSettings {
       **********************************************/
 
     InitialData.insert
-
-
-    /** **
-      *
-      * set up Gzip
-      *
-      */
-
-
-    new GzipFilter(shouldGzip = (request, response) =>
-      response.headers.get("Content-Type").exists(_.startsWith("text/html")))
 
     /**********************************************
      *

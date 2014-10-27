@@ -14,7 +14,7 @@
         0
     ],
     "constraints": [["hostname", "UNIQUE"]],
-    "instances": 9
+    "instances": 6
 }
 
 

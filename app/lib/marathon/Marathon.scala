@@ -2,7 +2,7 @@ package lib.marathon
 
 import com.typesafe.config.ConfigFactory
 import models.docker.DockerImage
-import models.marathon.{MarathonApp, Docker, MarathonAppJson}
+import models.marathon.{MarathonApp, MarathonAppJson}
 import play.api.libs.ws.WS
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global

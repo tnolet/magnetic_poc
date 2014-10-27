@@ -7,7 +7,7 @@ import play.api.libs.json._
  */
 
 
-case class Constraint(attribute: String, operator: String, value: String)
+case class  Constraint(attribute: String, operator: String, value: String)
 
 case class PortMapping(
                         containerPort: Int,
@@ -55,7 +55,7 @@ case class MarathonApp(
                            args: Option[List[String]] = None,
                            container: Container,
                            cpus: Double = 1,
-                           mem: Double = 1500,
+                           mem: Double = 1000,
                            disk: Double = 0,
                            env: Option[List[Map[String,String]]] = None,
                            constraints: List[Constraint] = List(),
