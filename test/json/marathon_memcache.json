@@ -1,0 +1,20 @@
+{
+    "container": {
+        "type": "DOCKER",
+        "docker": {
+            "image": "tnolet/memcached:latest",
+            "network" : "BRIDGE",
+            "portMappings": [
+                { "containerPort": 11211, "hostPort": 0, "servicePort": 9000, "protocol": "tcp" }
+            ]
+        }
+    },
+    "id": "memcached",
+    "cpus": "0.2",
+    "mem": "512",
+    "ports": [
+        0
+    ],
+    "cmd": "",
+    "instances": 1
+}

@@ -1,0 +1,20 @@
+{
+    "container": {
+        "type": "DOCKER",
+        "docker": {
+            "image": "tnolet/mesos-tester:latest",
+            "network" : "BRIDGE",
+            "portMappings": [
+                { "containerPort": 8080, "hostPort": 0, "protocol": "http" }
+            ]
+        }
+    },
+    "id": "tester",
+    "cpus": "0.2",
+    "mem": "512",
+    "ports": [
+        0
+    ],
+    "cmd": "",
+    "instances": 1
+}

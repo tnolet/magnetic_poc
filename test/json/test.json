@@ -1,0 +1,1 @@
+{"id":"vrn-container-7fc15fa2","cmd":"","args":[],"container":{"type":"DOCKER","docker":{"image":"tnolet/mesos-tester","portMappings":[]},"volumes":[]},"cpus":0.2,"mem":512.0,"disk":0.0,"constraints":[],"healthChecks":[],"instances":0,"ports":[0],"backoffSeconds":1.0,"backoffFactor":1.15,"uris":[],"dependencies":[],"upgradeStrategy":{"minimumHealthCapacity":1}}
