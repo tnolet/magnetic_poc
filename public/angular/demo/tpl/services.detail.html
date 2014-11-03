@@ -45,7 +45,7 @@
 
      <!--frontend chart-->
 
-    <div google-chart chart="chartFe" class=" m-b preloader">
+    <div google-chart chart="chartFe" class="preloader">
         <ng-include src="'demo/tpl/blocks/spinner.html'"></ng-include>
     </div>
 
@@ -97,7 +97,7 @@
 
     <!--backend chart -->
 
-    <div google-chart chart="chartBe" class=" m-b preloader">
+    <div google-chart chart="chartBe" class="preloader">
         <ng-include src="'demo/tpl/blocks/spinner.html'"></ng-include>
     </div>
 
@@ -126,7 +126,7 @@
             </div>
             <div class="col-sm-3 col-xs-6">
                 <div>Time since last session<i class="fa fa-fw fa-caret-up text-success text-sm"></i></div>
-                <div class="h2 m-b-sm" ng-bind="metrics.backend.lastsess"></div>
+                <div class="h2 m-b-sm" ng-bind="metrics.backend.lastsess | secondsSince"></div>
             </div>
 
         </div>

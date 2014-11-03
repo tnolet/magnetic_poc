@@ -5,7 +5,7 @@
     <div class="col v-middle">
         <span class="text-md">{{service.serviceType}} {{service.version}}</span>
     </div>
-    <div class="col v-middle m-t-xs hidden-xs">{{service.slas.length}}</div>
+    <div class="col v-middle m-t-xs hidden-xs" ng-bind="service.slas[0].state">N/A</div>
     <div class="col v-middle m-t-xs hidden-xs">{{service.port}}</div>
     <div class="col v-middle m-t-xs hidden-xs">{{service.containers.length }}</div>
 </a>

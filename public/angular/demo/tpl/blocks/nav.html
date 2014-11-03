@@ -1,35 +1,42 @@
 <ul class="nav">
-    <li class="hidden-folded padder m-t m-b-sm text-muted text-xs">
+    <li class="hidden-folded padder m-t m-b-sm text-muted">
         <span >Orchestration</span>
     </li>
     <li class="hidden-folded padder m-t m-b-sm text-muted text-xs">
     </li>
   <li ui-sref-active="active">
     <a ui-sref="app.environments.list">
-      <i class="glyphicon glyphicon-globe icon text-primary-dker"></i>
+      <i class="icon-globe icon text-primary"></i>
       <span class="font-bold">Environments</span>
     </a>
   </li>
   <li ui-sref-active="active">
     <a ui-sref="app.services.list">
-      <i class="fa fa-gears icon text-info-dker"></i>
+      <i class="icon-settings icon text-info-dker"></i>
         <span class="font-bold">Services</span>
     </a>
   </li>
   <li ui-sref-active="active">
     <a ui-sref="app.containers.list">
-          <i class="fa fa-cubes icon text-info-lter"></i>
+          <i class="icon-grid icon text-info-lter"></i>
         <span class="font-bold">Containers</span>
     </a>
   </li>
     <li ui-sref-active="active">
         <a ui-sref="app.images.list">
-            <i class="fa fa-database icon text-success"></i>
+            <i class="icon-layers icon text-success"></i>
             <span class="font-bold">Images</span>
         </a>
     </li>
   <li class="line dk"></li>
-    <li class="hidden-folded padder m-t m-b-sm text-muted text-xs">
+    <li class="hidden-folded padder m-t m-b-sm text-muted">
         <span class="ng-scope">System</span>
     </li>
+    <li ui-sref-active="active">
+        <a ui-sref="app.images.list">
+            <i class="icon-equalizer icon m-b-sm text-primary"></i>
+            <span class="font-bold">Topology</span>
+        </a>
+    </li>
+    <li class="line dk"></li>
 </ul>

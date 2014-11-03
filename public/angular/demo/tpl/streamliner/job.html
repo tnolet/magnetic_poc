@@ -1,7 +1,12 @@
 <div class="sl-item">
   <div class="m-l">
     <div class="text-muted">{{ item.updated_at | fromNow }}</div>
-    <p>{{ item.queue }} ({{ item.id }})<br /><span class="label bg-success h3">{{ item.status }}</span></p>
+    <p>{{ item.queue }}<br /><span class="label h3"
+        ng-class="{
+            'bg-success': item.status == 'FINISHED',
+            'bg-info': item.status == 'ACTIVE',
+            'bg-danger': item.status == 'FAILED'}"
+            >{{ item.status }}</span></p>
   </div>
 </div>
 <!-- <div class="bg-info wrapper-sm m-l-n m-r-n m-b r r-2x">

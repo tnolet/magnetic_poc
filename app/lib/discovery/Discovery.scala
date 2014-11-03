@@ -22,12 +22,10 @@ class Discovery {
 
   val zkConnect = conf.getString("discovery.zookeeper.connect")
   val zkRoot = conf.getString("discovery.zookeeper.root")
-
   val config = Configuration {
+    Seq[InetSocketAddress](("10.212.220.216", 2181),("10.189.115.2", 2181),("10.44.147.14",2181)) } withTimeout{ 60.seconds } withWatcher {(event, session) =>
 
-    Seq[InetSocketAddress](("10.151.59.229", 2181),("10.101.29.217", 2181),("10.195.59.140",2181)) } withTimeout{ 60.seconds } withWatcher {(event, session) =>
-
-    Logger.info("Zookeeper event: " + event.toString)
+    Logger.info("Recieved Zookeeper event: " + event.toString)
 
   }
 

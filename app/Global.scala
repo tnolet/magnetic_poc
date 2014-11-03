@@ -131,8 +131,7 @@ object InitialData {
     DB.withSession{ implicit s: play.api.db.slick.Session =>
       if (DockerImages.count == 0) {
         Seq(
-          DockerImage(Option(1L), "mesos_test", "tnolet/mesos-tester","latest",8080,"http",""),
-          DockerImage(Option(2L), "mesos_test", "tnolet/mesos-tester","2.0",8080,"http",""),
+          DockerImage(Option(2L), "mesos_test", "tnolet/mesos-tester","3.0",8080,"tcp",""),
           DockerImage(Option(2L), "test_shop", "tnolet/test-shop","0.11.0",80,"tcp","./start.sh"),
           DockerImage(Option(6L), "memcached", "sylvainlasnier/memcached","latest",11211,"tcp",""),
           DockerImage(Option(7L), "magneticio test shop", "magneticio/test-shop","0.3.3",80,"tcp","./start.sh")

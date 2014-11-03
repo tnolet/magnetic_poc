@@ -7,14 +7,14 @@
         }
     },
     "id": "local-proxy",
-    "args": ["--mode=localproxy","--zooConString=10.151.59.229:2181,10.101.29.217:2181,10.195.59.140:2181"],
+    "args": ["--mode=localproxy","--zooConString=10.212.220.216:2181,10.189.115.2:2181,10.44.147.14:2181"],
     "cpus": "0.2",
-    "mem": "512",
+    "mem": "312",
     "ports": [
         0
     ],
     "constraints": [["hostname", "UNIQUE"]],
-    "instances": 6
+    "instances": 7
 }
 
 
